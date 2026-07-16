@@ -86,6 +86,50 @@ const setScopedValue = (varName: string, slotKey: string, value: any): void => {
   formValues.value[varName][slotKey] = value
 }
 
+/**
+ * Baut die initiale Slot-Map für eine scoped Variable (``varScope =
+ * team|user``). Verteilt einen skalaren bzw. list-Default auf JEDEN
+ * Team-/User-Slot, damit ein scoped Default pro Slot sichtbar UND
+ * wirksam ist. Ohne dieses Seeding sähe der User leere Felder und
+ * ``submitDraft`` würde die leere Map überspringen — der App-Autor-
+ * Default (z.B. ``flavor_name = "gp1.small"`` mit ``:team``-Scope)
+ * ginge pro Slot verloren.
+ *
+ * Object-Defaults (z.B. ``map(string)`` mit Default ``{}``) liefern
+ * keinen per-Slot-Wert und bleiben eine leere Map — dort baut das
+ * Backend/Worker die Map ohnehin erst aus den ausgefüllten Slots.
+ * Bereits vorhandene Slot-Werte (Rückkehr via „Back") werden NICHT
+ * überschrieben.
+ */
+const seedScopedDefault = (
+  v: AppVariable,
+  existing?: Record<string, any>,
+): Record<string, any> => {
+  const map: Record<string, any> =
+    existing && typeof existing === 'object' && !Array.isArray(existing)
+      ? { ...existing }
+      : {}
+  const def = v.default
+  const hasSeedableDefault =
+    def !== undefined &&
+    def !== null &&
+    (typeof def === 'string' ||
+      typeof def === 'number' ||
+      typeof def === 'boolean' ||
+      Array.isArray(def))
+  if (!hasSeedableDefault) return map
+  // list(...)-Defaults als Komma-String, konsistent mit dem
+  // non-scoped Textarea-Widget.
+  const seed = isList(v.type) && Array.isArray(def) ? def.join(', ') : def
+  for (const slot of slotKeysFor(v)) {
+    const cur = map[slot]
+    if (cur === undefined || cur === null || cur === '') {
+      map[slot] = seed
+    }
+  }
+  return map
+}
+
 /** ``accept``-Attribut für eine File-Variable. */
 const fileAcceptFor = (v: AppVariable): string => {
   if (!v.fileExtensions || v.fileExtensions.length === 0) return '*'
@@ -300,12 +344,31 @@ onMounted(async () => {
       } else {
         stored_value = stored[v.name]
       }
+      // Scoped Variablen sind eine Slot-Map, kein Skalar. Vorhandene
+      // Map wiederherstellen und um (neu hinzugekommene) Slots mit dem
+      // App-Autor-Default ergänzen; sonst frisch aus dem Default seeden.
+      if (isScoped(v)) {
+        const existingMap =
+          stored_value && typeof stored_value === 'object' && !Array.isArray(stored_value)
+            ? stored_value
+            : undefined
+        restored[key] = seedScopedDefault(v, existingMap)
+        continue
+      }
       if (stored_value !== undefined && stored_value !== null) {
         restored[key] = stored_value
       } else if (v.default !== undefined && v.default !== null) {
         restored[key] = v.default
       } else {
         restored[key] = ''
+      }
+      // List-Werte werden im Draft als Array gespeichert, das
+      // ``<textarea>``-Widget erwartet aber einen Komma-String. Ohne
+      // diese Normalisierung rendert der Rehydration-Pfad (nach „Back")
+      // das Array via ``toString()`` als ``"a,b"`` statt ``"a, b"`` wie
+      // beim Erst-Laden — sichtbare Regression beim raus/rein-Navigieren.
+      if (isList(v.type) && Array.isArray(restored[key])) {
+        restored[key] = restored[key].join(', ')
       }
     }
     formValues.value = restored
@@ -368,10 +431,15 @@ onMounted(async () => {
       }
 
       if (isScoped(v) && v.osType !== 'file') {
-        if (typeof valToSet !== 'object' || Array.isArray(valToSet) || valToSet === null) {
-          valToSet = {}
-        }
-        formValues.value[storageKey] = valToSet
+        // Vorhandene Slot-Map übernehmen (z.B. aus savedValues), sonst
+        // leere Map — und in beiden Fällen den App-Autor-Default auf
+        // jeden Team-/User-Slot verteilen, damit ein scoped Default
+        // sichtbar UND wirksam ist (siehe seedScopedDefault).
+        const existingMap =
+          valToSet && typeof valToSet === 'object' && !Array.isArray(valToSet)
+            ? valToSet
+            : undefined
+        formValues.value[storageKey] = seedScopedDefault(v, existingMap)
         return
       }
       
@@ -619,8 +687,8 @@ watch(
               <div v-for="variable in packerByTemplate[tkey]" :key="`${tkey}.${variable.name}`" class="bg-white rounded-lg p-4 border border-blue-200 shadow-sm">
               <div class="flex items-start justify-between gap-2 mb-3">
                 <label
-                  :for="variable.name"
-                  @click.prevent="focusInput(variable.name)"
+                  :for="packerFormKey(variable)"
+                  @click.prevent="focusInput(packerFormKey(variable))"
                   class="text-base font-bold text-gray-900 cursor-pointer hover:text-blue-700 transition-colors flex-1"
                 >
                   {{ variable.name }}
@@ -628,9 +696,9 @@ watch(
 
                 <button
                   v-if="variable.description || isList(variable.type)"
-                  @click.stop="toggleTooltip(variable.name)"
+                  @click.stop="toggleTooltip(packerFormKey(variable))"
                   class="text-gray-400 hover:text-blue-600 transition-colors focus:outline-none"
-                  :class="activeTooltip === variable.name ? 'text-blue-600' : ''"
+                  :class="activeTooltip === packerFormKey(variable) ? 'text-blue-600' : ''"
                   :title="t('deployment.variables.showInfo')"
                 >
                   <Info :size="16" />
@@ -651,7 +719,7 @@ watch(
                 </p>
               </div>
 
-              <div v-if="activeTooltip === variable.name" class="mb-3 bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm text-gray-700">
+              <div v-if="activeTooltip === packerFormKey(variable)" class="mb-3 bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm text-gray-700">
                 <p v-if="variable.description" class="mb-2">{{ variable.description }}</p>
                 <div v-if="isList(variable.type)" class="flex gap-2 items-start text-xs text-blue-700">
                   <Info :size="12" class="mt-0.5 shrink-0" />
