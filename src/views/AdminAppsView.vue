@@ -12,6 +12,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import EntityListState from '@/components/ui/EntityListState.vue'
 import { appApi } from '@/api/app.api'
 import { useToast } from '@/composables/useToast'
+import { formatDate } from '@/utils/format'
 import type { App, AppVersionApproval } from '@/types'
 
 const { t } = useI18n()
@@ -147,30 +148,58 @@ const openRejectModal = (appId: string, versionTag: string) => {
   showRejectModal.value = true
 }
 
-const handleReject = async () => {
-  if (!rejectTarget.value || !rejectionReason.value.trim()) return
-  const { appId, versionTag } = rejectTarget.value
-  isRejecting.value = true
+// Shared logic behind reject and revoke: both validate a target + reason,
+// flip a loading flag, call an admin API method, mark the matching version
+// entry as rejected with the given reason, close the modal, and clear the
+// loading flag. Only the API method, the target, the i18n keys, the loading
+// flag, the modal, and the optional pending-count decrement differ.
+const submitRejection = async (params: {
+  target: { appId: string; versionTag: string } | null
+  reason: string
+  apiCall: (appId: string, versionTag: string, reason: string) => Promise<unknown>
+  setLoading: (value: boolean) => void
+  closeModal: () => void
+  successKey: string
+  errorKey: string
+  decrementPending: boolean
+}) => {
+  if (!params.target || !params.reason.trim()) return
+  const { appId, versionTag } = params.target
+  const reason = params.reason.trim()
+  params.setLoading(true)
   try {
-    await appApi.admin.rejectVersion(appId, versionTag, rejectionReason.value.trim())
-    toast.success(t('AdminAppsView.rejectSuccess'))
+    await params.apiCall(appId, versionTag, reason)
+    toast.success(t(params.successKey))
     const list = approvalsMap.value[appId]
     if (list) {
       const entry = list.find(a => a.version_tag === versionTag)
       if (entry) {
         entry.status = 'rejected'
-        entry.rejection_reason = rejectionReason.value.trim()
+        entry.rejection_reason = reason
       }
     }
-    if (pendingCountMap.value[appId]) {
+    if (params.decrementPending && pendingCountMap.value[appId]) {
       pendingCountMap.value[appId] = Math.max(0, pendingCountMap.value[appId] - 1)
     }
-    showRejectModal.value = false
+    params.closeModal()
   } catch {
-    toast.error(t('AdminAppsView.rejectError'))
+    toast.error(t(params.errorKey))
   } finally {
-    isRejecting.value = false
+    params.setLoading(false)
   }
+}
+
+const handleReject = async () => {
+  await submitRejection({
+    target: rejectTarget.value,
+    reason: rejectionReason.value,
+    apiCall: appApi.admin.rejectVersion,
+    setLoading: value => { isRejecting.value = value },
+    closeModal: () => { showRejectModal.value = false },
+    successKey: 'AdminAppsView.rejectSuccess',
+    errorKey: 'AdminAppsView.rejectError',
+    decrementPending: true,
+  })
 }
 
 const openRevokeModal = (appId: string, versionTag: string) => {
@@ -180,31 +209,16 @@ const openRevokeModal = (appId: string, versionTag: string) => {
 }
 
 const handleRevoke = async () => {
-  if (!revokeTarget.value || !revokeReason.value.trim()) return
-  const { appId, versionTag } = revokeTarget.value
-  isRevoking.value = true
-  try {
-    await appApi.admin.revokeVersion(appId, versionTag, revokeReason.value.trim())
-    toast.success(t('AdminAppsView.revokeSuccess'))
-    const list = approvalsMap.value[appId]
-    if (list) {
-      const entry = list.find(a => a.version_tag === versionTag)
-      if (entry) {
-        entry.status = 'rejected'
-        entry.rejection_reason = revokeReason.value.trim()
-      }
-    }
-    showRevokeModal.value = false
-  } catch {
-    toast.error(t('AdminAppsView.revokeError'))
-  } finally {
-    isRevoking.value = false
-  }
-}
-
-const formatDate = (val: string) => {
-  const d = new Date(val)
-  return isNaN(d.getTime()) ? val : d.toLocaleDateString('de-DE')
+  await submitRejection({
+    target: revokeTarget.value,
+    reason: revokeReason.value,
+    apiCall: appApi.admin.revokeVersion,
+    setLoading: value => { isRevoking.value = value },
+    closeModal: () => { showRevokeModal.value = false },
+    successKey: 'AdminAppsView.revokeSuccess',
+    errorKey: 'AdminAppsView.revokeError',
+    decrementPending: false,
+  })
 }
 
 onMounted(loadAll)

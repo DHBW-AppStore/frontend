@@ -9,7 +9,7 @@ const props = defineProps<{
 
 const { t } = useI18n()
 
-// 4 Schritte: Auswahl -> Verteilung -> Variablen -> Übersicht
+// 4 steps: config -> assignment -> variables -> summary
 const steps = [
   { step: 1, key: 'deployment.steps.config' },
   { step: 2, key: 'deployment.steps.assignment' },
@@ -17,10 +17,10 @@ const steps = [
   { step: 4, key: 'deployment.steps.summary' }
 ]
 
-// Berechnet die Breite automatisch basierend auf der Länge des Arrays (jetzt 3)
+// Compute the fill width automatically from the number of steps.
 const progressWidth = computed(() => {
   const totalSteps = steps.length
-  // Schutz vor Division durch Null, falls nur 1 Schritt da wäre
+  // Guard against division by zero if there were only a single step.
   if (totalSteps <= 1) return '0%'
   
   const percentage = ((props.currentStep - 1) / (totalSteps - 1)) * 100

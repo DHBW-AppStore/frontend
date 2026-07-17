@@ -16,6 +16,7 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 import EntityListState from '@/components/ui/EntityListState.vue'
 import { useDeploymentStore } from '@/stores/deployment.store'
 import { useAppStore } from '@/stores/app.store'
+import { formatDateTime } from '@/utils/format'
 
 const deploymentStore = useDeploymentStore()
 const appStore = useAppStore()
@@ -30,17 +31,15 @@ const getAppName = (appId: string) => {
   return app ? app.name : '-'
 }
 
-// Datum formatieren
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('de-DE', {
+// Format a timestamp as date + time (no seconds).
+const formatDate = (dateString: string) =>
+  formatDateTime(dateString, {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
-  }).format(date)
-}
+    minute: '2-digit',
+  })
 
 /**
  * Sortierung: neueste Deployments zuerst.

@@ -135,7 +135,6 @@ export const useAuthStore = defineStore('auth', {
 
     hasAnyRole(...roles: UserRole[]): boolean {
       if (!this.user?.role) return false
-      if (!Array.isArray(roles)) return false
       return roles.includes(this.user.role as UserRole)
     },
   },

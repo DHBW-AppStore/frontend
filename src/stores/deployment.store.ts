@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { deploymentApi } from '@/api/deployment.api'
 import { useAppStore } from './app.store'
 import { useAuthStore } from './auth.store'
-import { useKeycloak } from '@/composables/useKeycloak'
 
 import type {
   Deployment,
@@ -39,8 +38,6 @@ const defaultDraft: DeploymentDraft = {
 export const useDeploymentStore = defineStore('deployment', {
   state: () => ({
     deployments: [] as Deployment[],
-
-    deploymentTasks: {} as Record<string, any>,
 
     currentDeployment: null as DeploymentWithRelations | null,
     isLoading: false,
@@ -225,7 +222,6 @@ export const useDeploymentStore = defineStore('deployment', {
 
       // Fallback: Wenn keine Teams definiert sind, erstelle automatisch Teams basierend auf studentIds
       if (teams.length === 0 && this.draft.studentIds.length > 0) {
-        console.log('[submitDraft] Creating default teams from studentIds')
         // Erstelle Teams basierend auf groupCount
         const groupCount = this.draft.groupCount
         const studentsPerGroup = Math.floor(this.draft.studentIds.length / groupCount)
@@ -253,6 +249,37 @@ export const useDeploymentStore = defineStore('deployment', {
       // userInputVar: { packer: {...}, terraform: {...} }
       let userInputVarObj: any = { packer: {}, terraform: {} }
       if (this.draft.variables && typeof this.draft.variables === 'object') {
+        // Multi-Image-Packer-Layout erkennen: ``NewDeploymentVariableView``
+        // schreibt für solche Apps die Packer-Werte NICHT flach unter
+        // ``draft.variables[<name>]``, sondern verschachtelt unter
+        // ``draft.variables.packer[<template_key>][<name>]``. Lesen wir
+        // hier weiter nur flach, ist ``val`` für jede Multi-Image-Packer-
+        // Variable ``undefined`` → sie wird verworfen und das Backend
+        // fällt auf den HCL-Default zurück (der geänderte Wizard-Wert
+        // geht still verloren). Dieselbe Detection/Resolution wie in
+        // ``NewDeploymentSummaryView`` (``isMultiImagePackerLayout`` /
+        // ``_resolvePackerValue``).
+        const draftVars = this.draft.variables as Record<string, any>
+        const packerContainer = draftVars.packer
+        const isMultiImagePackerLayout =
+          packerContainer
+          && typeof packerContainer === 'object'
+          && !Array.isArray(packerContainer)
+          && Object.keys(packerContainer).length > 0
+          && Object.keys(packerContainer).every((k) => {
+            const slot = packerContainer[k]
+            return slot && typeof slot === 'object' && !Array.isArray(slot)
+          })
+
+        const resolveValue = (def: AppVariable): any => {
+          if (def.source === 'packer' && isMultiImagePackerLayout) {
+            const tkey = def.template_key ?? 'default'
+            const fromNested = packerContainer?.[tkey]?.[def.name]
+            if (fromNested !== undefined) return fromNested
+          }
+          return draftVars[def.name]
+        }
+
         // VariableDefinitions enthält Info, ob packer/terraform
         if (Array.isArray(this.draft.variableDefinitions)) {
           for (const def of this.draft.variableDefinitions) {
@@ -261,7 +288,7 @@ export const useDeploymentStore = defineStore('deployment', {
             // dict free of accidental ``undefined`` entries that would
             // confuse the backend's terraform encoder.
             if (def.osType === 'file') continue
-            const val = this.draft.variables[def.name]
+            const val = resolveValue(def)
             // Skip empty / undefined values — they would otherwise be
             // forwarded to Terraform as ``-var=name=null`` and bypass
             // the variable's HCL ``default = ...``. Critical for any
@@ -282,7 +309,18 @@ export const useDeploymentStore = defineStore('deployment', {
             ) {
               continue
             }
-            if (def.source === 'packer') userInputVarObj.packer[def.name] = val
+            if (def.source === 'packer') {
+              // Multi-image: nest under the template key so the worker
+              // finds it at ``user_vars["packer"][template_key][name]``
+              // (siehe worker/app/tasks.py). Single-image/legacy stays
+              // flat at ``user_vars["packer"][name]``.
+              if (isMultiImagePackerLayout) {
+                const tkey = def.template_key ?? 'default'
+                ;(userInputVarObj.packer[tkey] ??= {})[def.name] = val
+              } else {
+                userInputVarObj.packer[def.name] = val
+              }
+            }
             else if (def.source === 'terraform') userInputVarObj.terraform[def.name] = val
           }
         } else {
@@ -321,51 +359,8 @@ export const useDeploymentStore = defineStore('deployment', {
         payload.files = fileUploads
       }
 
-      console.log('[submitDraft] Sending Payload:', payload)
-
       const response = await this.createDeployment(payload as DeploymentCreate)
       return response
-    },
-
-    async fetchStatusForDeployment(deploymentId: string) {
-      /**
-       * Load the latest task status for a given deployment.
-       * Uses the Keycloak access token to call the tasks endpoint and keeps
-       * only the most recent task of type 'deploy' for quick status rendering.
-       */
-      const { getAccessToken } = useKeycloak()
-
-      try {
-        const token = await getAccessToken()
-
-        if (!token) {
-          console.warn(`[Store] Kein Access Token verfügbar für Deployment ${deploymentId}`)
-          return
-        }
-
-        const response = await fetch(`http://localhost:8000/tasks/deployment/${deploymentId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
-        })
-
-        if (!response.ok) {
-          if (response.status === 401) console.error("Nicht autorisiert!")
-          return
-        }
-
-        const tasks = await response.json()
-
-        if (Array.isArray(tasks)) {
-          const deployTasks = tasks.filter(t => t.type === 'deploy')
-          if (deployTasks.length > 0) {
-            this.deploymentTasks[deploymentId] = deployTasks[deployTasks.length - 1]
-          }
-        }
-      } catch (err) {
-        console.error(`Store: Fehler beim Laden des Status für ${deploymentId}`, err)
-      }
     }
   }
 })

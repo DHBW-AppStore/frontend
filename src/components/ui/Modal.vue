@@ -7,7 +7,7 @@ defineEmits(['close'])
 <template>
   <div
     v-if="show"
-    class="fixed inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center z-50 p-4"
+    class="fixed inset-0 bg-black/10 flex items-center justify-center z-50 p-4"
     @click.self="$emit('close')"
   >
     <div

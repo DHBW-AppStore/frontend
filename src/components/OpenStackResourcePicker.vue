@@ -444,17 +444,12 @@ watch(
 )
 
 onMounted(() => {
-  if (props.allowFreeText && shouldStartInFreeText()) {
-    isFreeTextMode.value = true
-    freeTextValue.value = typeof props.modelValue === 'string' ? props.modelValue : ''
-    return
-  }
-  // CSV-zu-Array-Migration: ältere Wizard-Persistenz hat ``list(string)``-
-  // Variablen als kommaseparierten String gespeichert. Damit der Parent
-  // ab sofort konsistent mit einem Array arbeitet (und nicht je nach
-  // Eingangswert mal CSV mal Array verarbeiten muss), normalisieren wir
-  // einmal beim Mount nach oben — nur, wenn wir tatsächlich einen CSV-
-  // String sehen und im Multi-Mode laufen.
+  // CSV-to-array migration: older wizard persistence stored
+  // ``list(string)`` variables as a comma-separated string. So the
+  // parent can work with an array consistently from now on (instead of
+  // handling CSV or array depending on the incoming value), we
+  // normalize once on mount — only when we actually see a CSV string and
+  // are running in multi mode.
   if (props.multi && typeof props.modelValue === 'string' && props.modelValue.trim()) {
     const parts = props.modelValue
       .split(',')
@@ -463,21 +458,12 @@ onMounted(() => {
     emit('update:modelValue', parts)
   }
   load()
-  // Cache füttern, falls nicht-gefilterter Picker. Andere Komponenten
-  // (Summary-View) können dann sofort den Namen lesen.
+  // Feed the cache when this is a non-filtered picker, so other
+  // components (summary view) can read the name immediately.
   if (!props.filterNetworkId) {
     ensureLoaded(props.osType)
   }
 })
-
-// ``shouldStartInFreeText`` (reserved for future allowFreeText-default
-// behavior) — die ursprüngliche Heuristik wurde entfernt, weil sie nie
-// einen anderen Wert als ``false`` zurückgegeben hat. Stub bleibt, damit
-// die Aufrufstelle nicht angepasst werden muss, falls später eine
-// type-spezifische Logik hier landet.
-function shouldStartInFreeText(): boolean {
-  return false
-}
 
 // ----------------------------------------------------------------
 // Free-Text-Fallback

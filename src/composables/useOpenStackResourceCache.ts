@@ -1,26 +1,25 @@
 /**
- * Display-Cache für OpenStack-Resourcen.
+ * Display cache for OpenStack resources.
  *
- * Hintergrund: Der Picker speichert je nach ``osMode`` entweder die UUID
- * oder den Namen einer Resource. Der User soll im Trigger-Button und in
- * der Summary-View aber IMMER den schönen Namen sehen — auch wenn der
- * gespeicherte Wert eine UUID ist.
+ * Background: depending on ``osMode`` the picker stores either the UUID
+ * or the name of a resource. In the trigger button and the summary view
+ * the user should ALWAYS see the friendly name — even when the stored
+ * value is a UUID.
  *
- * Lösung: Modul-globaler Cache, gefüllt von jedem Picker, der lädt.
- * - Mehrere Picker für denselben ``osType`` teilen den Cache (kein
- *   Re-Fetch).
- * - Summary-View kann via ``getDisplayName(osType, mode, value)``
- *   synchron auf den Cache zugreifen, ODER ``ensureLoaded(osType)``
- *   einmalig im Mount triggern.
- * - Cache-TTL: gleichgesetzt mit Backend-Cache (60s) — danach wird
- *   beim nächsten Picker-Open neu geladen.
+ * Solution: a module-global cache, filled by every picker that loads.
+ * - Multiple pickers for the same ``osType`` share the cache (no
+ *   re-fetch).
+ * - The summary view can read the cache synchronously via
+ *   ``getDisplayName(osType, mode, value)``, OR trigger
+ *   ``ensureLoaded(osType)`` once on mount.
+ * - Cache TTL: matched to the backend cache (60s) — after that it is
+ *   reloaded on the next picker open.
  *
- * REAKTIVITÄT: Der Cache selbst ist eine plain ``Map``, aber ein Vue-
- * ``ref`` (``cacheVersion``) wird bei jedem ``prime``/``invalidate``
- * incrementiert. Konsumenten lesen den Cache via ``getDisplayName`` /
- * ``getItems``, die ``cacheVersion.value`` mitlesen — damit hängen die
- * computeds, die diese Funktionen aufrufen, an der Vue-Reactivity und
- * laufen neu, sobald andere Komponenten den Cache aktualisieren.
+ * REACTIVITY: the cache itself is a plain ``Map``, but a Vue ``ref``
+ * (``cacheVersion``) is incremented on every ``prime``/``invalidate``.
+ * Consumers read the cache via ``getDisplayName``, which also reads
+ * ``cacheVersion.value`` — so the computeds calling it depend on Vue
+ * reactivity and re-run as soon as another component updates the cache.
  */
 import { ref } from 'vue'
 import {
@@ -204,15 +203,6 @@ export function getDisplayName(
     return { name: fallback.name, known: true, modeMismatch: true }
   }
   return { name: value, known: false }
-}
-
-/**
- * Alle Items eines Cache-Eintrags. Liest ebenfalls ``cacheVersion``,
- * damit Konsumenten reaktiv sind.
- */
-export function getItems(osType: OsResourceType): CachedItem[] {
-  void cacheVersion.value
-  return cache.get(osType)?.items || []
 }
 
 // ----------------------------------------------------------------

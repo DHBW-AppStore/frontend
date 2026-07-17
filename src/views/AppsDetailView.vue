@@ -14,6 +14,7 @@ import { useDeploymentStore } from '@/stores/deployment.store'
 import { useOpenStackCredentialsStore } from '@/stores/openstack-credentials.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRole } from '@/composables/useRole'
+import { formatDate } from '@/utils/format'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import Modal from '@/components/ui/Modal.vue'
 import AppVersionStatusBadge from '@/components/ui/AppVersionStatusBadge.vue'
@@ -150,15 +151,6 @@ const hasVersionInfo = computed(() => {
 // ----------------------------------------------------------------
 // Helpers
 // ----------------------------------------------------------------
-const formatDate = (val: any) => {
-  if (val instanceof Date) return val.toLocaleDateString('de-DE')
-  if (typeof val === 'string') {
-    const d = new Date(val)
-    if (!isNaN(d.getTime())) return d.toLocaleDateString('de-DE')
-  }
-  return val
-}
-
 const getIconForApp = (appName: string) => {
   const name = (appName || '').toLowerCase()
   if (name.includes('node')) return Server

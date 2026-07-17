@@ -365,24 +365,20 @@ async function primeOsDisplayCache(defs: AppVariable[]): Promise<void> {
   await Promise.all([...types].map((t) => ensureOsCacheLoaded(asOsResourceType(t))))
 }
 
-// --- 1. Lade-Logik & Merge ---
+// --- 1. Load logic & merge ---
 const fetchAndSyncVariables = async () => {
-  console.log('fetchAndSyncVariables called')
-  console.log('deploymentStore.draft.appId:', deploymentStore.draft.appId)
-  console.log('appStore.apps.length:', appStore.apps.length)
-
-  // Cache-Hit aus Step 3 hat absolute Priorität. Wenn der User über
-  // den Wizard hier gelandet ist, hat NewDeploymentVariableView die
-  // Definitionen schon im Draft abgelegt und wir können sie sofort
-  // anzeigen — ohne auf ``appStore.fetchApps`` zu warten und ohne den
-  // ``selectedApp``-Guard unten triggern zu lassen.
+  // A cache hit from step 3 takes absolute priority. When the user
+  // reached this page through the wizard, NewDeploymentVariableView has
+  // already stored the definitions in the draft, so we can show them
+  // immediately — without waiting for ``appStore.fetchApps`` and without
+  // tripping the ``selectedApp`` guard below.
   //
-  // Frühere Versionen lasen den Cache erst NACH dem Guard. Sobald
-  // ``selectedApp`` aus irgendeinem Grund (Apps noch nicht im Store,
-  // Direktaufruf der Summary-Route, gefilterte App-Liste) nicht
-  // resolved werden konnte, ging die Funktion mit ``return`` raus und
-  // ``appVariables.value`` blieb ``[]`` — Summary zeigte „No Packer/
-  // Terraform variables", obwohl der Draft die Definitionen enthielt.
+  // Earlier versions read the cache only AFTER the guard. As soon as
+  // ``selectedApp`` could not be resolved for any reason (apps not yet in
+  // the store, direct call to the summary route, filtered app list), the
+  // function returned early and ``appVariables.value`` stayed ``[]`` —
+  // the summary showed "No Packer/Terraform variables" even though the
+  // draft held the definitions.
   const cached = deploymentStore.draft.variableDefinitions
   if (cached && cached.length > 0) {
     appVariables.value = cached
@@ -390,14 +386,10 @@ const fetchAndSyncVariables = async () => {
     return
   }
 
-  // Stelle sicher, dass Apps geladen sind
+  // Make sure apps are loaded.
   if (appStore.apps.length === 0) {
-    console.log('Loading apps...')
     await appStore.fetchApps()
-    console.log('Apps loaded:', appStore.apps.length)
   }
-
-  console.log('selectedApp:', selectedApp.value)
 
   if (!selectedApp.value?.appId) {
     console.warn('No app selected or app not found')
