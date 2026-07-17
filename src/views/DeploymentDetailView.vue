@@ -34,6 +34,19 @@ const sshCommandFor = (data: { username?: string; ip?: string; port?: number }):
     return `ssh ${portFlag}${data.username}@${data.ip}`
 }
 
+// Build a per-user URL from user_accounts (ip + port), preserving any path
+// suffix the team VM url carries (e.g. "/pgadmin4").
+const userUrlFor = (data: { ip?: string; port?: number }, teamVmUrl?: string): string | null => {
+    if (!data.ip || !data.port) return null
+    let path = ''
+    if (teamVmUrl) {
+        try {
+            path = new URL(teamVmUrl).pathname.replace(/\/$/, '')
+        } catch { /* ignore malformed url */ }
+    }
+    return `http://${data.ip}:${data.port}${path}`
+}
+
 
 const route = useRoute()
 const router = useRouter()
@@ -61,6 +74,7 @@ interface UserAccount {
     ip: string
     port: number
     auth: string
+    type?: 'password' | 'ssh_key' | 'oauth' | 'none' | string
     authtype?: 'ssh' | 'url' | string
     url?: string
 }
@@ -2022,7 +2036,19 @@ const deselectTask = () => {
                                     </button>
                                 </div>
 
-                                <div v-if="team.vm?.url"
+                                <div v-if="member.account.data.ip && member.account.data.port && member.account.data.type !== 'ssh_key' && member.account.data.authtype !== 'ssh' && member.account.data.port !== 22"
+                                    class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded border border-gray-100 max-w-[280px]">
+                                    <span class="text-gray-400 font-sans text-[10px] uppercase tracking-wider flex-shrink-0">URL:</span>
+                                    <a :href="userUrlFor(member.account.data, team.vm?.url) ?? ''" target="_blank" rel="noopener noreferrer"
+                                        class="text-blue-600 hover:underline truncate">{{ userUrlFor(member.account.data, team.vm?.url)?.replace(/^https?:\/\//, '') }}</a>
+                                    <button
+                                        @click="copyToClipboard(userUrlFor(member.account.data, team.vm?.url) ?? '', 'vmurl-' + member.account.key)"
+                                        class="text-gray-400 hover:text-amber-600 p-0.5 rounded hover:bg-gray-200 transition-colors flex-shrink-0"
+                                        :title="copiedKey === 'vmurl-' + member.account.key ? 'Kopiert!' : 'URL kopieren'">
+                                        <component :is="copiedKey === 'vmurl-' + member.account.key ? Check : Copy" :size="12" />
+                                    </button>
+                                </div>
+                                <div v-else-if="team.vm?.url"
                                     class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded border border-gray-100 max-w-[280px]">
                                     <span class="text-gray-400 font-sans text-[10px] uppercase tracking-wider flex-shrink-0">URL:</span>
                                     <a :href="team.vm.url" target="_blank" rel="noopener noreferrer"
