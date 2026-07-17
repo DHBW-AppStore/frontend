@@ -16,6 +16,8 @@ import { useDeploymentStream } from '@/composables/useDeploymentStream'
 import InfrastructureVmCard from '@/components/InfrastructureVmCard.vue'
 import InfrastructureVmDrawer from '@/components/InfrastructureVmDrawer.vue'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
+import { formatDateTime } from '@/utils/format'
+import { extractErrorMessage } from '@/utils/http-error'
 
 import { Eye, EyeOff } from 'lucide-vue-next' // Stelle sicher, dass die Icons importiert sind
 
@@ -72,7 +74,7 @@ const typedUserAccounts = computed<Record<string, UserAccount> | null>(() => {
 
     let outputsObj: any = rawOutputs
 
-    // Fall 1: Outputs kommen als JSON-String aus der Text-Spalte der DB
+    // Case 1: outputs arrive as a JSON string from the DB text column.
     if (typeof rawOutputs === 'string') {
         try {
             const trimmed = rawOutputs.trim()
@@ -80,18 +82,17 @@ const typedUserAccounts = computed<Record<string, UserAccount> | null>(() => {
                 outputsObj = JSON.parse(trimmed)
             }
         } catch (e) {
-            console.error('Fehler beim Parsen der Outputs-Rohdaten:', e)
+            console.error('Failed to parse raw outputs data:', e)
             return null
         }
     }
 
-    // Fall 2: Es ist bereits ein Objekt (oder wurde oben erfolgreich geparst)
+    // Case 2: it is already an object (or was parsed successfully above).
     if (outputsObj && typeof outputsObj === 'object' && 'user_accounts' in outputsObj) {
         const userAccountsContainer = outputsObj.user_accounts
 
-        // Sicherstellen, dass wir an das .value-Objekt von Terraform herankommen
+        // Reach through to the Terraform ``.value`` object.
         if (userAccountsContainer && userAccountsContainer.value) {
-            console.log("=== TERRAFORM USER ACCOUNTS OUTPUT ===", userAccountsContainer.value)
             return userAccountsContainer.value as Record<string, UserAccount>
         }
     }
@@ -498,9 +499,10 @@ const pauseResumeBusy = ref(false)
 
 onMounted(async () => {
     await deploymentStore.fetchDeploymentById(deploymentId)
-    await loadTasks() // Lädt die Historie in tasks.value
+    await loadTasks() // Loads the history into tasks.value
 
-    // Wenn Tasks vorhanden sind, holen wir uns die Outputs des neuesten Tasks für oben
+    // Seed the top outputs from the latest task so the page can render
+    // the summary before the first SSE event arrives.
     if (tasks.value && tasks.value.length > 0) {
         const sortedTasks = [...tasks.value].sort((a, b) =>
             b.created_at.localeCompare(a.created_at)
@@ -509,7 +511,7 @@ onMounted(async () => {
         const latestTask = sortedTasks[0]
 
         if (latestTask) {
-            // Wir holen die Details direkt von der API und packen sie in die neue Variable
+            // Fetch the details straight from the API into latestTaskOutputs.
             try {
                 const { data } = await taskApi.getById(latestTask.taskId)
                 latestTaskOutputs.value = data
@@ -523,25 +525,6 @@ onMounted(async () => {
     // (OpenStack live-fetch can take ~1s) and the page should render
     // its other panels while it's in flight.
     loadResources()
-
-    // Wenn Tasks vorhanden sind, holen wir uns die Outputs des neuesten Tasks für oben
-    if (tasks.value && tasks.value.length > 0) {
-        const sortedTasks = [...tasks.value].sort((a, b) =>
-            b.created_at.localeCompare(a.created_at)
-        )
-
-        const latestTask = sortedTasks[0]
-
-        if (latestTask) {
-            // Wir holen die Details direkt von der API und packen sie in die neue Variable
-            try {
-                const { data } = await taskApi.getById(latestTask.taskId)
-                latestTaskOutputs.value = data
-            } catch (err) {
-                console.error('Error seeding top outputs:', err)
-            }
-        }
-    }
 })
 
 const loadTasks = async () => {
@@ -1296,25 +1279,6 @@ const cleanVariableValue = (value?: string) => {
 }
 
 /**
- * Defensive ``axios``-error → human string. ``err.response?.data?.detail``
- * is the FastAPI convention but the backend can ship it as either
- * a string or a dict (see e.g. ``{ reason: "openstack_credentials_missing" }``
- * for PRECONDITION_FAILED). Plain interpolation would print
- * ``[object Object]`` for the dict case; we drill into ``.reason``
- * when present and fall back to ``err.message`` so the toast is
- * always readable.
- */
-const extractErrorMessage = (err: any): string => {
-    const detail = err?.response?.data?.detail
-    if (typeof detail === 'string') return detail
-    if (detail && typeof detail === 'object') {
-        if (typeof detail.reason === 'string') return detail.reason
-        if (typeof detail.message === 'string') return detail.message
-    }
-    return err?.message || 'Unknown error'
-}
-
-/**
  * Split a task-logs string into a friendly headline + a collapsible
  * technical-details body. The backend's ``celery_event_listener.py``
  * emits Celery-infrastructure failures (``NotRegistered``,
@@ -1519,13 +1483,7 @@ const resendAccess = async (teamId: string, userId: string) => {
     }
 }
 
-const formatDate = (dateString?: string | null) => {
-    if (!dateString) return '-'
-    return new Date(dateString).toLocaleString('de-DE', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
-    })
-}
+const formatDate = formatDateTime
 
 const selectTask = async (task: Task) => {
     loadingTaskDetail.value = true

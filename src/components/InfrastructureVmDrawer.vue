@@ -23,6 +23,7 @@ import { onMounted, ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { DeploymentResource } from '@/types'
 import { deploymentApi } from '@/api/deployment.api'
+import { formatUptime, pillToneClass } from '@/composables/useVmPresentation'
 import {
   X,
   RefreshCw,
@@ -95,33 +96,9 @@ const lifecycleTone = computed<'green' | 'red' | 'amber' | 'gray'>(() => {
   return 'gray'
 })
 
-const lifecyclePillClass = computed(() => {
-  switch (lifecycleTone.value) {
-    case 'green':
-      return 'bg-emerald-100 text-emerald-700 border-emerald-200'
-    case 'red':
-      return 'bg-red-100 text-red-700 border-red-200'
-    case 'amber':
-      return 'bg-amber-100 text-amber-800 border-amber-200'
-    default:
-      return 'bg-gray-100 text-gray-700 border-gray-200'
-  }
-})
+const lifecyclePillClass = computed(() => pillToneClass(lifecycleTone.value))
 
-const uptime = computed(() => {
-  const ts = detail.value?.hardware?.launched_at
-  if (!ts) return null
-  const launched = new Date(ts).getTime()
-  if (!Number.isFinite(launched)) return null
-  const delta = Date.now() - launched
-  if (delta < 0) return null
-  const minutes = Math.floor(delta / 60_000)
-  if (minutes < 60) return `${minutes}m`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ${minutes % 60}m`
-  const days = Math.floor(hours / 24)
-  return `${days}d ${hours % 24}h`
-})
+const uptime = computed(() => formatUptime(detail.value?.hardware?.launched_at))
 
 // --- Map network IDs / fixed IPs to the human-friendly network name.
 // The Stage-2 ``ports`` block only carries the ``network_id`` (UUID).

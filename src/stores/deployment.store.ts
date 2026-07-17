@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { deploymentApi } from '@/api/deployment.api'
 import { useAppStore } from './app.store'
 import { useAuthStore } from './auth.store'
-import { useKeycloak } from '@/composables/useKeycloak'
 
 import type {
   Deployment,
@@ -39,8 +38,6 @@ const defaultDraft: DeploymentDraft = {
 export const useDeploymentStore = defineStore('deployment', {
   state: () => ({
     deployments: [] as Deployment[],
-
-    deploymentTasks: {} as Record<string, any>,
 
     currentDeployment: null as DeploymentWithRelations | null,
     isLoading: false,
@@ -225,7 +222,6 @@ export const useDeploymentStore = defineStore('deployment', {
 
       // Fallback: Wenn keine Teams definiert sind, erstelle automatisch Teams basierend auf studentIds
       if (teams.length === 0 && this.draft.studentIds.length > 0) {
-        console.log('[submitDraft] Creating default teams from studentIds')
         // Erstelle Teams basierend auf groupCount
         const groupCount = this.draft.groupCount
         const studentsPerGroup = Math.floor(this.draft.studentIds.length / groupCount)
@@ -363,51 +359,8 @@ export const useDeploymentStore = defineStore('deployment', {
         payload.files = fileUploads
       }
 
-      console.log('[submitDraft] Sending Payload:', payload)
-
       const response = await this.createDeployment(payload as DeploymentCreate)
       return response
-    },
-
-    async fetchStatusForDeployment(deploymentId: string) {
-      /**
-       * Load the latest task status for a given deployment.
-       * Uses the Keycloak access token to call the tasks endpoint and keeps
-       * only the most recent task of type 'deploy' for quick status rendering.
-       */
-      const { getAccessToken } = useKeycloak()
-
-      try {
-        const token = await getAccessToken()
-
-        if (!token) {
-          console.warn(`[Store] Kein Access Token verfügbar für Deployment ${deploymentId}`)
-          return
-        }
-
-        const response = await fetch(`http://localhost:8000/tasks/deployment/${deploymentId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
-        })
-
-        if (!response.ok) {
-          if (response.status === 401) console.error("Nicht autorisiert!")
-          return
-        }
-
-        const tasks = await response.json()
-
-        if (Array.isArray(tasks)) {
-          const deployTasks = tasks.filter(t => t.type === 'deploy')
-          if (deployTasks.length > 0) {
-            this.deploymentTasks[deploymentId] = deployTasks[deployTasks.length - 1]
-          }
-        }
-      } catch (err) {
-        console.error(`Store: Fehler beim Laden des Status für ${deploymentId}`, err)
-      }
     }
   }
 })

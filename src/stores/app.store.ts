@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { appApi } from '@/api/app.api'
 import type { App, AppWithUser, AppCreate, AppUpdate } from '@/types'
+import { runRequest } from './_request'
 
 export const useAppStore = defineStore('app', {
   state: () => ({
@@ -19,81 +20,63 @@ export const useAppStore = defineStore('app', {
 
   actions: {
     async fetchApps(userId?: string) {
-      this.isLoading = true
-      this.error = null
-
-      try {
+      const ctx = {
+        setLoading: (v: boolean) => { this.isLoading = v },
+        setError: (e: string | null) => { this.error = e },
+      }
+      await runRequest(ctx, async () => {
         const { data } = await appApi.list({ userId })
         this.apps = data
-      } catch (err: any) {
-        this.error = err.response?.data?.detail || 'Failed to fetch apps'
-      } finally {
-        this.isLoading = false
-      }
+      }, 'Failed to fetch apps', { rethrow: false })
     },
 
     async fetchAppById(appId: string) {
-      this.isLoading = true
-      this.error = null
-
-      try {
+      const ctx = {
+        setLoading: (v: boolean) => { this.isLoading = v },
+        setError: (e: string | null) => { this.error = e },
+      }
+      await runRequest(ctx, async () => {
         const { data } = await appApi.getById(appId)
         this.currentApp = data
-      } catch (err: any) {
-        this.error = err.response?.data?.detail || 'Failed to fetch app'
-      } finally {
-        this.isLoading = false
-      }
+      }, 'Failed to fetch app', { rethrow: false })
     },
 
     async createApp(data: AppCreate) {
-      this.isLoading = true
-      this.error = null
-
-      try {
+      const ctx = {
+        setLoading: (v: boolean) => { this.isLoading = v },
+        setError: (e: string | null) => { this.error = e },
+      }
+      return runRequest(ctx, async () => {
         const { data: app } = await appApi.create(data)
         this.apps.push(app)
         return app
-      } catch (err: any) {
-        this.error = err.response?.data?.detail || 'Failed to create app'
-        throw err
-      } finally {
-        this.isLoading = false
-      }
+      }, 'Failed to create app')
     },
 
     async updateApp(appId: string, data: AppUpdate) {
-      this.isLoading = true
-      this.error = null
-
-      try {
+      const ctx = {
+        setLoading: (v: boolean) => { this.isLoading = v },
+        setError: (e: string | null) => { this.error = e },
+      }
+      return runRequest(ctx, async () => {
         const { data: app } = await appApi.update(appId, data)
         const index = this.apps.findIndex((a) => a.appId === appId)
         if (index !== -1) {
           this.apps[index] = app
         }
         return app
-      } catch (err: any) {
-        this.error = err.response?.data?.detail || 'Failed to update app'
-        throw err
-      } finally {
-        this.isLoading = false
-      }
+      }, 'Failed to update app')
     },
 
     async deleteApp(appId: string) {
-      this.isLoading = true
-      this.error = null
-
-      try {
+      const ctx = {
+        setLoading: (v: boolean) => { this.isLoading = v },
+        setError: (e: string | null) => { this.error = e },
+      }
+      await runRequest(ctx, async () => {
         await appApi.delete(appId)
         this.apps = this.apps.filter((a) => a.appId !== appId)
-      } catch (err: any) {
-        this.error = err.response?.data?.detail || 'Failed to delete app'
-        throw err
-      } finally {
-        this.isLoading = false
-      }
+      }, 'Failed to delete app')
     },
 
     async fetchAppVariables(appId: string, version: string) {

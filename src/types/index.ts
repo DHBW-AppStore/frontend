@@ -381,55 +381,6 @@ export interface Task {
 }
 
 // ----------------------------------------------------------------
-// USER GROUP TYPES
-// ----------------------------------------------------------------
-export interface UserGroup {
-  userGroupId: string
-  deploymentId: string
-  courseIds?: string[]
-}
-
-export interface UserGroupWithMembers extends UserGroup {
-  users: User[]
-  courses: Course[]
-}
-
-export interface UserGroupCreate {
-  deploymentId: string
-  userIds?: string[]
-  courseIds?: string[]
-}
-
-export interface UserGroupUpdate {
-  deploymentId?: string
-  userIds?: string[]
-  courseIds?: string[]
-}
-
-// ----------------------------------------------------------------
-// TEAM TYPES
-// ----------------------------------------------------------------
-export interface Team {
-  teamId: string
-  name: string
-  userGroupId: string
-}
-
-export interface TeamWithMembers extends Team {
-  users: User[]
-}
-
-export interface TeamCreate {
-  name: string
-  userGroupId: string
-  userIds?: string[]
-}
-
-export interface TeamUpdate {
-  name?: string
-}
-
-// ----------------------------------------------------------------
 // AUTH TYPES
 // ----------------------------------------------------------------
 // ----------------------------------------------------------------
@@ -475,10 +426,6 @@ export interface DeploymentQueryParams extends PaginationParams {
   userId?: string
   appId?: string
   status?: DeploymentStatus
-}
-
-export interface TeamQueryParams extends PaginationParams {
-  userGroupId?: string
 }
 
 
