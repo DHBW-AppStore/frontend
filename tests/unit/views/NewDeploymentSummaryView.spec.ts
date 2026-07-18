@@ -37,7 +37,7 @@ vi.mock('@/api/user.api', () => ({
 // Mock für den OpenStack Cache
 vi.mock('@/composables/useOpenStackResourceCache', () => ({
   ensureLoaded: vi.fn().mockResolvedValue(undefined),
-  getDisplayName: vi.fn((type, mode, val) => ({ name: `OS-Name-${val}` }))
+  getDisplayName: vi.fn((_type, _mode, val) => ({ name: `OS-Name-${val}` }))
 }))
 
 describe('NewDeploymentSummaryView.vue', () => {

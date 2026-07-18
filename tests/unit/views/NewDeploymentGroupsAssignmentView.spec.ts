@@ -103,7 +103,7 @@ describe('NewDeploymentTeamsView.vue', () => {
     const wrapper = createWrapper()
     await flushPromises()
 
-    const store = useDeploymentStore()
+   
     
     // Beide Studenten sollten im Unassigned-Pool sein, da 'assignments' leer ist
     expect(wrapper.text()).toContain('John Doe')

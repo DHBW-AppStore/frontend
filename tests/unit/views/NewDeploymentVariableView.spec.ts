@@ -22,7 +22,7 @@ vi.mock('vue-router', () => ({
 
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
-    t: (key: string, params?: any) => key
+    t: (key: string) => key
   })
 }))
 
