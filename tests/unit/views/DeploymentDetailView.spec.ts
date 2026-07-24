@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, computed } from 'vue'
 
 import DeploymentDetailView from '@/views/DeploymentDetailView.vue'
 import type { DeploymentWithRelations, Task } from '@/types'
@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   mockDeleteDeployment: vi.fn(),
   mockListTasksByDeployment: vi.fn(),
   mockGetTaskById: vi.fn(),
+  mockGetMyAccess: vi.fn(),
   mockAddToast: vi.fn(),
   mockStartStream: vi.fn(),
   mockStopStream: vi.fn(),
@@ -35,28 +36,20 @@ const mockStreamConnectionState = ref<'idle' | 'connecting' | 'live' | 'reconnec
 vi.mock('lucide-vue-next', () => {
   const icon = (className: string) => ({ template: `<span class="${className}" />` })
 
-  return {
-    CircleArrowLeft: icon('icon-circle-arrow-left'),
-    Loader2: icon('icon-loader'),
-    Users: icon('icon-users'),
-    Settings: icon('icon-settings'),
-    Terminal: icon('icon-terminal'),
-    ChevronDown: icon('icon-chevron-down'),
-    Trash2: icon('icon-trash'),
-    GitBranch: icon('icon-git-branch'),
-    User: icon('icon-user'),
-    Calendar: icon('icon-calendar'),
-    Clock: icon('icon-clock'),
-    Package: icon('icon-package'),
-    AlertCircle: icon('icon-alert-circle'),
-    CheckCircle: icon('icon-check-circle'),
-    XCircle: icon('icon-x-circle'),
-    StopCircle: icon('icon-stop-circle'),
-    Flame: icon('icon-flame'),
-    Copy: icon('icon-copy'),
-    Check: icon('icon-check'),
-    Send: icon('icon-send'),
-  }
+  // Every icon the view imports must be a named export here — vitest
+  // validates named ESM imports at module-eval time, so a Proxy
+  // fallback isn't enough. Keep this list in sync with the two
+  // ``lucide-vue-next`` imports in DeploymentDetailView.vue.
+  const names = [
+    'CircleArrowLeft', 'Loader2', 'Users', 'Settings', 'Terminal',
+    'ChevronDown', 'Trash2', 'GitBranch', 'User', 'Calendar', 'Clock',
+    'Package', 'AlertCircle', 'CheckCircle', 'XCircle', 'StopCircle',
+    'Flame', 'Copy', 'Check', 'Send', 'PauseCircle', 'PlayCircle',
+    'RefreshCw', 'Server', 'Network', 'Shield', 'Eye', 'EyeOff',
+  ]
+  return Object.fromEntries(
+    names.map((n) => [n, icon(`icon-${n.toLowerCase()}`)]),
+  )
 })
 
 vi.mock('vue-router', () => ({
@@ -89,6 +82,15 @@ vi.mock('@/stores/auth.store', () => ({
   }),
 }))
 
+// ``useRole`` reads ``auth.user?.role`` in production; the auth-store
+// mock above doesn't expose ``user``, so mock the composable directly
+// and drive ``isStaff`` off the same ref the tests already toggle.
+vi.mock('@/composables/useRole', () => ({
+  useRole: () => ({
+    isStaff: computed(() => mockIsTeacherOrAdmin.value),
+  }),
+}))
+
 vi.mock('@/stores/toast.store', () => ({
   useToastStore: () => ({
     addToast: mocks.mockAddToast,
@@ -105,6 +107,7 @@ vi.mock('@/api/task.api', () => ({
 vi.mock('@/api/deployment.api', () => ({
   deploymentApi: {
     resendAccess: vi.fn(),
+    getMyAccess: mocks.mockGetMyAccess,
   },
 }))
 
@@ -350,5 +353,80 @@ describe.skip('DeploymentDetailView.vue', () => {
       message: 'DeploymentDetailView.deleteSuccessToast',
     })
     expect(mocks.mockPush).toHaveBeenCalledWith({ name: 'deployments.list' })
+  })
+})
+
+
+// ---------------------------------------------------------
+// Member self-access (own credentials via /my-access)
+// ---------------------------------------------------------
+// Focused, un-skipped block: unlike the legacy suite above (skipped
+// pending a full rewrite), this covers only the member self-credentials
+// path added alongside the backend ``/my-access`` endpoint.
+describe('DeploymentDetailView.vue — member self-access', () => {
+  const mountComponent = () =>
+    mount(DeploymentDetailView, {
+      global: {
+        mocks: {
+          $t: (key: string, vars?: Record<string, unknown>) =>
+            vars ? `${key} ${JSON.stringify(vars)}` : key,
+        },
+        stubs: {
+          RouterLink: true,
+          BaseButton: { template: '<button><slot /></button>' },
+          Modal: {
+            props: ['show'],
+            template: '<div v-if="$props.show" class="modal"><slot /></div>',
+          },
+        },
+      },
+    })
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // Non-owner student who IS a member of Team Alpha (member-1).
+    mockIsTeacherOrAdmin.value = false
+    mockAuthUserId.value = 'member-1'
+    mockDeployment.value = baseDeployment({ userId: 'user-owner' })
+    mocks.mockListTasksByDeployment.mockResolvedValue({ data: [] })
+    mocks.mockGetMyAccess.mockResolvedValue({
+      data: {
+        // Key mirrors the terraform contract the view derives:
+        // "<team>-<email-local-part with dots→dashes>".
+        user_accounts: {
+          'Team Alpha-member1': {
+            username: 'member1',
+            team: 'Team Alpha',
+            ip: '10.0.0.5',
+            port: 22,
+            auth: 'super-secret-pw',
+            type: 'password',
+          },
+        },
+        team_vms: {},
+      },
+    })
+  })
+
+  it('lädt die eigenen Zugangsdaten über /my-access statt über die Task-Liste', async () => {
+    const wrapper = mountComponent()
+    await flushPromises()
+
+    // Member path: my-access is queried, the owner-only task list is not.
+    expect(mocks.mockGetMyAccess).toHaveBeenCalledWith('dep-1')
+    expect(mocks.mockListTasksByDeployment).not.toHaveBeenCalled()
+    // The own credential renders in the Teams card.
+    expect(wrapper.text()).toContain('member1')
+  })
+
+  it('ruft /my-access NICHT auf, wenn der Nutzer Owner-View hat', async () => {
+    // Staff → owner view → task-based outputs path, no my-access call.
+    mockIsTeacherOrAdmin.value = true
+    mocks.mockGetMyAccess.mockClear()
+
+    mountComponent()
+    await flushPromises()
+
+    expect(mocks.mockGetMyAccess).not.toHaveBeenCalled()
   })
 })

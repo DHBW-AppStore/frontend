@@ -190,6 +190,31 @@ export interface DeploymentWithRelations extends Deployment {
   logs?: string | null;
 }
 
+// One member's access credentials, mirroring the raw terraform
+// ``user_accounts`` entry shape. Returned (filtered to the caller's
+// own entry) by the ``/deployments/{id}/my-access`` endpoint so a
+// team member can see their own credentials without the owner view.
+export interface DeploymentUserAccount {
+  username: string;
+  team?: string;
+  ip?: string;
+  port?: number;
+  auth?: string;
+  type?: 'password' | 'ssh_key' | 'oauth' | 'none' | string;
+  authtype?: 'ssh' | 'url' | string;
+  url?: string;
+}
+
+// Response of ``GET /deployments/{id}/my-access``. Both maps carry at
+// most one key (the caller's own account / their team's VM), in the
+// same shape as ``outputs.user_accounts.value`` so the detail view's
+// existing account-matching pipeline consumes it unchanged. Empty maps
+// mean "no credentials yet".
+export interface MyAccessResponse {
+  user_accounts: Record<string, DeploymentUserAccount>;
+  team_vms: Record<string, { url?: string; floating_ip?: string; fixed_ip?: string }>;
+}
+
 export interface DeploymentCreate {
   name: string
   appId: string
