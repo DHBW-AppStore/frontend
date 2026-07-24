@@ -62,6 +62,13 @@ const loadingTasks = ref(false)
 const selectedTask = ref<Task | null>(null)
 //NEU
 const latestTaskOutputs = ref<Task | null>(null)
+// Member self-access: a non-owner (student) can't read the owner-only
+// task outputs, so we fetch just their own credentials from the
+// dedicated ``/my-access`` endpoint into this map. It mirrors the raw
+// ``user_accounts.value`` shape so ``typedUserAccounts`` can fall back
+// to it and the existing account-matching pipeline works unchanged.
+const myAccounts = ref<Record<string, UserAccount> | null>(null)
+const myTeamVms = ref<Record<string, { url?: string; floating_ip?: string; fixed_ip?: string }> | null>(null)
 // Liefert immer den aktuell aktiven Daten-Task für die UI-Blöcke
 const activeDataTask = computed(() => selectedTask.value || latestTaskOutputs.value)
 const loadingTaskDetail = ref(false)
@@ -84,7 +91,11 @@ interface UserAccount {
 const typedUserAccounts = computed<Record<string, UserAccount> | null>(() => {
     const currentTarget = selectedTask.value || latestTaskOutputs.value
     const rawOutputs = currentTarget?.outputs
-    if (!rawOutputs) return null
+    // Member fallback: non-owners have no task outputs (the owner-only
+    // task endpoint 403s / is skipped), so use the per-user credentials
+    // fetched from ``/my-access``. Already in the ``user_accounts.value``
+    // shape, so it feeds the matching pipeline below directly.
+    if (!rawOutputs) return myAccounts.value
 
     let outputsObj: any = rawOutputs
 
@@ -97,7 +108,7 @@ const typedUserAccounts = computed<Record<string, UserAccount> | null>(() => {
             }
         } catch (e) {
             console.error('Failed to parse raw outputs data:', e)
-            return null
+            return myAccounts.value
         }
     }
 
@@ -111,7 +122,7 @@ const typedUserAccounts = computed<Record<string, UserAccount> | null>(() => {
         }
     }
 
-    return null
+    return myAccounts.value
 })
 
 
@@ -255,7 +266,9 @@ const enrichedTeams = computed(() => {
 function extractTeamVms(): Record<string, { url?: string; floating_ip?: string; fixed_ip?: string }> | null {
     const currentTarget = selectedTask.value || latestTaskOutputs.value
     const rawOutputs = currentTarget?.outputs
-    if (!rawOutputs) return null
+    // Member fallback: use the team VM block from ``/my-access`` so a
+    // non-owner still gets the Web-URL pill (SSH/PW render even without it).
+    if (!rawOutputs) return myTeamVms.value
 
     let outputsObj: any = rawOutputs
     if (typeof rawOutputs === 'string') {
@@ -263,11 +276,11 @@ function extractTeamVms(): Record<string, { url?: string; floating_ip?: string; 
             const trimmed = rawOutputs.trim()
             if (trimmed.startsWith('{')) outputsObj = JSON.parse(trimmed)
         } catch {
-            return null
+            return myTeamVms.value
         }
     }
     const vms = outputsObj?.team_vms?.value
-    return vms && typeof vms === 'object' ? vms : null
+    return vms && typeof vms === 'object' ? vms : myTeamVms.value
 }
 
 // Zählt die Ressourcen im State für die kleine Sub-Headline im Header
@@ -515,23 +528,40 @@ onMounted(async () => {
     await deploymentStore.fetchDeploymentById(deploymentId)
     await loadTasks() // Loads the history into tasks.value
 
-    // Seed the top outputs from the latest task so the page can render
-    // the summary before the first SSE event arrives.
-    if (tasks.value && tasks.value.length > 0) {
-        const sortedTasks = [...tasks.value].sort((a, b) =>
-            b.created_at.localeCompare(a.created_at)
-        )
+    if (isOwnerView.value) {
+        // Owner view: seed the top outputs from the latest task so the
+        // page can render the summary before the first SSE event arrives.
+        if (tasks.value && tasks.value.length > 0) {
+            const sortedTasks = [...tasks.value].sort((a, b) =>
+                b.created_at.localeCompare(a.created_at)
+            )
 
-        const latestTask = sortedTasks[0]
+            const latestTask = sortedTasks[0]
 
-        if (latestTask) {
-            // Fetch the details straight from the API into latestTaskOutputs.
-            try {
-                const { data } = await taskApi.getById(latestTask.taskId)
-                latestTaskOutputs.value = data
-            } catch (err) {
-                console.error('Error seeding top outputs:', err)
+            if (latestTask) {
+                // Fetch the details straight from the API into latestTaskOutputs.
+                try {
+                    const { data } = await taskApi.getById(latestTask.taskId)
+                    latestTaskOutputs.value = data
+                } catch (err) {
+                    console.error('Error seeding top outputs:', err)
+                }
             }
+        }
+    } else {
+        // Member view: the owner-only task outputs are off-limits, so
+        // fetch just this member's own credentials from ``/my-access``.
+        // ``typedUserAccounts`` / ``extractTeamVms`` fall back to these,
+        // and the Teams-card credential block renders as for the owner.
+        try {
+            const { data } = await deploymentApi.getMyAccess(deploymentId)
+            // The API type marks fields optional; the local UserAccount
+            // interface is stricter but structurally compatible at the
+            // point of use, so cast the map through unknown.
+            myAccounts.value = (data.user_accounts ?? null) as Record<string, UserAccount> | null
+            myTeamVms.value = data.team_vms ?? null
+        } catch (err) {
+            console.error('Error loading own access credentials:', err)
         }
     }
 

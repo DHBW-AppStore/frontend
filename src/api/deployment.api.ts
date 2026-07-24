@@ -6,6 +6,7 @@ import type {
   DeploymentQueryParams,
   DeploymentResourceListResponse,
   DeploymentResource,
+  MyAccessResponse,
 } from '@/types'
 
 // ----------------------------------------------------------------
@@ -92,6 +93,24 @@ export const deploymentApi = {
     return api.post(
       `/deployments/${deploymentId}/teams/${teamId}/users/${userId}/resend-access`,
     )
+  },
+
+  /**
+   * Fetch the CALLER'S OWN access credentials for a deployment.
+   *
+   * Member counterpart to the owner-only outputs: a team member
+   * (student) gets only their own account, extracted server-side from
+   * the latest successful deploy — teammates' credentials are never
+   * included. The response mirrors the raw ``user_accounts`` /
+   * ``team_vms`` shape (one key each) so the detail view's existing
+   * account-matching consumes it unchanged.
+   *
+   * 200 with empty maps means "no credentials yet" (no successful
+   * deploy, or the app issued no per-user account). 403 if the caller
+   * has no access to the deployment.
+   */
+  getMyAccess: (deploymentId: string) => {
+    return api.get<MyAccessResponse>(`/deployments/${deploymentId}/my-access`)
   },
 
   /**
