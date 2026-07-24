@@ -35,9 +35,7 @@ Lint, Type-Check und Tests werden im Frontend-Container ausgeführt — `make sh
 
 ## Code-Struktur
 
-Der Code liegt in `src/`. Der typische Datenfluss: eine **View** ruft einen
-**Store** (Pinia), der Store spricht über einen **API-Layer** mit dem Backend,
-und `api/axios.ts` hängt automatisch den Keycloak-Bearer-Token an jeden Request.
+Der Code liegt in `src/`. Der typische Datenfluss: eine **View** ruft einen **Store** (Pinia), der Store spricht über einen **API-Layer** mit dem Backend, und `api/axios.ts` hängt automatisch den Keycloak-Bearer-Token an jeden Request.
 
 ```
 src/
@@ -67,15 +65,9 @@ src/
 | `composables/useDeploymentStream.ts` | Abonniert den SSE-Live-Status eines Deployments |
 | `router/index.ts` | Routen + Guards, Layout-Wahl über `meta.layout` |
 
-**views/** — Kern ist der mehrstufige Deployment-Wizard
-(`NewDeploymentConfigView` → `…VariableView` → `…GroupsAssignmentView` →
-`…SummaryView`), dazu App-Katalog (`AppsView`/`AppsDetailView`), Deployments
-(`DeploymentsView`/`DeploymentDetailView`), Kurse, Dashboard und Settings.
+**views/** — Kern ist der mehrstufige Deployment-Wizard (`NewDeploymentConfigView` → `…VariableView` → `…GroupsAssignmentView` → `…SummaryView`), dazu App-Katalog (`AppsView`/`AppsDetailView`), Deployments (`DeploymentsView`/`DeploymentDetailView`), Kurse, Dashboard und Settings.
 
-**api/ ↔ stores/** — spiegeln sich paarweise: zu jeder Ressource gibt es ein
-`*.api.ts` (reine HTTP-Calls) und meist einen `*.store.ts` (State + Aktionen,
-ruft den API-Layer). Beispiele: `deployment`, `app`, `course`, `team`,
-`user`, `credentials`.
+**api/ ↔ stores/** — spiegeln sich paarweise: zu jeder Ressource gibt es ein `*.api.ts` (reine HTTP-Calls) und meist einen `*.store.ts` (State + Aktionen, ruft den API-Layer). Beispiele: `deployment`, `app`, `course`, `team`, `user`, `credentials`.
 
 ## Mehr
 
