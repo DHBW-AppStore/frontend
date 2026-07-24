@@ -35,39 +35,39 @@ Lint, Type-Check und Tests werden im Frontend-Container ausgeführt — `make sh
 
 ## Code-Struktur
 
-Der Code liegt in `src/`. Der typische Datenfluss: eine **View** ruft einen **Store** (Pinia), der Store spricht über einen **API-Layer** mit dem Backend, und `api/axios.ts` hängt automatisch den Keycloak-Bearer-Token an jeden Request.
+Der Code liegt in `src/`. Der typische Datenfluss von der Oberfläche bis zum Backend: eine **View** (eine Seite der App) liest ihre Daten aus einem **Store** — einem zentralen Datenspeicher, den sich mehrere Seiten teilen (umgesetzt mit der Bibliothek Pinia). Der Store holt bzw. schickt diese Daten über den **API-Layer** (`api/`) zum Backend. Dabei ergänzt `api/axios.ts` bei jedem Aufruf automatisch den Login-Token, sodass sich die einzelnen Aufrufe nicht selbst darum kümmern müssen.
 
 ```
 src/
-├── main.ts        # App-Bootstrap (Pinia, Router, i18n)
-├── views/         # Seiten (Route-Ziele), z.B. Deployment-Wizard, App-Katalog
-├── layouts/       # Rahmen-Layouts (App/Auth/User), per Route-Meta gewählt
-├── components/    # Wiederverwendbare Komponenten; ui/ = generische Bausteine
-├── stores/        # Pinia-Stores: globaler State + Aktionen (*.store.ts)
-├── api/           # HTTP-Layer, ein File pro Ressource (*.api.ts) + axios.ts
-├── composables/   # Wiederverwendbare Logik (use*), z.B. Auth, SSE-Stream
-├── services/      # Nicht-UI-Dienste (aktuell: auth.service für Keycloak)
-├── router/        # Vue-Router-Definition + Auth-Guards (requiresAuth/requiresGuest)
-├── types/         # TypeScript-Typen (OpenStack-Credentials, Quota, ...)
-├── utils/         # Helfer (clouds-yaml-Parsing, Formatierung, HTTP-Fehler)
-└── i18n/          # vue-i18n Setup + Locales (DE/EN)
+├── main.ts        # Startpunkt der App (registriert Store, Router, Übersetzungen)
+├── views/         # Seiten der App (Ziele der Navigation), z.B. Deployment-Wizard, App-Katalog
+├── layouts/       # Seitenrahmen (App/Auth/User), je nach Route gewählt
+├── components/    # Wiederverwendbare Bausteine; ui/ = generische Elemente (Button, Dialog, ...)
+├── stores/        # Gemeinsamer Datenspeicher mehrerer Seiten + zugehörige Aktionen (*.store.ts)
+├── api/           # Aufrufe ans Backend, ein File pro Ressource (*.api.ts) + axios.ts
+├── composables/   # Wiederverwendbare Logik (use*), z.B. Login, Live-Updates
+├── services/      # Logik ohne Oberfläche (aktuell: auth.service fürs Keycloak-Login)
+├── router/        # Definition der Seiten-Adressen + Zugriffsschutz (Login nötig ja/nein)
+├── types/         # TypeScript-Typdefinitionen (OpenStack-Credentials, Quota, ...)
+├── utils/         # Kleine Helfer (clouds-yaml-Parsing, Formatierung, Fehler-Aufbereitung)
+└── i18n/          # Mehrsprachigkeit: Setup + Übersetzungstexte (DE/EN)
 ```
 
-> Die `.d.ts`-Dateien neben den `.ts` sind generierte Type-Declarations (Build-Artefakte), kein handgeschriebener Code.
+> Die `.d.ts`-Dateien neben den `.ts` werden beim Build automatisch erzeugt (sie beschreiben nur die Typen) — kein handgeschriebener Code.
 
 **Zentrale Mechanismen:**
 
 | Datei | Zweck |
 |---|---|
-| `api/axios.ts` | Request-Interceptor hängt `Authorization: Bearer <token>` an; Response-Interceptor behandelt 401 |
-| `stores/auth.store.ts` | Login-State, Rollen (student/teacher/admin) |
-| `composables/useKeycloak.ts` | OIDC-Login/Logout via `oidc-client-ts` |
-| `composables/useDeploymentStream.ts` | Abonniert den SSE-Live-Status eines Deployments |
-| `router/index.ts` | Routen + Guards, Layout-Wahl über `meta.layout` |
+| `api/axios.ts` | Zentrale Stelle für alle Backend-Aufrufe: hängt vor dem Absenden automatisch den Login-Token an (`Authorization: Bearer <token>`) und fängt abgelaufene Logins (Fehler 401) ab |
+| `stores/auth.store.ts` | Merkt sich, wer eingeloggt ist, und dessen Rolle (student/teacher/admin) |
+| `composables/useKeycloak.ts` | Login und Logout gegen Keycloak (via Bibliothek `oidc-client-ts`) |
+| `composables/useDeploymentStream.ts` | Empfängt den Live-Fortschritt eines Deployments in Echtzeit vom Backend (Server-Sent Events) |
+| `router/index.ts` | Legt die Seiten-Adressen fest und schützt geschützte Seiten vor nicht eingeloggten Nutzern |
 
 **views/** — Kern ist der mehrstufige Deployment-Wizard (`NewDeploymentConfigView` → `…VariableView` → `…GroupsAssignmentView` → `…SummaryView`), dazu App-Katalog (`AppsView`/`AppsDetailView`), Deployments (`DeploymentsView`/`DeploymentDetailView`), Kurse, Dashboard und Settings.
 
-**api/ ↔ stores/** — spiegeln sich paarweise: zu jeder Ressource gibt es ein `*.api.ts` (reine HTTP-Calls) und meist einen `*.store.ts` (State + Aktionen, ruft den API-Layer). Beispiele: `deployment`, `app`, `course`, `team`, `user`, `credentials`.
+**api/ ↔ stores/** — spiegeln sich paarweise: zu jeder Ressource gibt es ein `*.api.ts` (macht nur die reinen Aufrufe ans Backend) und meist einen `*.store.ts` (hält die Daten im Speicher und bietet Aktionen darauf an, die wiederum die Aufrufe nutzen). Beispiele: `deployment`, `app`, `course`, `team`, `user`, `credentials`.
 
 ## Mehr
 
