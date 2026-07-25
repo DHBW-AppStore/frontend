@@ -628,7 +628,15 @@ const isDeploymentBusy = computed(() => {
     const dStatus = deployment.value?.status
     if (dStatus === 'pending' || dStatus === 'running') return true
     const tStatus = activeTask.value?.status
-    return tStatus === 'pending' || tStatus === 'running'
+    if (tStatus === 'pending' || tStatus === 'running') return true
+    // Members never load the task list (tasks.value stays empty, so
+    // activeTask is null), but a redeploy/pause/resume can still be in
+    // flight while the deployment row reads "success". Fall back to the
+    // latest_task status from the detail response, which is populated
+    // regardless of role, so the member's resend button stays disabled
+    // until the run is terminal.
+    const latestStatus = deployment.value?.latest_task?.status
+    return latestStatus === 'pending' || latestStatus === 'running'
 })
 
 // Tasks that aren't the currently running one. Shown as the history
