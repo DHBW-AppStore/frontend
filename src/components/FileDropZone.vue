@@ -16,6 +16,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Upload, FileText, X } from 'lucide-vue-next'
 import type { DeploymentFile } from '@/types'
+import { formatBytes } from '@/utils/format'
 
 const props = withDefaults(defineProps<{
   /** Optional MIME-filter for the native file picker (e.g. ``"application/pdf"``). */
@@ -53,12 +54,6 @@ const { t } = useI18n()
 const localError = ref<string>('')
 
 const hasValue = computed(() => !!props.modelValue)
-
-const formatBytes = (n: number): string => {
-  if (n < 1024) return `${n} B`
-  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`
-  return `${(n / 1024 / 1024).toFixed(1)} MB`
-}
 
 /**
  * Read a File into a base64 string (without the ``data:...,`` prefix

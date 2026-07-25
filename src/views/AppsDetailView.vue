@@ -14,7 +14,7 @@ import { useDeploymentStore } from '@/stores/deployment.store'
 import { useOpenStackCredentialsStore } from '@/stores/openstack-credentials.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRole } from '@/composables/useRole'
-import { formatDate } from '@/utils/format'
+import { formatDate, MAX_IMAGE_BYTES } from '@/utils/format'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import Modal from '@/components/ui/Modal.vue'
 import AppVersionStatusBadge from '@/components/ui/AppVersionStatusBadge.vue'
@@ -268,8 +268,6 @@ const togglePrivacy = async () => {
 // ----------------------------------------------------------------
 // Edit modal
 // ----------------------------------------------------------------
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024
-
 const openEditModal = () => {
   if (!app.value) return
   editForm.value = {

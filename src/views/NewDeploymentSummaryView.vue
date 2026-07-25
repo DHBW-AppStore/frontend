@@ -16,6 +16,7 @@ import {
 } from 'lucide-vue-next'
 import type { AppVariable } from '@/types'
 import type { OsResourceType } from '@/api/openstack-resources.api'
+import { formatBytes } from '@/utils/format'
 import {
   ensureLoaded as ensureOsCacheLoaded,
   getDisplayName as getOsDisplayName,
@@ -199,12 +200,6 @@ function _formatSubmitError(err: any): string {
  * with a chip list of uploaded slots showing filename + size (never the base64
  * content). Size is formatted in KB/MB.
  */
-function _formatBytes(n: number): string {
-  if (n < 1024) return `${n} B`
-  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`
-  return `${(n / 1024 / 1024).toFixed(1)} MB`
-}
-
 const fileVarSummaries = computed(() => {
   const defs = appVariables.value || []
   const uploads = deploymentStore.draft.fileUploads || {}
@@ -222,7 +217,7 @@ const fileVarSummaries = computed(() => {
       chips.push({
         slot: slotKey,
         filename: file.name,
-        size: _formatBytes(file.size || 0),
+        size: formatBytes(file.size || 0),
       })
     }
     out.push({

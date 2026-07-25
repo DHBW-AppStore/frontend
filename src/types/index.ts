@@ -383,13 +383,6 @@ export interface Task {
 // ----------------------------------------------------------------
 // AUTH TYPES
 // ----------------------------------------------------------------
-// ----------------------------------------------------------------
-// AUTH TYPES (moved to auth.api.ts)
-// ----------------------------------------------------------------
-// export interface LoginCredentials
-// export interface RegisterData  
-// export interface AuthToken
-// These are now in auth.api.ts
 
 // ----------------------------------------------------------------
 // API RESPONSE TYPES

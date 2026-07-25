@@ -45,3 +45,20 @@ export function formatDateTime(
   if (value === null || value === undefined || value === '') return '-'
   return new Date(value).toLocaleString(LOCALE, options)
 }
+
+/**
+ * Human-readable byte size (``B`` / ``KB`` / ``MB``). Bytes under 1 KiB show as
+ * whole bytes, KiB values are rounded to a whole number, and MiB values keep one
+ * decimal. Consolidates the per-component byte formatters.
+ */
+export function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`
+  return `${(n / 1024 / 1024).toFixed(1)} MB`
+}
+
+/**
+ * Maximum accepted size (in bytes) for an uploaded app logo/image. Shared by the
+ * app create + detail views so the client-side size check stays consistent.
+ */
+export const MAX_IMAGE_BYTES = 2 * 1024 * 1024

@@ -7,6 +7,7 @@ import { useI18n } from 'vue-i18n' // <-- i18n Import hinzugefügt
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import { MAX_IMAGE_BYTES } from '@/utils/format'
 
 // Icons
 import {
@@ -59,8 +60,6 @@ const iconColorClass = computed(() => {
 const triggerFileInput = () => {
   fileInputRef.value?.click()
 }
-
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024
 
 const processFile = (file: File) => {
   if (!file.type.startsWith('image/')) {

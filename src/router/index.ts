@@ -8,7 +8,6 @@ import AppsView from "@/views/AppsView.vue";
 import HelpView from "@/views/HelpView.vue";
 import DeploymentsView from "@/views/DeploymentsView.vue";
 import DeploymentsListView from "@/views/DeploymentsListView.vue";
-import DeploymentCreateView from "@/views/DeploymentCreateView.vue";
 import DeploymentDetailView from "@/views/DeploymentDetailView.vue";
 import LoginView from "@/views/LoginView.vue";
 import DashboardView from "@/views/DashboardView.vue";
@@ -139,10 +138,6 @@ const router = createRouter({
           path: '',
           name: 'deployments.list',
           component: DeploymentsListView,
-        },
-        {
-          path: '',
-          component: DeploymentCreateView,
         },
         {
           path: '/deployments/:id',

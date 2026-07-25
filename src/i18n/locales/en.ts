@@ -17,17 +17,6 @@ export default {
       failureMessage: "Login failed!",
       missingCredentials: "Please enter username and password."
     },
-    register: {
-      title: "Register",
-      nameLabel: "Name",
-      namePlaceholder: "John Doe",
-      emailLabel: "E-Mail",
-      emailPlaceholder: "name@six7.de",
-      passwordLabel: "Password",
-      passwordPlaceholder: "••••••••",
-      submit: "Register",
-      toLogin: "Back to login",
-    },
   },
 
   nav: {
@@ -41,11 +30,6 @@ export default {
   },
 
   action: {
-    save: "Save",
-    cancel: "Cancel",
-    delete: "Delete",
-    update: "Update",
-    create: "Create",
     back: "Back",
   },
 
@@ -74,11 +58,6 @@ export default {
   markdownRenderer: {
     more: "Show more",
     less: "Show less",
-  },
-
-  ConfigView: {
-    title: "Configuration",
-    subtitle: "Manage your application settings",
   },
 
   CoursesView: {
@@ -358,9 +337,6 @@ export default {
     destroyStartedToast: "Destroy started — see live progress below.",
     destroySuccessToast: "Deployment destroyed and removed.",
     destroyErrorToast: "Error starting destroy.",
-  },
-  DeploymentCreateView: {
-    title: "Create New Deployment",
   },
   AppsView: {
     title: "Apps",
