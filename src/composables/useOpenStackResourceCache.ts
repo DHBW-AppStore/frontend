@@ -31,8 +31,8 @@ import {
 interface CachedItem {
   id: string
   name: string
-  // Sekundäre Display-Info, falls vom Picker mitgegeben (z.B.
-  // Flavor-Specs). Optional — Summary-View nutzt nur ``name``.
+  // Secondary display info if provided by the picker (e.g. flavor specs).
+  // Optional — the summary view only uses ``name``.
   secondary?: string
   raw: any
 }
@@ -40,25 +40,22 @@ interface CachedItem {
 interface CacheEntry {
   items: CachedItem[]
   loadedAt: number
-  // Pending-Promise — verhindert Donnerherden, wenn mehrere Picker
-  // gleichzeitig dieselbe Liste anfordern.
+  // Pending promise — prevents a thundering herd when several pickers request
+  // the same list at once.
   loading?: Promise<void>
 }
 
-// In-Memory-Cache, prozesslokal pro Browser-Tab. Reload löscht.
+// In-memory cache, process-local per browser tab. Cleared on reload.
 const cache = new Map<OsResourceType, CacheEntry>()
 
-// Reaktiver Versions-Counter. JEDE Mutation des Caches incrementiert
-// den. Konsumenten (Picker, Summary-View) lesen ``cacheVersion.value``
-// in ihren computeds — Vue trackt die Abhängigkeit und re-läuft
-// computeds, wenn der Cache sich ändert.
+// Reactive version counter. Every cache mutation increments it; consumers read
+// ``cacheVersion.value`` in their computeds so Vue re-runs them on change.
 const cacheVersion = ref(0)
 
 const TTL_MS = 60_000
 
 /**
- * Holt einen Eintrag aus dem Cache, NICHT älter als TTL. Liefert
- * ``null``, wenn nicht vorhanden / abgelaufen.
+ * Returns a cache entry no older than the TTL, or ``null`` if missing/expired.
  */
 function getFresh(osType: OsResourceType): CacheEntry | null {
   const entry = cache.get(osType)
@@ -68,15 +65,10 @@ function getFresh(osType: OsResourceType): CacheEntry | null {
 }
 
 /**
- * Stellt sicher, dass die Liste für ``osType`` geladen ist (oder
- * gerade lädt). Dedupliziert parallele Aufrufe.
- *
- * Optionale Filter (z.B. ``network_id`` für Subnets) werden NICHT
- * gecached — Filter-spezifische Listen sind die Verantwortung des
- * jeweiligen Pickers, nicht dieses zentralen Display-Caches.
- *
- * Wirft NICHT — Fehler werden geschluckt; Cache bleibt einfach leer.
- * Picker-Komponenten haben eigene Fehler-Anzeige.
+ * Ensures the list for ``osType`` is loaded (or loading). Deduplicates parallel
+ * calls. Filtered lists (e.g. ``network_id`` for subnets) are not cached here.
+ * Never throws — errors are swallowed and the cache stays empty; pickers show
+ * their own error UI.
  */
 export async function ensureLoaded(osType: OsResourceType): Promise<void> {
   const fresh = getFresh(osType)
@@ -95,15 +87,12 @@ export async function ensureLoaded(osType: OsResourceType): Promise<void> {
       })
       cacheVersion.value += 1
     } catch {
-      // Bewusst kein Throw — Cache bleibt leer, Picker zeigt seine
-      // eigene Error-UI.
+      // Deliberately no throw — cache stays empty, picker shows its own error UI.
     }
   })()
 
-  // Pending-Marker setzen, damit parallele Aufrufe warten statt
-  // selbst neu zu fetchen. ``cacheVersion`` NICHT incrementieren —
-  // solange noch geladen wird, hat sich die sichtbare Cache-Sicht
-  // nicht geändert.
+  // Set the pending marker so parallel calls wait instead of re-fetching. Don't
+  // increment ``cacheVersion``: the visible cache view hasn't changed yet.
   cache.set(osType, {
     items: cache.get(osType)?.items || [],
     loadedAt: cache.get(osType)?.loadedAt || 0,
@@ -111,7 +100,7 @@ export async function ensureLoaded(osType: OsResourceType): Promise<void> {
   })
 
   await loading
-  // ``loading`` aus dem Eintrag wieder entfernen.
+  // Remove ``loading`` from the entry again.
   const final = cache.get(osType)
   if (final) {
     delete final.loading
@@ -119,10 +108,9 @@ export async function ensureLoaded(osType: OsResourceType): Promise<void> {
 }
 
 /**
- * Schreibt eine bereits gefetchte Liste in den Cache. Wird vom Picker
- * aufgerufen, wenn er aus eigenen Gründen schon Items in der Hand hat
- * (z.B. mit Filter geladen, oder gerade refresht). Verhindert
- * Doppel-Fetch durch andere Picker oder die Summary.
+ * Writes an already-fetched list into the cache. Called by the picker when it
+ * already has items in hand (e.g. loaded with a filter, or just refreshed) to
+ * prevent a double-fetch by other pickers or the summary.
  */
 export function prime(osType: OsResourceType, items: ReadonlyArray<OsResourceBase & Record<string, any>>): void {
   cache.set(osType, {
@@ -133,7 +121,7 @@ export function prime(osType: OsResourceType, items: ReadonlyArray<OsResourceBas
 }
 
 /**
- * Cache-Bust für genau einen ``osType`` (Refresh-Button).
+ * Cache-bust for a single ``osType`` (refresh button).
  */
 export function invalidate(osType: OsResourceType): void {
   if (cache.delete(osType)) {
@@ -142,9 +130,8 @@ export function invalidate(osType: OsResourceType): void {
 }
 
 /**
- * Komplette Cache-Invalidierung. Wird beim Logout aufgerufen — der
- * neue User hat seine eigenen OpenStack-Credentials, der Cache der
- * vorherigen Session darf nicht stehenbleiben.
+ * Full cache invalidation, called on logout so the previous session's cache
+ * doesn't leak to the next user (who has their own OpenStack credentials).
  */
 export function invalidateAll(): void {
   if (cache.size === 0) return
@@ -153,31 +140,28 @@ export function invalidateAll(): void {
 }
 
 /**
- * Synchroner Lookup. Liefert den Display-Namen für einen Roh-Wert
- * (UUID oder Name), abhängig vom Mode der Variable.
+ * Synchronous lookup. Returns the display name for a raw value (UUID or name),
+ * depending on the variable's mode.
  *
- * - Mode='id', value=UUID → Lookup über ``items.id``, gibt ``name`` zurück
- * - Mode='name', value=name → bestätigt Existenz, gibt name zurück
- * - Cache-Miss / unbekannter Wert → gibt den Roh-Wert zurück mit
- *   ``known: false``
- * - Cross-Mode-Fallback: Trifft der primäre Mode-Lookup nicht zu, wird
- *   der ANDERE Mode probiert. Beispiel: Variable speichert UUIDs, aber
- *   der HCL-Default ist ein Name (Bug #4-Paar) — dann findet der
- *   id-Lookup nichts, der name-Lookup aber schon. In dem Fall liefern
- *   wir ``known: true`` mit ``modeMismatch: true``, damit der Caller
- *   einen subtilen Hinweis rendern kann ("falscher Mode-Default").
+ * - mode='id', value=UUID → lookup via ``items.id``, returns ``name``
+ * - mode='name', value=name → confirms existence, returns name
+ * - cache miss / unknown value → returns the raw value with ``known: false``
+ * - cross-mode fallback: if the primary mode lookup misses, the other mode is
+ *   tried (e.g. the variable stores UUIDs but the HCL default is a name). On a
+ *   hit there, returns ``known: true`` with ``modeMismatch: true`` so the caller
+ *   can render a subtle hint.
  *
- * Liefert ``null``, wenn ``value`` leer ist.
+ * Returns ``null`` when ``value`` is empty.
  *
- * Liest ``cacheVersion.value``, damit jede computed, die diese Funktion
- * aufruft, automatisch neu läuft, sobald sich der Cache ändert.
+ * Reads ``cacheVersion.value`` so any computed calling this re-runs when the
+ * cache changes.
  */
 export function getDisplayName(
   osType: OsResourceType,
   mode: 'id' | 'name',
   value: string | null | undefined,
 ): { name: string; known: boolean; modeMismatch?: boolean } | null {
-  // Reaktive Abhängigkeit registrieren — siehe Modul-Docstring.
+  // Register the reactive dependency — see module docstring.
   void cacheVersion.value
   if (!value) return null
   const entry = cache.get(osType)
@@ -190,12 +174,10 @@ export function getDisplayName(
   if (found) {
     return { name: found.name, known: true }
   }
-  // Cross-Mode-Fallback: primärer Mode-Lookup ist gescheitert. Wir
-  // probieren den jeweils anderen Mode — typischerweise speichert die
-  // Variable UUIDs, der hinterlegte Default ist aber ein Name (oder
-  // umgekehrt). Findet der Fallback ein Match, geben wir den Namen
-  // zurück und setzen ``modeMismatch``, damit das UI dem Nutzer den
-  // Mismatch sichtbar machen kann ohne den Wert zu blockieren.
+  // Cross-mode fallback: the primary lookup missed, so try the other mode
+  // (typically the variable stores UUIDs but the default is a name, or vice
+  // versa). On a match, return the name with ``modeMismatch`` so the UI can
+  // surface the mismatch without blocking the value.
   const fallback = mode === 'id'
     ? entry.items.find((it) => it.name === value)
     : entry.items.find((it) => it.id === value)

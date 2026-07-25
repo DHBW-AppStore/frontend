@@ -229,9 +229,8 @@ onMounted(loadAll)
 
     <PageHeader :title="$t('AdminAppsView.title')" :subtitle="$t('AdminAppsView.subtitle')">
       <template #actions>
-        <!-- Filter toggle als Action. Spielt die Rolle, die in den
-             anderen Views der "Neu"-Button spielt — Page-spezifisch,
-             daher als Slot statt fest verdrahtet. -->
+        <!-- Filter toggle as the page action (page-specific, so it's a slot
+             rather than hard-wired). -->
         <div class="flex items-center gap-2 text-sm">
           <span class="text-gray-500">{{ $t('AdminAppsView.filterLabel') }}</span>
           <button
@@ -255,15 +254,12 @@ onMounted(loadAll)
       :icon="Inbox"
       :empty-message="$t('AdminAppsView.emptyAppsTitle')"
     >
-      <!-- Accordion list. Apps mit pending Submissions stehen oben
-           (siehe ``sortedApps`` im script). Anders als die anderen
-           Main-Pages ist hier eine Liste, kein Grid — Approval-Workflow
-           braucht das Aufklappen. -->
+      <!-- Accordion list. Apps with pending submissions come first (see
+           ``sortedApps``). This is a list, not a grid, because the approval
+           workflow needs expandable rows. -->
 
-      <!-- Filter aktiv, aber keine offenen Einreichungen → eigener,
-           freundlicher Empty-State. Ohne diesen Block wäre der Bereich
-           einfach leer (apps.length > 0, aber sortedApps.length === 0),
-           was wie ein Bug wirkt. -->
+      <!-- Filter active but no open submissions → dedicated empty state
+           (apps.length > 0 but sortedApps.length === 0). -->
       <div
         v-if="sortedApps.length === 0"
         class="flex flex-col items-center justify-center py-16 px-6 text-center bg-gray-50 border border-dashed border-gray-200 rounded-xl"

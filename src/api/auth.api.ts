@@ -6,14 +6,6 @@ export interface LoginCredentials {
   password: string
 }
 
-export interface RegisterData {
-  email: string
-  username: string
-  password: string
-  role?: string
-  courseId?: string
-}
-
 export interface AuthToken {
   access_token: string
   token_type: string
@@ -28,13 +20,6 @@ export const authApi = {
    */
   login: (credentials: LoginCredentials) => {
     return api.post<AuthToken>('/auth/login', credentials)
-  },
-
-  /**
-   * Register new user
-   */
-  register: (data: RegisterData) => {
-    return api.post<AuthToken>('/auth/register', data)
   },
 
   /**

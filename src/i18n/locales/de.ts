@@ -17,17 +17,6 @@ export default {
       failureMessage: "Anmeldung fehlgeschlagen!",
       missingCredentials: "Bitte Nutzernamen und Passwort eingeben."
     },
-    register: {
-      title: "Registrierung",
-      nameLabel: "Name",
-      namePlaceholder: "Max Mustermann",
-      emailLabel: "E-Mail",
-      emailPlaceholder: "name@six7.de",
-      passwordLabel: "Passwort",
-      passwordPlaceholder: "••••••••",
-      submit: "Registrieren",
-      toLogin: "Zurück zum Login",
-    },
   },
 
   nav: {
@@ -41,11 +30,6 @@ export default {
   },
 
   action: {
-    save: "Speichern",
-    cancel: "Abbrechen",
-    delete: "Löschen",
-    update: "Aktualisieren",
-    create: "Erstellen",
     back: "Zurück",
   },
 
@@ -74,11 +58,6 @@ export default {
   markdownRenderer: {
     more: "Mehr anzeigen",
     less: "Weniger",
-  },
-
-  ConfigView: {
-    title: "Konfiguration",
-    subtitle: "Verwalte hier die Anwendungseinstellungen",
   },
 
   CoursesView: {
@@ -358,9 +337,6 @@ export default {
     destroyStartedToast: "Zerstören gestartet — Live-Fortschritt unten.",
     destroySuccessToast: "Deployment wurde erfolgreich zerstört und entfernt.",
     destroyErrorToast: "Fehler beim Starten des Zerstörens.",
-  },
-  DeploymentCreateView: {
-    title: "Neues Deployment erstellen",
   },
   AppsView: {
     title: "Apps",
@@ -643,7 +619,7 @@ export default {
     groups: {
       title: 'Legen Sie die Anzahl der Gruppen fest',
       one: 'Eine Gruppe',
-      eachUser: 'Jeder Nutzer einzeln',  // <--- WICHTIG: Hier stand vorher "each", es muss "eachUser" heißen!
+      eachUser: 'Jeder Nutzer einzeln',
       custom: 'Individuell',
       autoAssigned: 'Automatisch zugewiesen',
       autoDistributed: 'Automatisch verteilt',

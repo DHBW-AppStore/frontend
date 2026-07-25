@@ -158,12 +158,10 @@ export function useDeploymentStream(deploymentId: Ref<string | null>) {
       currentPhase.value = ev.phase
       currentPhaseIndex.value = ev.phase_index
       totalPhases.value = ev.total_phases
-      // Worker sendet die volle Phase-Sequenz mit jedem Progress-
-      // Event mit, sobald der Task einen ``_PhaseTracker`` hat (alle
-      // realen Deploy-/Destroy-/Pause-/Resume-/Redeploy-Pfade). Das
-      // ist die authoritative Source-of-Truth für den Stepper —
-      // insbesondere für Multi-Image-Deploys, wo Template-Keys nicht
-      // aus Beobachtungsreihenfolge erratbar sind.
+      // The worker sends the full phase sequence with every progress event once
+      // the task has a ``_PhaseTracker`` (all real deploy/destroy/pause/resume/
+      // redeploy paths). This is the authoritative source for the stepper,
+      // especially for multi-image deploys where template keys aren't guessable.
       if (Array.isArray(ev.phase_names) && ev.phase_names.length > 0) {
         phaseNames.value = ev.phase_names
       }

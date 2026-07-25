@@ -37,26 +37,23 @@ const isBool = (type: string) => ['bool', 'boolean'].includes(type.toLowerCase()
 const isNumber = (type: string) => ['number', 'int', 'integer'].includes(type.toLowerCase())
 const isList = (type: string) => type.toLowerCase().startsWith('list') || type.toLowerCase().startsWith('set') || type.toLowerCase().startsWith('array')
 
-// Helper function: Does the variable have Value-Help metadata (osType)?
-// Picker takes precedence over type-based input — also for
-// ``list(string)`` variables, because the picker handles multi-selection itself.
-// ``osType`` is exclusively set by the backend if the variable carries an
-// ``@openstack:<type>`` marker in its description (see backend/app/routers/apps.py).
+// Does the variable have value-help metadata (osType)? The picker takes
+// precedence over type-based input, including ``list(string)`` variables.
+// ``osType`` is set by the backend only when the variable's description carries
+// an ``@openstack:<type>`` marker.
 //
-// File variables (``osType === 'file'``) are explicitly excluded here:
-// their renderer is the :file-specific FileDropZone branch, not the
-// OpenStackResourcePicker. If they are not handled separately, the picker
-// would try to list files from non-existent Resource API and fail with 400.
-// True if the variable is marked with ``@openstack:file:<scope>``.
+// File variables (``osType === 'file'``) are excluded here: their renderer is
+// the file-specific FileDropZone branch, not the OpenStackResourcePicker.
+// True when the variable is marked ``@openstack:file:<scope>``.
 const isFileVar = (v: AppVariable): boolean => v.osType === 'file'
 
-// True if the variable has a per-variable scope other than ``all``.
+// True when the variable has a per-variable scope other than ``all``.
 const effectiveScope = (v: AppVariable): 'all' | 'team' | 'user' => {
   return (v.varScope || v.osScope || 'all') as 'all' | 'team' | 'user'
 }
 const isScoped = (v: AppVariable): boolean => effectiveScope(v) !== 'all'
 
-/** Slot keys for a scoped variable */
+/** Slot keys for a scoped variable. */
 const slotKeysFor = (v: AppVariable): string[] => {
   const scope = effectiveScope(v)
   if (scope === 'team') return wizardTeams.value.map((t) => t.name)
@@ -70,7 +67,7 @@ const slotKeysFor = (v: AppVariable): string[] => {
   return []
 }
 
-/** One-path API for the v-model of a scoped non-file variable. */
+/** Single-path API for the v-model of a scoped non-file variable. */
 const getScopedValue = (varName: string, slotKey: string): any => {
   const bag = formValues.value[varName]
   if (bag && typeof bag === 'object' && !Array.isArray(bag)) return bag[slotKey] ?? ''
@@ -85,18 +82,13 @@ const setScopedValue = (varName: string, slotKey: string, value: any): void => {
 }
 
 /**
- * Builds the initial slot map for a scoped variable (``varScope =
- * team|user``). Distributes a scalar or list default to EVERY team/user
- * slot, so that a scoped default is visible AND effective per slot.
- * Without this seeding, the user would see empty fields and ``submitDraft`` 
- * would skip the empty map — the app author default (e.g., 
- * ``flavor_name = "gp1.small"`` with ``:team`` scope) would be lost 
- * per slot.
+ * Builds the initial slot map for a scoped variable (``varScope = team|user``).
+ * Distributes a scalar or list default across every team/user slot so a scoped
+ * default is visible and effective per slot.
  *
- * Object defaults (e.g. ``map(string)`` with default ``{}``) provide
- * no per-slot value and remain an empty map — there, the backend/worker
- * only builds the map from the filled-in slots anyway.
- * Already existing slot values (returning via „Back") are NOT overwritten.
+ * Object defaults (e.g. ``map(string)`` with default ``{}``) yield no per-slot
+ * value and stay an empty map. Existing slot values (returning via "Back") are
+ * not overwritten.
  */
 const seedScopedDefault = (
   v: AppVariable,
@@ -115,8 +107,7 @@ const seedScopedDefault = (
       typeof def === 'boolean' ||
       Array.isArray(def))
   if (!hasSeedableDefault) return map
-  // list(...) defaults as comma string, consistent with the 
-  // non-scoped textarea widget.
+  // list(...) defaults as a comma string, consistent with the non-scoped textarea widget.
   const seed = isList(v.type) && Array.isArray(def) ? def.join(', ') : def
   for (const slot of slotKeysFor(v)) {
     const cur = map[slot]
@@ -270,7 +261,7 @@ const packerFormKey = (variable: AppVariable): string => {
   return `${tkey}.${variable.name}`
 }
 
-// --- CORE LOGIC: Normalization for comparison ---
+// --- CORE LOGIC: value normalization for comparison ---
 const normalizeValue = (val: any, type: string) => {
   if (val === null || val === undefined) {
     if (isList(type)) return []
@@ -311,24 +302,18 @@ onMounted(async () => {
 
   if (deploymentStore.draft.variableDefinitions && deploymentStore.draft.variableDefinitions.length > 0) {
     variables.value = deploymentStore.draft.variableDefinitions
-    // Re-hydrate ``formValues`` from the draft. Important: the form
-    // binding uses ``packerFormKey(v)`` consistently (= ``v.name`` for
-    // single-image, ``"<tkey>.<name>"`` for multi-image), but
-    // ``handleNext`` writes Packer values differently depending on the mode
-    // in the draft:
-    //   - single-image:  ``draft.variables[v.name]`` (flat)
-    //   - multi-image :  ``draft.variables.packer[<tkey>][<name>]`` (nested)
-    // A naive ``{ ...draft.variables }`` would, in the multi-image case,
-    // copy the ``packer`` container as the only top-level key —
-    // every single Packer field would then bind to ``undefined`` and the
-    // user sees empty inputs after „Back". Here we map explicitly back to the 
-    // form-key convention and fill in ``v.default`` for missing values, 
-    // so that variables added later also get defaults.
+    // Re-hydrate ``formValues`` from the draft. The form binding uses
+    // ``packerFormKey(v)`` throughout, but ``handleNext`` stores Packer values
+    // differently by mode:
+    //   - single-image: ``draft.variables[v.name]`` (flat)
+    //   - multi-image : ``draft.variables.packer[<tkey>][<name>]`` (nested)
+    // So we map explicitly back to the form-key convention and fill missing
+    // values from ``v.default``.
     const stored = (deploymentStore.draft.variables || {}) as Record<string, any>
     const restored: Record<string, any> = {}
     for (const v of variables.value) {
-      // File variables are rendered separately in the drop zone (going
-      // via ``draft.fileUploads``), not via ``formValues``.
+      // File variables are rendered separately in the drop zone (they go via
+      // draft.fileUploads), not through formValues.
       if (v.osType === 'file') continue
       const key = v.source === 'packer' ? packerFormKey(v) : v.name
       let stored_value: any
@@ -340,9 +325,8 @@ onMounted(async () => {
       } else {
         stored_value = stored[v.name]
       }
-      // Scoped variables are a slot map, not a scalar. Restore existing map and 
-      // supplement (newly added) slots with the app author default; otherwise seed 
-      // freshly from the default. 
+      // Scoped variables are a slot map, not a scalar. Restore the existing map
+      // and top up new slots with the author default; otherwise seed fresh.
       if (isScoped(v)) {
         const existingMap =
           stored_value && typeof stored_value === 'object' && !Array.isArray(stored_value)
@@ -358,11 +342,8 @@ onMounted(async () => {
       } else {
         restored[key] = ''
       }
-      // List values are stored in the draft as an array, but the 
-      // ``<textarea>`` widget expects a comma string. Without this 
-      // normalization, the rehydration path (after „Back") renders the 
-      // array via ``toString()`` as ``"a,b"`` instead of ``"a, b"`` as
-      // on initial load — visible regression when navigating out/in.
+      // List values are stored in the draft as an array, but the ``<textarea>``
+      // widget expects a comma string, so normalise to ``"a, b"`` on rehydration.
       if (isList(v.type) && Array.isArray(restored[key])) {
         restored[key] = restored[key].join(', ')
       }
@@ -427,10 +408,9 @@ onMounted(async () => {
       }
 
       if (isScoped(v) && v.osType !== 'file') {
-        // Carry over existing slot map (e.g. from savedValues), else empty
-        // map — and in both cases distribute the app author default to 
-        // every team/user slot, so that a scoped default is visible AND 
-        // effective (see seedScopedDefault).
+        // Reuse an existing slot map (e.g. from savedValues) or an empty map,
+        // and in both cases distribute the author default across every
+        // team/user slot (see seedScopedDefault).
         const existingMap =
           valToSet && typeof valToSet === 'object' && !Array.isArray(valToSet)
             ? valToSet

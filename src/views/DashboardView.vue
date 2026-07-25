@@ -101,8 +101,8 @@ onMounted(() => {
         <ArrowRight :size="14" class="ml-auto text-gray-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
       </RouterLink>
 
-      <!-- Courses-Tile: Studenten haben kein Courses-Recht (Route ist
-           staff-only). Tile via RoleGate verstecken statt 404 beim Klick. -->
+      <!-- Courses tile: students have no courses access (staff-only route),
+           so hide the tile via RoleGate instead of 404 on click. -->
       <template v-if="isStaff">
       <div class="kpi-divider" />
 

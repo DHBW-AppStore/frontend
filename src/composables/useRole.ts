@@ -20,7 +20,7 @@ export function useRole() {
   const isStudent = computed(() => role.value === "student")
   const isStaff = computed(() => isAdmin.value || isTeacher.value)
 
-  // Capability-Mirror (rein kosmetisch, schützt keine Daten)
+  // Capability mirror (cosmetic only; protects no data).
   const canEditApp = (app: App) =>
     isAdmin.value || app.userId === auth.user?.userId
   const canDeleteApp = canEditApp

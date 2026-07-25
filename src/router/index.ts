@@ -8,7 +8,6 @@ import AppsView from "@/views/AppsView.vue";
 import HelpView from "@/views/HelpView.vue";
 import DeploymentsView from "@/views/DeploymentsView.vue";
 import DeploymentsListView from "@/views/DeploymentsListView.vue";
-import DeploymentCreateView from "@/views/DeploymentCreateView.vue";
 import DeploymentDetailView from "@/views/DeploymentDetailView.vue";
 import LoginView from "@/views/LoginView.vue";
 import DashboardView from "@/views/DashboardView.vue";
@@ -24,16 +23,14 @@ import NewDeploymentGroupsAssignmentView from '@/views/NewDeploymentGroupsAssign
 
 
 /**
- * Guard für die Wizard-Steps. Verhindert Deep-Links, die das Wizard-State-
- * Modell überspringen — z.B. ``/deployment/new/summary`` ohne dass je ein
- * App ausgewählt wurde, was sonst stillschweigend zu leeren Lists/Submits
- * führt. Bei fehlenden Feldern leitet der Guard auf den passenden vorigen
- * Schritt weiter, statt 404 oder weißen Bildschirm zu produzieren.
+ * Guard for the wizard steps. Prevents deep-links that skip the wizard state
+ * model (e.g. ``/deployment/new/summary`` without an app selected). When fields
+ * are missing, the guard redirects to the matching earlier step.
  *
- * Akzeptierte Felder:
- *  - ``appId``      → vorhanden = String, sonst zurück zur App-Übersicht
- *  - ``name``       → nicht-leerer String
- *  - ``studentIds`` → mind. 1 Eintrag
+ * Accepted fields:
+ *  - ``appId``      → present = string, otherwise back to the apps overview
+ *  - ``name``       → non-empty string
+ *  - ``studentIds`` → at least 1 entry
  */
 type WizardField = 'appId' | 'name' | 'studentIds'
 
@@ -44,12 +41,12 @@ function requireWizardStep(required: WizardField[]) {
       const val = (draft as any)[field]
       if (field === 'studentIds') {
         if (!Array.isArray(val) || val.length === 0) {
-          // Ohne Studenten gibt's nichts zu tun → Step 1.
+          // No students, nothing to do → step 1.
           return { name: 'deployment.config' }
         }
       } else if (field === 'appId') {
         if (!val) {
-          // Ohne App kein Wizard-Eintrittspunkt → zurück zur App-Liste.
+          // No app, no wizard entry point → back to the apps list.
           return '/apps'
         }
       } else if (typeof val !== 'string' || val.trim() === '') {
@@ -143,10 +140,6 @@ const router = createRouter({
           component: DeploymentsListView,
         },
         {
-          path: '',
-          component: DeploymentCreateView,
-        },
-        {
           path: '/deployments/:id',
           name: 'deployments.detail',
           component: DeploymentDetailView,
@@ -171,8 +164,8 @@ const router = createRouter({
       name: 'deployment.teams',
       component: NewDeploymentGroupsAssignmentView,
       meta: { requiresAuth: true, layout: 'app' },
-      // Schritt 2 setzt voraus, dass Schritt 1 (App + Name + mind. ein
-      // Student) befüllt wurde. Deep-Links sonst → Redirect auf Schritt 1.
+      // Step 2 requires step 1 (app + name + at least one student). Deep-links
+      // otherwise redirect to step 1.
       beforeEnter: requireWizardStep(['appId', 'name', 'studentIds']),
     },
     {
@@ -180,8 +173,8 @@ const router = createRouter({
       name: 'deployment.variables',
       component: NewDeploymentVariableView,
       meta: { requiresAuth: true, layout: 'app' },
-      // Variablen-Schritt braucht Team-Setup (mind. groupCount/assignments
-      // muss befüllt sein). Sonst zurück zur passenden Vorstufe.
+      // The variables step needs the team setup filled in; otherwise redirect
+      // to the matching earlier step.
       beforeEnter: requireWizardStep(['appId', 'name', 'studentIds']),
     },
     {
@@ -189,7 +182,7 @@ const router = createRouter({
       name: 'deployment.summary',
       component: NewDeploymentSummaryView,
       meta: { requiresAuth: true, layout: 'app' },
-      // Summary nur erreichbar, wenn alle vorherigen Schritte Daten haben.
+      // Summary is only reachable once all previous steps have data.
       beforeEnter: requireWizardStep(['appId', 'name', 'studentIds']),
     },
     {
@@ -240,17 +233,15 @@ router.beforeEach(async (to, _from, next) => {
 
   if (requiresRole && requiresRole.length > 0) {
     if (!authStore.hasAnyRole(...requiresRole)) {
-      // Vorher: still auf "from"/"/" zurück — der Nutzer sah keinen
-      // Hinweis, warum der Klick nichts tut. Jetzt:
-      //   - Toast mit Klartext, welche Rolle erforderlich ist
-      //   - dedizierte /forbidden-Route, damit Refresh+History sauber bleiben
+      // Show a toast naming the required role, then send the user to the
+      // dedicated /forbidden route so refresh + history stay clean.
       try {
         const tr = i18n.global.t
         const required = requiresRole.map((r) => tr(`roleLabels.${r}`)).join(', ')
         useToastStore().error(tr('router.forbidden', { roles: required }))
       } catch {
-        // Toast/i18n nicht verfügbar (z.B. ganz früher Boot) — Hard-Fallback
-        // damit der Redirect trotzdem stattfindet.
+        // Toast/i18n not available (e.g. very early boot) — hard fallback so
+        // the redirect still happens.
       }
       return next({ path: '/forbidden' })
     }

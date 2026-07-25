@@ -1,19 +1,18 @@
 /**
- * Read-API für die OpenStack-Resourcen des aktuellen Users.
+ * Read API for the current user's OpenStack resources.
  *
- * Wird vom ``OpenStackResourcePicker`` genutzt, damit Wizard-User
- * keine UUIDs aus Horizon abtippen müssen. Backend cached die Antworten
- * 60 s — Frontend sollte daher unbedacht aufrufen können, ohne
- * Keystone-Token-Sturm auszulösen.
+ * Used by the ``OpenStackResourcePicker`` so wizard users don't have to copy
+ * UUIDs from Horizon. The backend caches responses for 60s, so the frontend can
+ * call freely without triggering a Keystone token storm.
  *
- * Fehlerstrategie: das Backend antwortet 412 (Credentials fehlen) /
- * 502 (OpenStack-API down) / 200 (mit Daten) — der Picker wertet das
- * Status-Feld aus und rendert entsprechende Fallbacks.
+ * Error strategy: the backend answers 412 (credentials missing) / 502
+ * (OpenStack API down) / 200 (with data); the picker reads the status and
+ * renders the matching fallback.
  */
 import api from './axios'
 
 // ----------------------------------------------------------------
-// Resource-Shapes — flach gehalten, nur was die UI braucht.
+// Resource shapes — kept flat, only what the UI needs.
 // ----------------------------------------------------------------
 export interface OsResourceBase {
   id: string
@@ -77,8 +76,8 @@ export interface OsAvailabilityZone extends OsResourceBase {
   state: string
 }
 
-// Discriminated Union der unterstützten Resource-Typen — bleibt
-// EXAKT synchron mit ``backend/app/routers/apps.py:_OS_TYPES``.
+// Discriminated union of supported resource types — must stay exactly in sync
+// with ``backend/app/routers/apps.py:_OS_TYPES``.
 export type OsResourceType =
   | 'network'
   | 'subnet'
@@ -126,7 +125,7 @@ export const openstackResourcesApi = {
       params: { service },
     }),
 
-  /** Cache-Bust für den User. ``kind`` optional, sonst alles. */
+  /** Cache-bust for the user. ``kind`` optional, otherwise everything. */
   refresh: (kind?: OsResourceType) =>
     api.post('/me/openstack/resources/refresh', null, {
       params: kind ? { kind } : undefined,

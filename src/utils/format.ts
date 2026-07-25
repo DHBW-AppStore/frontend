@@ -1,19 +1,15 @@
 /**
  * Shared date formatting helpers.
  *
- * These consolidate the ``de-DE`` date formatting that was previously
- * copy-pasted (with slightly different options and null guards) across
- * several views. Two shapes are exposed:
+ * Consolidates the ``de-DE`` date formatting used across several views. Two
+ * shapes are exposed:
  *
- * - :func:`formatDate` — date only (``dd.mm.yyyy``), used in list/detail
- *   views that only show the day.
- * - :func:`formatDateTime` — date + time, used where the exact timestamp
- *   matters (deployment list / detail).
+ * - :func:`formatDate` — date only (``dd.mm.yyyy``), for list/detail views.
+ * - :func:`formatDateTime` — date + time, where the exact timestamp matters.
  *
- * Both are tolerant of ``null``/empty input and of unparseable strings.
- * :func:`formatDate` returns the input verbatim when it can't be parsed
- * (callers add their own ``? … : '-'`` guard, as before);
- * :func:`formatDateTime` yields ``'-'`` for empty input.
+ * Both tolerate ``null``/empty input and unparseable strings. :func:`formatDate`
+ * returns the input verbatim when it can't be parsed; :func:`formatDateTime`
+ * yields ``'-'`` for empty input.
  */
 
 const LOCALE = 'de-DE'
@@ -49,3 +45,20 @@ export function formatDateTime(
   if (value === null || value === undefined || value === '') return '-'
   return new Date(value).toLocaleString(LOCALE, options)
 }
+
+/**
+ * Human-readable byte size (``B`` / ``KB`` / ``MB``). Bytes under 1 KiB show as
+ * whole bytes, KiB values are rounded to a whole number, and MiB values keep one
+ * decimal. Consolidates the per-component byte formatters.
+ */
+export function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`
+  return `${(n / 1024 / 1024).toFixed(1)} MB`
+}
+
+/**
+ * Maximum accepted size (in bytes) for an uploaded app logo/image. Shared by the
+ * app create + detail views so the client-side size check stays consistent.
+ */
+export const MAX_IMAGE_BYTES = 2 * 1024 * 1024

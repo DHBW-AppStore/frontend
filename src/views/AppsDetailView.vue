@@ -14,7 +14,7 @@ import { useDeploymentStore } from '@/stores/deployment.store'
 import { useOpenStackCredentialsStore } from '@/stores/openstack-credentials.store'
 import { useAuthStore } from '@/stores/auth.store'
 import { useRole } from '@/composables/useRole'
-import { formatDate } from '@/utils/format'
+import { formatDate, MAX_IMAGE_BYTES } from '@/utils/format'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import Modal from '@/components/ui/Modal.vue'
 import AppVersionStatusBadge from '@/components/ui/AppVersionStatusBadge.vue'
@@ -76,12 +76,8 @@ const isOwner = computed(() =>
   !!app.value && String(app.value.userId) === String(authStore.userId)
 )
 
-// RBAC-Plan Bug #2: App edit/delete/version-management ist
-// "Owner ODER Admin" — Teacher haben KEINEN Bypass mehr. Vorher
-// erlaubte ``isTeacherOrAdmin`` Teachern Apps fremder Owner zu
-// löschen, was der refactored Backend (``capabilities.can_edit_app``)
-// jetzt mit 403 abweist; das UI muss matchen, sonst klickt der
-// Teacher ins Leere.
+// App edit/delete/version-management is "owner or admin". Mirrors the backend
+// ``capabilities.can_edit_app`` so the UI doesn't offer actions that would 403.
 const canDelete = computed(() =>
   !!app.value && (isAdmin.value || isOwner.value)
 )
@@ -272,8 +268,6 @@ const togglePrivacy = async () => {
 // ----------------------------------------------------------------
 // Edit modal
 // ----------------------------------------------------------------
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024
-
 const openEditModal = () => {
   if (!app.value) return
   editForm.value = {

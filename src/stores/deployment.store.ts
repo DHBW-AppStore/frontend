@@ -22,12 +22,12 @@ const defaultDraft: DeploymentDraft = {
   groupCount: 1,
   assignments: [],
 
-  // --- WICHTIG: Diese müssen mit dem Interface übereinstimmen ---
+  // --- These must match the interface ---
   version: 'latest',
-  variables: {},     // Behebt den TS-Fehler "Property variables missing"
-  userInputVar: {},  // Behebt den TS-Fehler "Property userInputVar missing"
+  variables: {},
+  userInputVar: {},
   groupNames: [],
-  variableDefinitions: [] as AppVariable[], // speichert die API-Definitionen für die Variablen
+  variableDefinitions: [] as AppVariable[], // stores the API definitions for the variables
   // ``fileUploads`` is the wizard-side staging area for files. Each
   // ``@openstack:file:<scope>``-marked variable contributes one entry
   // here, with inner-keys driven by the scope. ``submitDraft`` ships
@@ -43,10 +43,10 @@ export const useDeploymentStore = defineStore('deployment', {
     isLoading: false,
     error: null as string | null,
 
-    // Der Wizard-Status (Draft)
+    // The wizard state (draft).
     draft: JSON.parse(JSON.stringify(defaultDraft)) as DeploymentDraft,
 
-    // Globaler Cache für Studenten und Kurse (userId/courseId → Objekt)
+    // Global cache for students and courses (userId/courseId → object).
     studentCache: new Map<string, any>(),
     courseCache: new Map<string, any>(),
   }),
@@ -87,16 +87,11 @@ export const useDeploymentStore = defineStore('deployment', {
         const response = await deploymentApi.getById(id)
         this.currentDeployment = response.data
       } catch (err: any) {
-        // 404 = Deployment wurde upstream soft-deleted (z.B. nach
-        // erfolgreichem Destroy). Das ist KEIN Fehler-Zustand für
-        // die UI — der ``streamConnectionState === 'ended'``-Watcher
-        // im DetailView prüft anschließend ``currentDeployment ===
-        // null`` als Soft-Delete-Signal und navigiert zur Liste mit
-        // Success-Toast. Hätten wir hier ``state.error`` gesetzt,
-        // würde der nächste Render einen Error-Banner zeigen, obwohl
-        // das Backend exakt das tut, was der User wollte. Bei allen
-        // anderen Status-Codes (5xx, Netzwerk-Timeout) bleibt der
-        // Error-Pfad intakt.
+        // 404 = deployment was soft-deleted upstream (e.g. after a successful
+        // destroy). This is not a UI error state: the DetailView's stream-ended
+        // watcher checks ``currentDeployment === null`` as a soft-delete signal
+        // and navigates to the list with a success toast. Other status codes
+        // (5xx, network timeout) keep the error path intact.
         const status = err?.response?.status
         if (status === 404) {
           this.currentDeployment = null
@@ -220,9 +215,9 @@ export const useDeploymentStore = defineStore('deployment', {
         }))
       }
 
-      // Fallback: Wenn keine Teams definiert sind, erstelle automatisch Teams basierend auf studentIds
+      // Fallback: if no teams are defined, auto-create teams based on studentIds.
       if (teams.length === 0 && this.draft.studentIds.length > 0) {
-        // Erstelle Teams basierend auf groupCount
+        // Create teams based on groupCount.
         const groupCount = this.draft.groupCount
         const studentsPerGroup = Math.floor(this.draft.studentIds.length / groupCount)
         const remainder = this.draft.studentIds.length % groupCount
@@ -240,7 +235,7 @@ export const useDeploymentStore = defineStore('deployment', {
         }
       }
 
-      // Stelle sicher, dass alle userIds als UUID-Strings formatiert sind
+      // Ensure all userIds are formatted as UUID strings.
       teams = teams.map(team => ({
         name: team.name,
         userIds: team.userIds.map(id => typeof id === 'string' ? id : String(id))
@@ -249,16 +244,11 @@ export const useDeploymentStore = defineStore('deployment', {
       // userInputVar: { packer: {...}, terraform: {...} }
       let userInputVarObj: any = { packer: {}, terraform: {} }
       if (this.draft.variables && typeof this.draft.variables === 'object') {
-        // Multi-Image-Packer-Layout erkennen: ``NewDeploymentVariableView``
-        // schreibt für solche Apps die Packer-Werte NICHT flach unter
-        // ``draft.variables[<name>]``, sondern verschachtelt unter
-        // ``draft.variables.packer[<template_key>][<name>]``. Lesen wir
-        // hier weiter nur flach, ist ``val`` für jede Multi-Image-Packer-
-        // Variable ``undefined`` → sie wird verworfen und das Backend
-        // fällt auf den HCL-Default zurück (der geänderte Wizard-Wert
-        // geht still verloren). Dieselbe Detection/Resolution wie in
-        // ``NewDeploymentSummaryView`` (``isMultiImagePackerLayout`` /
-        // ``_resolvePackerValue``).
+        // Detect multi-image Packer layout: such apps store Packer values nested
+        // under ``draft.variables.packer[<template_key>][<name>]`` rather than
+        // flat under ``draft.variables[<name>]``. Reading only flat would leave
+        // ``val`` undefined for those variables. Same detection/resolution as in
+        // ``NewDeploymentSummaryView``.
         const draftVars = this.draft.variables as Record<string, any>
         const packerContainer = draftVars.packer
         const isMultiImagePackerLayout =
@@ -280,7 +270,7 @@ export const useDeploymentStore = defineStore('deployment', {
           return draftVars[def.name]
         }
 
-        // VariableDefinitions enthält Info, ob packer/terraform
+        // variableDefinitions carries whether each var is packer/terraform.
         if (Array.isArray(this.draft.variableDefinitions)) {
           for (const def of this.draft.variableDefinitions) {
             // File-typed variables travel through ``files`` instead of

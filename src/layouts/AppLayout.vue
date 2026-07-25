@@ -120,13 +120,6 @@ const navItems = computed(() => [
         </RouterLink>
       </nav>
 
-      <!--
-        Placeholder for a future bottom-of-sidebar config link.
-        Previously there was an empty ``<div class="px-2 py-3 border-t border-white/10">``
-        here, which rendered as a stray horizontal line above empty
-        space. Removed entirely until there's actual content to host.
-      -->
-
     </aside>
 
     <!-- Main area -->

@@ -170,7 +170,7 @@ const submitAddMembers = async () => {
     const ids = Array.from(selectedToAdd.value.keys())
     await courseStore.addMembers(courseId.value, ids)
 
-    // Singular/Plural bei Toasts
+    // Singular/plural for toasts.
     if (ids.length === 1) {
       toast.success(t('CourseDetailView.toasts.membersAddedSingular'))
     } else {
@@ -220,8 +220,7 @@ const confirmRemoveMember = async () => {
 const memberCount = computed(() => courseStore.currentMembers.length)
 
 const roleLabel = (role: string | undefined) => {
-  // Zentralisierte Role-Labels (i18n/role-labels.ts) → konsistente
-  // Übersetzungen über Views hinweg.
+  // Centralized role labels for consistent translations across views.
   return t(roleLabelKey(role))
 }
 

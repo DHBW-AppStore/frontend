@@ -24,15 +24,15 @@ const progressWidth = computed(() => {
   if (totalSteps <= 1) return '0%'
   
   const percentage = ((props.currentStep - 1) / (totalSteps - 1)) * 100
-  // Begrenzung auf 0-100% zur Sicherheit
+  // Clamp to 0-100% for safety.
   return `${Math.min(Math.max(percentage, 0), 100)}%`
 })
 
-// Hilfsfunktion für Text-Ausrichtung
+// Helper for text alignment.
 const getTextAlignmentClass = (step: number, total: number) => {
-  if (step === 1) return 'left-0 origin-left'              // Erster: Linksbuendig
-  if (step === total) return 'right-0 origin-right'        // Letzter: Rechtsbuendig
-  return 'left-1/2 -translate-x-1/2 origin-center'         // Alle dazwischen: Zentriert
+  if (step === 1) return 'left-0 origin-left'              // first: left-aligned
+  if (step === total) return 'right-0 origin-right'        // last: right-aligned
+  return 'left-1/2 -translate-x-1/2 origin-center'         // in between: centered
 }
 </script>
 
@@ -59,11 +59,9 @@ const getTextAlignmentClass = (step: number, total: number) => {
               currentStep >= item.step
                 ? 'border-emerald-600 text-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.4)]'
                 : 'border-gray-300 text-gray-400',
-              // Füllt den Kreis komplett grün, wenn der Schritt erledigt ist
+              // Fill the circle green once the step is done.
               currentStep > item.step ? '!bg-emerald-600 !text-white' : '',
-              // Aktueller Schritt: dezent größer pulsieren statt
-              // ein-/ausblenden (animate-pulse), damit der User immer
-              // sieht, wo er ist.
+              // Current step: pulse subtly so the user always sees where they are.
               currentStep === item.step ? 'text-emerald-600 animate-step-pulse' : ''
             ]"
           >
@@ -90,11 +88,9 @@ const getTextAlignmentClass = (step: number, total: number) => {
 </template>
 
 <style scoped>
-/* Statt Tailwinds animate-pulse (das die Opacity moduliert und den
-   aktuellen Schritt halb-unsichtbar macht) skalieren wir den Kreis
-   leicht hin und her. So bleibt er immer voll sichtbar und das Auge
-   wird trotzdem dorthin gezogen. transform-origin ist mittig, damit
-   die Position auf der Linie nicht „wackelt“. */
+/* Scale the circle slightly instead of using Tailwind's animate-pulse (which
+   modulates opacity and half-hides the current step), so it stays fully visible.
+   transform-origin is centered so its position on the line doesn't wobble. */
 @keyframes step-pulse {
   0%, 100% {
     transform: scale(1);

@@ -26,11 +26,11 @@ const credStore = useOpenStackCredentialsStore()
 
 const courses = ref<any[]>([])
 
-// Two separate lists: Cache (initial) + current view (search/filter)
+// Two separate lists: cache (initial) + current view (search/filter).
 const allStudents = ref<any[]>([])
 const students = ref<any[]>([])
 
-// Cache-Map for all ever seen students (remains stable, keyed by keycloak_id)
+// Cache map for every student ever seen (stable, keyed by keycloak_id).
 const studentCache = ref(new Map<string, any>())
 
 const studentSearchQuery = ref('')
@@ -39,11 +39,11 @@ const loadingStudents = ref(false)
 const coursesError = ref<string | null>(null)
 const studentsError = ref<string | null>(null)
 
-// Tab for selection: 'courses' or 'individuals'
+// Selection tab: 'courses' or 'individuals'.
 const activeTab = ref<'courses' | 'individuals'>('courses')
 
-// Helper: Store students in cache (keyed by keycloak_id)
-// Only overwrite if the new object has more information (e.g., firstName)
+// Helper: store students in the cache (keyed by keycloak_id). Only overwrite
+// when the new object has more info (e.g. firstName).
 function cacheStudents(list: any[]) {
   for (const s of list || []) {
     if (!s?.keycloak_id || typeof s.keycloak_id !== 'string' || !s.keycloak_id.trim()) continue
@@ -55,51 +55,46 @@ function cacheStudents(list: any[]) {
   }
 }
 
-// Filtered list for individual search: shows search results or initial list
-// Always returns the object from the cache if available
+// Filtered list for individual search: shows search results, always returning
+// the cached object when present.
 const filteredStudents = computed(() => {
-  // Basis: when empty, show empty list (no students without search)
+  // Base: empty query → empty list (no students without a search).
   if (!studentSearchQuery.value.trim()) {
     return []
   }
-  // Backend has already filtered by username/email/firstName/lastName
-  // (Keycloak Admin API ``/users?search=…``) — an additional client-side
-  // filter with ``s.username || s.firstName || …`` would be incorrect, as the
-  // ``||`` fallback only considers the first truthy field in the comparison: a
-  // user with ``username="okann"`` and ``firstName="Jeffrey"`` would be excluded
-  // when searching for "Jeff", even if the backend returned it correctly
-  // Therefore, simply pass through the backend response and only use the cache object
-  // if available (prevents duplicates).
+  // The backend already filtered by username/email/firstName/lastName (Keycloak
+  // Admin API ``/users?search=…``), so we pass its response through and only use
+  // the cached object when present (prevents duplicates).
   return students.value.map((s: any) => {
     const cached = s?.keycloak_id ? studentCache.value.get(s.keycloak_id) : undefined
     return cached || s
   }).filter(Boolean)
 })
 
-// Selected Students: always resolve from cache (remains stable, keyed by keycloak_id)
+// Selected students: always resolved from the cache (stable, keyed by keycloak_id).
 const selectedStudents = computed(() => {
   return store.draft.studentIds
     .map((kid: string) => studentCache.value.get(kid))
     .filter(Boolean)
 })
 
-// Cache for students per course (lazy loading)
+// Cache for students per course (lazy loading).
 const courseStudentsCache = ref(new Map<string, any[]>())
 
-// Helper function: Returns all student IDs for a given course (lazy loading)
+// Helper: return all student IDs of a course (lazy loading).
 async function getStudentIdsForCourse(courseId: string): Promise<string[]> {
-  // Check cache
+  // Check the cache.
   if (courseStudentsCache.value.has(courseId)) {
     const students = courseStudentsCache.value.get(courseId)!
     return students.map((s: any) => s.keycloak_id)
   }
 
-  // Load students for this course
+  // Load students for this course.
   try {
     const res = await courseApi.getById(courseId)
     const students = res.data.users || []
     courseStudentsCache.value.set(courseId, students)
-    // Also cache in studentCache
+    // Also cache in studentCache.
     cacheStudents(students)
     return students.map((s: any) => s.keycloak_id)
   } catch (err) {
@@ -108,15 +103,15 @@ async function getStudentIdsForCourse(courseId: string): Promise<string[]> {
   }
 }
 
-// Loading states for courses
+// Loading states for courses.
 const loadingCourseStudents = ref(new Set<string>())
 
-// Helper function: Returns number of students per course (lazy loading)
+// Helper: return the student count per course (lazy loading).
 function getStudentCountForCourse(courseId: string) {
   if (courseStudentsCache.value.has(courseId)) {
     return courseStudentsCache.value.get(courseId)!.length
   }
-  // If not loaded, load lazily
+  // Load lazily if not loaded.
   if (!loadingCourseStudents.value.has(courseId)) {
     loadingCourseStudents.value.add(courseId)
     getStudentIdsForCourse(courseId).then(() => {
@@ -125,19 +120,19 @@ function getStudentCountForCourse(courseId: string) {
       loadingCourseStudents.value.delete(courseId)
     })
   }
-  return 0 // Placeholder during loading
+  return 0 // placeholder while loading
 }
 
-// Course checkbox: checked, when all students of the course are selected
+// Course checkbox: checked when all students of the course are selected.
 function isCourseSelected(courseId: string) {
   if (!courseStudentsCache.value.has(courseId)) {
-    return false // Not yet loaded
+    return false // not loaded yet
   }
   const studentIds = courseStudentsCache.value.get(courseId)!.map((s: any) => s.keycloak_id)
   return studentIds.length > 0 && studentIds.every((id) => store.draft.studentIds.includes(id))
 }
 
-// Toggle course checkbox: select/deselect all students of a course
+// Course checkbox toggle: select/deselect all students of the course.
 const toggleCourse = async (courseId: string) => {
   const studentIds = await getStudentIdsForCourse(courseId)
   if (studentIds.length === 0) {
@@ -146,18 +141,18 @@ const toggleCourse = async (courseId: string) => {
   }
   const allSelected = studentIds.length > 0 && studentIds.every((id) => store.draft.studentIds.includes(id))
   if (allSelected) {
-    // Deselect: remove all students of this course from selection
+    // Deselect: remove all students of this course from the selection.
     store.draft.studentIds = store.draft.studentIds.filter((id: string) => !studentIds.includes(id))
   } else {
-    // Select: add all students of this course to selection (without duplicates)
+    // Select: add all students of this course to the selection (no duplicates).
     const set = new Set([...store.draft.studentIds, ...studentIds])
     store.draft.studentIds = Array.from(set)
   }
-  // Synchronize course selection list
+  // Sync the course-selection list.
   syncCourseSelection()
 }
 
-// Toggle student checkbox (for individual selection)
+// Toggle a student checkbox (for individual selection).
 const toggleStudent = (studentKeycloakId: string) => {
   if (!studentKeycloakId || typeof studentKeycloakId !== 'string' || !studentKeycloakId.trim()) return
   const index = store.draft.studentIds.indexOf(studentKeycloakId)
@@ -166,13 +161,13 @@ const toggleStudent = (studentKeycloakId: string) => {
   } else {
     store.draft.studentIds.push(studentKeycloakId)
   }
-  // After each toggle: synchronize course selection
+  // After each toggle: sync the course selection.
   syncCourseSelection()
 }
 
-// Synchronizes store.draft.courseIds with the current student selection state
+// Sync store.draft.courseIds with the current student selection state.
 async function syncCourseSelection() {
-  // For each course: If all students are selected, include course in courseIds, otherwise exclude
+  // For each course: if all students are selected, include it in courseIds.
   const newCourseIds: string[] = []
   for (const course of courses.value) {
     if (courseStudentsCache.value.has(course.courseId)) {
@@ -192,13 +187,13 @@ const handleNext = () => {
     return
   }
 
-  // Check if name is filled out
+  // Check that the name is filled in.
   if (!store.draft.name || store.draft.name.trim() === '') {
     toast.warning(t('deployment.errors.missingName'))
     return
   }
 
-  // Check if at least one student is selected
+  // Check that at least one student is selected.
   if (store.draft.studentIds.length === 0) {
     toast.warning(t('deployment.errors.missingStudents'))
     return
@@ -215,7 +210,7 @@ const handleBack = () => {
   }
 }
 
-// Load courses
+// Load courses.
 async function loadCourses() {
   loadingCourses.value = true
   coursesError.value = null
@@ -230,7 +225,7 @@ async function loadCourses() {
   }
 }
 
-// Load initial student list (will be cached)
+// Load the initial student list (cached).
 async function loadAllStudents() {
   loadingStudents.value = true
   studentsError.value = null
@@ -247,27 +242,27 @@ async function loadAllStudents() {
   }
 }
 
-// Search with debouncing
+// Search with debouncing.
 let searchTimer: number | undefined
 watch(studentSearchQuery, (val) => {
   if (searchTimer) window.clearTimeout(searchTimer)
   searchTimer = window.setTimeout(async () => {
     const q = val?.trim() || ''
 
-    // Empty search: show initial list (no additional API call)
+    // Empty query: show the initial list (no extra API call).
     if (!q) {
       students.value = allStudents.value
       toast.clear()
       return
     }
 
-    // Too short search: keep current list (no flickering)
+    // Query too short: keep the current list (no flicker).
     if (q.length < 2) {
       toast.clear()
       return
     }
 
-    // Execute search
+    // Perform the search.
     try {
       loadingStudents.value = true
       const res = await userApi.search(q, 50)
@@ -285,7 +280,7 @@ watch(studentSearchQuery, (val) => {
   }, 300)
 })
 
-// On mount: Load courses and initial students
+// On mount, load courses + the initial students.
 onMounted(async () => {
   // Ensure cred state is fresh; banner branch shows when missing
   if (!credStore.status) await credStore.fetch()

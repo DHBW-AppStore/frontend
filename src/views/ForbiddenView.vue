@@ -5,11 +5,9 @@ import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
 /**
- * 403-Hint-View. Renderert, wenn der Router-Guard einen Routenwechsel
- * wegen fehlender Rolle blockt — statt still aufs Dashboard zu
- * springen (alte Variante, in der der Nutzer rätseln musste, warum
- * der Klick nichts tut). Ein Toast hat den Grund schon gemeldet;
- * diese Seite gibt dem Nutzer einen Rückweg.
+ * 403 hint view. Rendered when the router guard blocks a route change due to a
+ * missing role. A toast already reported the reason; this page gives the user a
+ * way back.
  */
 const router = useRouter()
 const { t } = useI18n()
