@@ -124,7 +124,7 @@ const fileAcceptFor = (v: AppVariable): string => {
   return v.fileExtensions.map((e) => `.${e}`).join(',')
 }
 
-// Subnet-Filter
+// Subnet filter
 const findNetworkValueForSubnet = (_subnet: AppVariable): string | null => {
   const networkVar = variables.value.find(
     (v) => v.osType === 'network' && v.osMode === 'id',

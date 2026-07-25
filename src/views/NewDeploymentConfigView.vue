@@ -268,7 +268,7 @@ watch(studentSearchQuery, (val) => {
       const res = await userApi.search(q, 50)
       toast.clear()
       students.value = res.data || []
-      cacheStudents(students.value) // Neue Studenten cachen (keyed by keycloak_id)
+      cacheStudents(students.value) // Cache new students (keyed by keycloak_id)
     } catch (err) {
       console.error('User search error:', err)
       const e: any = err

@@ -199,6 +199,10 @@ jobs:
     name: "🐳 Build"
     runs-on: ubuntu-latest
     needs: [typecheck, test, security]
+    # Guard against a hung build burning the full 6h job budget. A
+    # healthy amd64 image build finishes in a few minutes; anything
+    # past 20 min is a hang, not slow progress.
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: write
@@ -230,7 +234,11 @@ jobs:
           context: .
           file: ./Dockerfile
           push: false
-          platforms: linux/amd64,linux/arm64
+          # amd64 only: the deploy target (OpenStack VMs) is amd64, and
+          # an emulated arm64 build hung in ``npm install`` under QEMU
+          # and ran into the 6h job timeout. Re-add arm64 here (and in
+          # the push job) only alongside a native arm64 runner.
+          platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -247,6 +255,7 @@ jobs:
     name: "🔒 Image Scan"
     runs-on: ubuntu-latest
     needs: [build]
+    timeout-minutes: 20
     permissions:
       contents: read
       security-events: write
@@ -304,6 +313,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, image-scan]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: write
@@ -342,7 +352,10 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
+          # amd64 only — see the note on the ``build`` job. Keep this
+          # in sync with that job so the pushed image matches what CI
+          # actually built and scanned.
+          platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

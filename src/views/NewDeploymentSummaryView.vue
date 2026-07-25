@@ -373,7 +373,7 @@ const fetchAndSyncVariables = async () => {
   isLoadingVariables.value = true
 
   try {
-    // A. Version sicherstellen (String vs Objekt Fix)
+    // A. Ensure version (string vs object fix)
     const rawTag: any = deploymentStore.draft.releaseTag
     let versionString = 'latest'
     if (rawTag && typeof rawTag === 'object' && rawTag.version) {
@@ -415,7 +415,7 @@ const fetchAndSyncVariables = async () => {
       }
     }
 
-    // D. Draft initialisieren
+    // D. Initialize draft
     if (!deploymentStore.draft.variables) {
       deploymentStore.draft.variables = {}
     }
