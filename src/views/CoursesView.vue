@@ -68,7 +68,7 @@ const saveCourse = async () => {
     toast.success(t('CoursesView.toasts.createSuccess'))
     showModal.value = false
 
-    // Nach dem Erstellen direkt zur Detailseite navigieren
+    // Navigate to the detail page right after creation.
     if (created?.courseId) {
       router.push(`/courses/${created.courseId}`)
     }

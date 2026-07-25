@@ -55,9 +55,9 @@ const isList = (type: string) =>
   type.toLowerCase().startsWith('set') ||
   type.toLowerCase().startsWith('array')
 
-// Picker hat Vorrang vor Type-basierten Eingaben — auch bei list(...)-
-// Variablen, weil der Picker selbst Multi handhabt. File-Variablen
-// werden vom Parent gerendert, daher hier explizit ausgenommen.
+// The picker takes precedence over type-based inputs, including list(...)
+// variables, since it handles multi itself. File variables are rendered by the
+// parent and so are excluded here.
 const hasOsPicker = (v: AppVariable): boolean =>
   Boolean(v.osType) && v.osType !== 'file'
 
@@ -89,9 +89,9 @@ const toggleFocus = (() => {
 </script>
 
 <template>
-  <!-- OpenStack-Resource-Picker hat Vorrang über alle Type-basierten
-       Renderings. Greift, sobald das Backend einen ``osType`` mitgegeben
-       hat (außer ``file`` — das handled der Parent). -->
+  <!-- The OpenStack resource picker takes precedence over all type-based
+       renderings, whenever the backend provided an ``osType`` (except
+       ``file``, handled by the parent). -->
   <OpenStackResourcePicker
     v-if="hasOsPicker(variable)"
     :os-type="pickerOsType(variable)"

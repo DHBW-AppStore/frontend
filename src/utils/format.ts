@@ -1,19 +1,15 @@
 /**
  * Shared date formatting helpers.
  *
- * These consolidate the ``de-DE`` date formatting that was previously
- * copy-pasted (with slightly different options and null guards) across
- * several views. Two shapes are exposed:
+ * Consolidates the ``de-DE`` date formatting used across several views. Two
+ * shapes are exposed:
  *
- * - :func:`formatDate` — date only (``dd.mm.yyyy``), used in list/detail
- *   views that only show the day.
- * - :func:`formatDateTime` — date + time, used where the exact timestamp
- *   matters (deployment list / detail).
+ * - :func:`formatDate` — date only (``dd.mm.yyyy``), for list/detail views.
+ * - :func:`formatDateTime` — date + time, where the exact timestamp matters.
  *
- * Both are tolerant of ``null``/empty input and of unparseable strings.
- * :func:`formatDate` returns the input verbatim when it can't be parsed
- * (callers add their own ``? … : '-'`` guard, as before);
- * :func:`formatDateTime` yields ``'-'`` for empty input.
+ * Both tolerate ``null``/empty input and unparseable strings. :func:`formatDate`
+ * returns the input verbatim when it can't be parsed; :func:`formatDateTime`
+ * yields ``'-'`` for empty input.
  */
 
 const LOCALE = 'de-DE'

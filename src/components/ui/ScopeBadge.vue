@@ -2,22 +2,13 @@
 /**
  * Compact scope indicator for the deployment-wizard variable cards.
  *
- * Wraps the existing ``Badge`` component with scope-specific copy:
- *   * ``team`` → purple badge "Pro Team" + ``Users`` lucide icon
- *   * ``user`` → purple badge "Pro User" + ``User`` lucide icon
- *   * ``all``/undefined → nothing rendered (the calm default; the
- *     UI shows extra badges only when something deviates from the
- *     plain "one value for everyone" case).
+ * Wraps ``Badge`` with scope-specific copy:
+ *   * ``team`` → purple badge "Pro Team" + ``Users`` icon
+ *   * ``user`` → purple badge "Pro User" + ``User`` icon
+ *   * ``all``/undefined → nothing rendered (the calm default)
  *
- * Why purple: the wizard already uses purple to signal "Terraform"
- * sections and the scope-banner uses the same hue, so a single
- * "this is a scope-coloured thing" mental model carries.
- *
- * The component intentionally accepts ``undefined`` (and not just
- * the literal scopes) so callers can ``<ScopeBadge :scope="v.varScope" />``
- * without a guard — that's the most common shape because backend
- * omits ``varScope`` from the variable payload when it's effectively
- * "all".
+ * Purple matches the wizard's "Terraform" / scope hue. Accepts ``undefined`` so
+ * callers can pass ``v.varScope`` without a guard (the backend omits it when "all").
  */
 import { Users, User } from 'lucide-vue-next'
 import Badge from './Badge.vue'
@@ -36,9 +27,5 @@ defineProps<{
     <User :size="12" class="mr-1" aria-hidden="true" />
     <span>Pro User</span>
   </Badge>
-  <!--
-    scope === 'all' or undefined: render nothing. The default case
-    needs no marker — adding a "Für alle"-Badge to every plain
-    variable would just be visual noise.
-  -->
+  <!-- scope === 'all' or undefined: render nothing (the default needs no marker). -->
 </template>

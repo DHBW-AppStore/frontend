@@ -11,12 +11,10 @@ import PageHeader from '@/components/ui/PageHeader.vue'
 const authStore = useAuthStore()
 const { t } = useI18n()
 
-// WORKAROUND: Wir überschreiben hier lokal den strengen Typ von authStore.user mit "any".
-// So hört TypeScript auf zu meckern, dass firstName, course, etc. nicht im alten Typen existieren.
+// Cast to ``any`` so fields like firstName/course are accessible without the strict user type.
 const user = computed(() => authStore.user as any)
 
-// Zentrale role-label helpers (i18n/role-labels.ts) ersetzen die alten
-// Inline-Maps — eine Quelle für Variant + Übersetzung über alle Views.
+// Central role-label helpers: one source for variant + translation across views.
 const roleBadgeVariant = computed(() => roleBadgeVariantFor(user.value?.role))
 const roleLabel = computed(() => t(roleLabelKey(user.value?.role)))
 
@@ -138,9 +136,8 @@ const createdDate = computed(() => {
 
       </div>
 
-      <!-- Settings — eigenes Layout (Listen-Eintrag), nicht Karten-
-           Grid. Bleibt weiß, gleicher Border/Padding-Stil wie die
-           Cards drüber. -->
+      <!-- Settings — list layout rather than a card grid; same border/padding
+           style as the cards above. -->
       <div class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
         <div class="px-6 py-4 border-b">
           <h2 class="text-lg font-semibold text-gray-900">{{ t('UserView.settings.title') }}</h2>

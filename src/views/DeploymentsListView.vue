@@ -42,15 +42,11 @@ const formatDate = (dateString: string) =>
   })
 
 /**
- * Sortierung: neueste Deployments zuerst.
+ * Sort newest deployments first.
  *
- * Server liefert die Liste in DB-Insert-Reihenfolge — visuell wirkt
- * das wie eine "älteste zuerst"-Sortierung, was beim Anlegen eines
- * neuen Deployments unnatürlich ist (User erwartet sein gerade
- * erstelltes Deployment ganz oben). Daher hier client-seitig nach
- * ``created_at`` absteigend sortieren. Ohne ``created_at`` (Edge-
- * Case bei noch nicht erstelltem ersten Task) fällt das Item ans
- * Ende — besser als ``NaN`` im Vergleich.
+ * The server returns the list in DB insert order, so we sort client-side by
+ * ``created_at`` descending. Items without ``created_at`` fall to the end
+ * (better than ``NaN`` in the comparison).
  */
 const sortedDeployments = computed(() =>
   [...deploymentStore.deployments].sort((a, b) => {
@@ -60,12 +56,8 @@ const sortedDeployments = computed(() =>
   })
 )
 
-// Status-Pillen. Identische Palette wie vor dem Karten-Refactor —
-// die Farb-Semantik (orange = destroy, amber = lifecycle-pending,
-// slate = ruhe-paused) ist über die App gelernt, dazu gibt's auch
-// die ``BarChart3``-Statistik-Page. Wir behalten die Map, ändern nur
-// das Rendering: nicht mehr Tabellen-Zelle, sondern Pill innerhalb
-// der Karte.
+// Status pills. Color semantics: orange = destroy, amber = lifecycle-pending,
+// slate = paused.
 const getStatusColor = (status: string) => {
   const colors = {
     'success': 'bg-green-100 text-green-800 border-green-300',
@@ -114,10 +106,8 @@ const getStatusColor = (status: string) => {
         </RouterLink>
       </template>
 
-      <!-- Karten-Grid. Eine Karte pro Deployment: Name (groß),
-           App-Name (Untertitel), Status-Pill, Release-Tag, Erstell-
-           datum. Klick führt zum Detail. Sortierung: neueste oben
-           (siehe ``sortedDeployments`` im script). -->
+      <!-- Card grid, one card per deployment (name, app name, status pill,
+           release tag, creation date). Click opens the detail; newest first. -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <RouterLink
           v-for="deployment in sortedDeployments"

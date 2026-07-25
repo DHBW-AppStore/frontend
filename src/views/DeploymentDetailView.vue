@@ -19,9 +19,9 @@ import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { formatDateTime } from '@/utils/format'
 import { extractErrorMessage } from '@/utils/http-error'
 
-import { Eye, EyeOff } from 'lucide-vue-next' // Stelle sicher, dass die Icons importiert sind
+import { Eye, EyeOff } from 'lucide-vue-next'
 
-// Zustand für die Passwort-Sichtbarkeit (Key ist der Index/Key des Accounts)
+// Password visibility state, keyed by account index/key.
 const visiblePasswords = ref<Record<string | number, boolean>>({})
 
 const togglePasswordVisibility = (key: string | number) => {
@@ -47,16 +47,15 @@ const { t } = useI18n()
 const tasks = ref<Task[]>([])
 const loadingTasks = ref(false)
 const selectedTask = ref<Task | null>(null)
-//NEU
 const latestTaskOutputs = ref<Task | null>(null)
-// Liefert immer den aktuell aktiven Daten-Task für die UI-Blöcke
+// Always returns the currently active data task for the UI blocks.
 const activeDataTask = computed(() => selectedTask.value || latestTaskOutputs.value)
 const loadingTaskDetail = ref(false)
 
 const deploymentId = route.params.id as string
 
 const deployment = computed(() => deploymentStore.currentDeployment)
-// Interface für die Struktur eines einzelnen Accounts
+// Structure of a single account.
 interface UserAccount {
     username: string
     team: string
@@ -121,28 +120,16 @@ const enrichedTeams = computed(() => {
 
     // Resolve member ↔ account.
     //
-    // The canonical contract is the ``user_accounts`` MAP KEY. Every
-    // app template we ship (Online-IDE, pgAdmin, etc.) constructs the
-    // key the same way:
+    // The canonical contract is the ``user_accounts`` MAP KEY, which every app
+    // template constructs the same way:
     //
     //     key = "<team>-" + email.split("@")[0].replace(".", "-")
     //
-    // i.e. ``team-name + "-" + sanitised-email-local-part``. Because
-    // we have the member's email and team on the backend side, we can
-    // reproduce that key deterministically and skip all heuristics.
-    //
-    // The value's ``username`` field is NOT a reliable identifier:
-    // Online-IDE writes the email's local-part there (per-member
-    // credential), pgAdmin writes a synthetic team-wide pseudo-email
-    // (``team-1@example.com``, shared by every member of the team).
-    // Older heuristics that compared keycloak ``member.username`` to
-    // either field broke whenever those diverged (e.g. keycloak user
-    // ``okann`` with email ``okso2004@gmail.com``).
-    //
-    // We index by key once and look up the derived key per member.
-    // Three legacy fallbacks survive for templates we haven't seen
-    // yet, but on every current template the derived-key strategy
-    // resolves on the first try.
+    // Since the member's email and team are known here, that key can be
+    // reproduced deterministically. The value's ``username`` field is not a
+    // reliable identifier (some templates write the email local-part, others a
+    // shared team-wide pseudo-email), so we index by key and look up the derived
+    // key per member. Three fallbacks cover templates not matched by the key.
     const accountByEmail = new Map<string, { key: string; data: UserAccount }>()
     const accountByUsername = new Map<string, { key: string; data: UserAccount }>()
     const accountByKey = new Map<string, { key: string; data: UserAccount }>()
@@ -256,7 +243,7 @@ function extractTeamVms(): Record<string, { url?: string; floating_ip?: string; 
     return vms && typeof vms === 'object' ? vms : null
 }
 
-// Zählt die Ressourcen im State für die kleine Sub-Headline im Header
+// Counts the resources in the state for the header sub-headline.
 const tfResourcesCount = computed(() => {
     const state = selectedTask.value?.tf_state
     if (!state) return 0
@@ -269,7 +256,7 @@ const tfResourcesCount = computed(() => {
     }
 })
 
-// Leichtgewichtiges und sicheres Syntax Highlighting für JSON
+// Lightweight, safe syntax highlighting for JSON.
 const highlightJson = (jsonString: string): string => {
     if (!jsonString) return ''
 
@@ -285,16 +272,16 @@ const highlightJson = (jsonString: string): string => {
 
             if (/^"/.test(match)) {
                 if (/:$/.test(match)) {
-                    cls = 'text-blue-500 font-medium' // Keys (Blau)
+                    cls = 'text-blue-500 font-medium' // keys
                 } else {
-                    cls = 'text-emerald-500' // String-Werte (Grün)
+                    cls = 'text-emerald-500' // string values
                 }
             } else if (/true|false/.test(match)) {
-                cls = 'text-purple-500 font-bold' // Booleans (Lila)
+                cls = 'text-purple-500 font-bold' // booleans
             } else if (/null/.test(match)) {
-                cls = 'text-gray-500 italic' // Null (Grau)
+                cls = 'text-gray-500 italic' // null
             } else {
-                cls = 'text-cyan-500' // Zahlen (Cyan)
+                cls = 'text-cyan-500' // numbers
             }
 
             return `<span class="${cls}">${match}</span>`
@@ -354,12 +341,9 @@ const loadResources = async (refresh = true) => {
         } else if (status === 502) {
             resourcesError.value = t('vm.resourcesErrors.unreachable')
         } else if (status === 404) {
-            // Deployment wurde upstream soft-deleted (z.B. unmittelbar
-            // nach einem erfolgreichen Destroy, während die Detail-
-            // Seite noch offen ist). Resources sind dann definitiv
-            // weg; ein roter Error-Banner ist Symptom-statt-Ursache.
-            // Den ``gone``-Pfad übernimmt der Stream-Watcher; hier
-            // einfach silent leeren.
+            // Deployment was soft-deleted upstream (e.g. right after a
+            // successful destroy). The resources are gone; the stream watcher
+            // handles the ``gone`` path, so just clear silently here.
             resources.value = []
         } else {
             resourcesError.value = err?.message || t('vm.resourcesErrors.generic')
@@ -613,18 +597,14 @@ const historyTasks = computed<Task[]>(() => {
     return list.filter((t) => t.taskId !== active.taskId)
 })
 
-// Phase stepper — N dots based on the live ``totalPhases`` reported by
-// the worker. Phase names live in the worker (different sets for
-// deploy/destroy), so the frontend stays task-type-agnostic for the
-// dot count. We do keep label tables for the deploy/destroy presets
-// here so the stepper renders meaningful labels under each dot when
-// the worker's totals match a known shape; an unknown count falls
-// back to numbered labels (``1``..``N``) instead of empty space.
+// Phase stepper — N dots based on the live ``totalPhases`` reported by the
+// worker. Phase names live in the worker (different sets for deploy/destroy),
+// so the frontend stays task-type-agnostic for the dot count. Label tables for
+// the deploy/destroy presets render meaningful labels under each dot when the
+// totals match a known shape; an unknown count falls back to numbered labels.
 //
-// Default to a conservative 11-dot view before the first event arrives
-// so the layout doesn't jump when the worker first reports its real
-// phase count (which could be 8 for deploy-without-packer or 7 for
-// destroy).
+// Default to a conservative 11-dot view before the first event arrives so the
+// layout doesn't jump when the worker reports its real phase count.
 const DEFAULT_PHASE_COUNT = 11
 
 const PHASE_LABELS_DEPLOY_FULL = [
@@ -662,16 +642,11 @@ const PHASE_LABELS_DESTROY = [
     'CLEANUP',
 ] as const
 
-// Pause/Resume share the destroy preamble (clone + clouds + tf init
-// to be able to state-pull) but their hot phase is a CLI-driven
-// server stop/start, NOT a terraform destroy. Same length as
-// ``PHASE_LABELS_DESTROY`` (7) — that's the bug a previous version
-// of ``phaseStepLabel`` ran into when it picked the table by length
-// alone and silently rendered "TERRAFORM DESTROY" while the worker
-// emitted a "Server Stop" header. The fix below picks tables by
-// task type first and only falls back to length-matching if the
-// type is unknown (e.g. live-stream attached before tasks were
-// loaded).
+// Pause/Resume share the destroy preamble (clone + clouds + tf init to allow a
+// state-pull) but their hot phase is a CLI-driven server stop/start, not a
+// terraform destroy. Same length as ``PHASE_LABELS_DESTROY`` (7), so tables are
+// picked by task type first and only fall back to length-matching when the type
+// is unknown (e.g. live-stream attached before tasks were loaded).
 const PHASE_LABELS_PAUSE = [
     'STARTING',
     'OPENSTACK_SETUP',
@@ -706,20 +681,12 @@ const PHASE_LABELS_REDEPLOY = [
     'CLEANUP',
 ] as const
 
-// Stepper-Labels: der Worker schickt mit jedem Progress-Event die
-// volle Phase-Sequenz als ``phase_names`` mit (siehe ``StructuredLogger
-// .progress()``). Das ist die einzige authoritative Quelle, weil
-// Multi-Image-Deploys eine dynamische Sequenz haben, deren Template-
-// Keys das Frontend nicht raten kann.
-//
-// Vor dem ersten Progress-Event (Page-Load mitten in einer langen
-// Phase, oder bevor der Worker das erste Mal "STARTING" emittiert
-// hat) fallen wir auf die statischen Tabellen unten zurück — sie
-// decken die fixen Legacy-Shapes (Single-Image-Deploy / Destroy /
-// Pause / Resume / Redeploy) korrekt ab. Wir RATEN nichts mehr für
-// Multi-Image: solange ``phase_names`` leer ist, zeigt der Stepper
-// dort nur die fixen Vorphasen plus generische Slot-Nummern für
-// die noch nicht offenbarten Packer-Trios.
+// Stepper labels: the worker sends the full phase sequence as ``phase_names``
+// with every progress event — the authoritative source, since multi-image
+// deploys have a dynamic sequence whose template keys the frontend can't guess.
+// Before the first progress event, we fall back to the static tables below,
+// which cover the fixed shapes (single-image deploy / destroy / pause / resume
+// / redeploy); multi-image slots show generic numbers until ``phase_names`` lands.
 
 const phaseStepCount = computed<number>(() => {
     return streamTotalPhases.value > 0 ? streamTotalPhases.value : DEFAULT_PHASE_COUNT
@@ -818,13 +785,9 @@ watch(
         }
         if (task.current_phase && streamCurrentPhase.value === null) {
             streamCurrentPhase.value = task.current_phase
-            // Approximate the phase index from the persisted percent so
-            // the stepper renders meaningfully *before* the first SSE
-            // progress event lands. The worker emits the authoritative
-            // 1-based ``phase_index`` shortly after; until then this is
-            // the same math the worker used to derive the percent in
-            // the first place (round(idx/total*100)). Default total is
-            // 11 (``streamTotalPhases`` ref); good enough for visual.
+            // Approximate the phase index from the persisted percent so the
+            // stepper renders meaningfully before the first SSE progress event
+            // lands, mirroring the worker's own round(idx/total*100) math.
             if (task.progress_pct != null && streamCurrentPhaseIndex.value === null) {
                 const total = streamTotalPhases.value || DEFAULT_PHASE_COUNT
                 streamCurrentPhaseIndex.value = Math.max(
@@ -859,17 +822,13 @@ watch(
     { immediate: true },
 )
 
-// When the SSE stream signals it has ended (terminal lifecycle event
-// from the backend), reload the deployment + tasks so the detail view
-// switches from the live progress bar to the static log/output render.
+// When the SSE stream ends (terminal lifecycle event), reload the deployment +
+// tasks so the view switches from the live progress bar to the static render.
 //
-// Special case: a successful destroy auto-soft-deletes the deployment
-// on the backend, so the detail row disappears. Two ways we detect
-// it: (1) the active task we last saw was a DESTROY that just hit a
-// terminal status, or (2) the refetch comes back without a current
-// deployment (the store's fetchDeploymentById swallows the 404 into
-// ``state.error`` instead of throwing, so we can't try/catch — we
-// check ``deploymentStore.currentDeployment`` directly after).
+// Special case: a successful destroy auto-soft-deletes the deployment, so the
+// row disappears. Detected either via the last active task being a terminal
+// DESTROY, or via the refetch returning no current deployment (the store
+// swallows the 404 into ``state.error``, so we check ``currentDeployment``).
 watch(streamConnectionState, async (state) => {
     if (state !== 'ended') return
 
@@ -883,12 +842,9 @@ watch(streamConnectionState, async (state) => {
     await deploymentStore.fetchDeploymentById(deploymentId)
     await loadTasks()
 
-    // The deployment row only disappears when destroy *actually*
-    // succeeded — the celery event listener auto-soft-deletes on
-    // ``task-succeeded`` of a DESTROY task. A failed destroy leaves
-    // the row in place; the user should stay on the detail page so
-    // they can read the logs and decide what to do (retry destroy
-    // / dig into terraform state / etc.).
+    // The deployment row only disappears when destroy actually succeeded (the
+    // celery listener auto-soft-deletes on ``task-succeeded`` of a DESTROY task).
+    // A failed destroy leaves the row so the user can read the logs.
     const gone = !deploymentStore.currentDeployment
         || deploymentStore.currentDeployment.deploymentId !== deploymentId
 
@@ -902,10 +858,8 @@ watch(streamConnectionState, async (state) => {
         return
     }
 
-    // Destroy *attempted* but the row still exists → it failed
-    // (auto-soft-delete only fires on success). Fire a clear error
-    // toast and leave the user on the detail page so they can
-    // inspect the logs and retry.
+    // Destroy attempted but the row still exists → it failed. Show a clear
+    // error toast and leave the user on the detail page to inspect the logs.
     if (wasDestroy) {
         toastStore.addToast({
             type: 'error',
@@ -914,14 +868,10 @@ watch(streamConnectionState, async (state) => {
         return
     }
 
-    // Pause/Resume failed asynchronously. The store has the latest
-    // task list now; ``activeTask`` won't be set anymore (no
-    // PENDING/RUNNING), so we look at ``tasks.value[0]`` (sorted
-    // newest-first by created_at via ``activeTask``'s computed
-    // implementation pattern). The toast is intentionally separate
-    // from the logs panel — the user gets a clear "the lifecycle
-    // pass failed but the deployment is still up" hint without us
-    // pulling raw exception text into the toast itself.
+    // Pause/Resume failed asynchronously. ``activeTask`` is no longer set, so
+    // look at the newest task. The toast is kept separate from the logs panel
+    // to give a clear "the lifecycle pass failed but the deployment is still up"
+    // hint without pulling raw exception text into the toast.
     const sortedTasks = [...(tasks.value || [])]
         .sort((a, b) => b.created_at.localeCompare(a.created_at))
     const newestTask = sortedTasks[0]
@@ -1042,13 +992,10 @@ const copyToClipboard = async (text: string, key: string) => {
 
 const phaseLabel = (phase: unknown): string => {
     if (typeof phase !== 'string' || !phase) return ''
-    // Worker-emittierte Multi-Image-Phasen tragen den Template-Key als
-    // ``:<key>``-Suffix (z.B. ``PACKER_BUILD:database``). Wir trennen
-    // den Suffix ab, formatieren den Basis-Phase-Namen wie gewohnt
-    // (Title-Case mit Leerzeichen statt Underscores) und hängen den
-    // Sub-Key als ``[<key>]`` in einer Read-Friendly-Form an. So liest
-    // sich der Stepper-Header als ``Packer Build [database]`` statt
-    // ``Packer Build:database``.
+    // Worker-emitted multi-image phases carry the template key as a ``:<key>``
+    // suffix (e.g. ``PACKER_BUILD:database``). Split the suffix off, title-case
+    // the base name, and append the sub-key as ``[<key>]`` so the stepper reads
+    // ``Packer Build [database]`` instead of ``Packer Build:database``.
     const colonIdx = phase.indexOf(':')
     const base = colonIdx === -1 ? phase : phase.slice(0, colonIdx)
     const subKey = colonIdx === -1 ? '' : phase.slice(colonIdx + 1).trim()
@@ -1510,18 +1457,14 @@ const deselectTask = () => {
 <template>
     <div v-if="deployment" class="space-y-6">
         <!--
-            Two-column layout: the deployment detail content stays on
-            the left, and the VM-detail sidebar — when an inline VM is
-            selected — anchors as a sticky right column. The sidebar
-            sits under the App-Header (the parent layout's main
-            wrapper) and to the right of the App-Sidebar; it is part
-            of the page's normal flow, never an overlay. When no VM
-            is selected the left column expands to full width.
+            Two-column layout: the deployment detail content stays on the left,
+            and the VM-detail sidebar anchors as a sticky right column when an
+            inline VM is selected. The left column expands to full width otherwise.
         -->
         <div class="flex gap-6 items-start">
             <div class="flex-1 min-w-0 space-y-6">
 
-        <!-- Header mit Back Button und Status Badge -->
+        <!-- Header with back button and status badge -->
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-4">
                 <RouterLink :to="{ name: 'deployments.list' }">
@@ -1549,13 +1492,8 @@ const deselectTask = () => {
                     </span>
                 </div>
 
-                <!-- Pause / Resume button. One slot, two states —
-                     visible only when the lifecycle matrix permits
-                     the action right now. While ``pausing``/``resuming``
-                     it stays hidden (no point clicking; the live
-                     stream shows progress). The Trash button below
-                     handles destroy/delete and stays available even
-                     for ``paused`` deployments. -->
+                <!-- Pause / Resume button. One slot, two states, visible only
+                     when the lifecycle matrix permits the action right now. -->
                 <BaseButton
                     v-if="canPauseOrResume"
                     @click="!pauseResumeBusy && (showPauseResumeModal = true)"
@@ -1574,11 +1512,9 @@ const deselectTask = () => {
                     </span>
                 </BaseButton>
 
-                <!-- Single Delete button. The backend decides whether
-                     this triggers a destroy task (live progress to
-                     follow) or a straight soft-delete based on status.
-                     Hidden entirely for members — they can read the
-                     deployment but never tear it down. -->
+                <!-- Single Delete button. The backend decides whether this
+                     triggers a destroy task or a straight soft-delete based on
+                     status. Hidden entirely for members. -->
                 <BaseButton v-if="isOwnerView" @click="canDelete && (showDeleteModal = true)" :disabled="!canDelete"
                     :title="deleteDisabledReason" class="flex items-center gap-2 px-4 py-2" variant="red">
                     <Trash2 :size="18" />
@@ -1587,10 +1523,10 @@ const deselectTask = () => {
             </div>
         </div>
 
-        <!-- Main Info Grid mit 3 Cards -->
+        <!-- Main info grid with 3 cards -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <!-- Deployment Info Card -->
+            <!-- Deployment info card -->
             <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <Package :size="20" class="text-primary" />
@@ -1625,7 +1561,7 @@ const deselectTask = () => {
                 </div>
             </div>
 
-            <!-- App Info Card -->
+            <!-- App info card -->
             <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <Package :size="20" class="text-emerald-600" />
@@ -1660,7 +1596,7 @@ const deselectTask = () => {
                 <div v-else class="text-sm text-gray-500">No app information available</div>
             </div>
 
-            <!-- User Info Card -->
+            <!-- User info card -->
             <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <User :size="20" class="text-blue-600" />
@@ -1697,7 +1633,7 @@ const deselectTask = () => {
             </div>
         </div>
 
-        <!-- Gruppen Section -->
+        <!-- Groups section -->
         <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm" v-if="groups.length > 0">
             <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                 <Users :size="20" class="text-primary" />
@@ -1964,10 +1900,9 @@ const deselectTask = () => {
                             <div v-if="member.account"
                                 class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-600 lg:justify-end">
 
-                                <!-- Web-App-URL aus ``team_vms.<team>.url`` —
-                                     für jedes Mitglied des Teams gleich. Wenn
-                                     gesetzt, fällt die SSH-Pille weg und der
-                                     Username steht daneben. -->
+                                <!-- Web-app URL from ``team_vms.<team>.url``,
+                                     shared by every team member. When set, the
+                                     SSH pill is dropped and the username shows next to it. -->
                                 <div v-if="team.vm?.url"
                                     class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded border border-gray-100">
                                     <span class="text-gray-400 font-sans text-[10px] uppercase tracking-wider flex-shrink-0">User:</span>
@@ -1993,10 +1928,8 @@ const deselectTask = () => {
                                     </button>
                                 </div>
 
-                                <!-- Fertige SSH-Befehlszeile — enthält bereits
-                                     username, IP und (bei nicht-22) den Port,
-                                     darum reichen IP/Port-Chips daneben nicht
-                                     mehr; eine reicht. -->
+                                <!-- Ready-to-use SSH command line — already
+                                     includes username, IP and (for non-22) the port. -->
                                 <div v-if="!team.vm?.url && member.account.data.ip && member.account.data.username && (!member.account.data.authtype || member.account.data.authtype === 'ssh')"
                                     class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded border border-gray-100 max-w-full">
                                     <span class="text-gray-400 font-sans text-[10px] uppercase tracking-wider flex-shrink-0">SSH:</span>
@@ -2362,18 +2295,10 @@ const deselectTask = () => {
                             </div>
                             <div class="bg-gray-50 p-4 overflow-y-auto max-h-[500px]">
                                 <div class="bg-white rounded-lg border border-gray-200 p-4">
-                                    <!-- Failure-Sonderfall: bei einem
-                                         backend-formatierten
-                                         ``Task failed: ...``-String
-                                         splitten wir die freundliche
-                                         Headline von der technischen
-                                         Trace-Section. Die Headline
-                                         steht direkt sichtbar in rot;
-                                         die Details liegen hinter
-                                         einem Toggle, damit der
-                                         Endnutzer nicht sofort einen
-                                         30-zeiligen Python-Stack-Trace
-                                         vor sich hat. -->
+                                    <!-- Failure case: for a backend-formatted
+                                         ``Task failed: ...`` string, split the
+                                         friendly headline (shown in red) from the
+                                         technical trace, which hides behind a toggle. -->
                                     <template v-if="taskLogsSplit.isFailure">
                                         <div class="flex items-start gap-2 text-sm text-red-700 mb-3">
                                             <AlertCircle :size="18" class="mt-0.5 flex-shrink-0" />
@@ -2459,21 +2384,10 @@ const deselectTask = () => {
 
             </div>
             <!--
-                VM detail sidebar — sticky right column. Conditionally
-                rendered: only takes space when the user opened a VM.
-                ``sticky top-6`` keeps the panel in view as the user
-                scrolls the main content; ``max-h-[calc(100vh-6rem)]``
-                clamps the panel to the viewport (minus the App-Header
-                + a comfortable gap at top/bottom). The inner
-                ``InfrastructureVmDrawer`` keeps its own
-                ``overflow-y-auto`` body, so the panel scrolls
-                independently of the left column without breaking
-                its rounded corners.
-
-                On smaller screens (below ``xl``) the sidebar falls
-                into the page flow as a normal-width card under the
-                main content — no sticky there, the column-layout
-                doesn't survive narrow viewports anyway.
+                VM detail sidebar — sticky right column, rendered only when the
+                user opened a VM. Stays in view while scrolling the main content
+                and is clamped to the viewport height. Below ``xl`` it falls into
+                the page flow as a normal-width card.
             -->
             <aside
                 v-if="openDrawerAddress"

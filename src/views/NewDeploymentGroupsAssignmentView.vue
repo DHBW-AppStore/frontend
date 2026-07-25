@@ -11,9 +11,8 @@ const { t } = useI18n()
 const router = useRouter()
 const store = useDeploymentStore()
 
-// --- Reaktiver Cache-Wrapper ---
+// --- Reactive cache wrapper ---
 const studentCacheMap = store.studentCache ?? new Map<string, any>()
-// Type für studentCache definieren
 const studentCache = reactive<Record<string, any>>({})
 
 function syncStudentCacheToReactive() {
@@ -69,11 +68,11 @@ function ensureDefaultGroupNames() {
   for (let i = 0; i < groupCount.value; i++) {
     const currentName = currentNames[i]
     
-    // Behalte vorhandene Namen (auch wenn sie Default-Namen sind, falls der User sie so haben will)
+    // Keep existing names (even if they are default names).
     if (currentName && currentName.trim() !== '') {
       groupNames.value[i] = currentName
     } else {
-      // Setze Default Namen nur für neue/leere Gruppen per i18n
+      // Set default names only for new/empty groups via i18n.
       groupNames.value[i] = t('deployment.assignment.vmDefaultName', { index: i + 1 })
     }
   }
@@ -91,7 +90,7 @@ const ensureAssignmentArrays = () => {
 watch(groupCount, (newCount, oldCount) => {
   ensureAssignmentArrays()
   
-  // Füge Default-Namen nur für neue Gruppen hinzu
+  // Add default names only for new groups.
   if (typeof oldCount === 'number' && newCount > oldCount) {
     for (let i = oldCount; i < newCount; i++) {
       if (!groupNames.value[i] || groupNames.value[i]?.trim() === '') {
@@ -111,7 +110,7 @@ watch(groupCount, (newCount, oldCount) => {
       }
     }
     assignments.length = newCount
-    // Entferne auch die Namen für entfernte Teams
+    // Also remove the names for removed teams.
     groupNames.value.length = newCount
   }
 }, { immediate: false })
@@ -127,7 +126,7 @@ onMounted(async () => {
   }
   ensureAssignmentArrays()
   
-  // Stelle sicher, dass alle Gruppen Namen haben
+  // Ensure all groups have names.
   ensureDefaultGroupNames()
   
   const assignments = store.draft.assignments as string[][]
@@ -182,7 +181,7 @@ const setOneGroup = () => {
   const assignments = store.draft.assignments as string[][]
   assignments[0] = [...store.draft.studentIds]
   
-  // Behalte bestehenden Namen oder setze Default
+  // Keep the existing name or set a default.
   const defaultName = t('deployment.assignment.vmDefaultName', { index: 1 })
   if (!groupNames.value[0] || groupNames.value[0].trim() === '' || groupNames.value[0].startsWith('Team')) {
     groupNames.value[0] = defaultName
@@ -207,7 +206,7 @@ const setEachUser = () => {
 const setCustom = () => {
   store.draft.groupMode = 'custom'
   if (store.draft.groupCount === 1 && totalStudents.value > 1) store.draft.groupCount = 2
-  // Stelle sicher, dass Namen für die aktuelle Anzahl vorhanden sind
+  // Ensure names exist for the current count.
   ensureDefaultGroupNames()
 }
 
@@ -325,7 +324,7 @@ const removeFromGroup = (studentId: string, groupIndex: number) => {
 const shuffleStudents = () => {
   const allStudents = [...store.draft.studentIds]
   
-  // Fisher-Yates Shuffle mit explizitem null-check
+  // Fisher-Yates shuffle with explicit null check.
   for (let i = allStudents.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     const temp = allStudents[i]

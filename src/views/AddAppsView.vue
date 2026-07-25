@@ -68,7 +68,7 @@ const processFile = (file: File) => {
     return
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    // Variable für MB an i18n übergeben
+    // Pass the MB value to i18n.
     toast.error(t('AppsCreateView.messages.imageTooLarge', { size: Math.round(MAX_IMAGE_BYTES / 1024 / 1024) }))
     return
   }
@@ -300,7 +300,7 @@ const handleSubmit = async () => {
       </div>
 
       <div class="flex flex-col items-center pt-4">
-        <!-- Container an das Design der Übersicht angepasst (p-6, flex-col, ohne Zentrierung) -->
+        <!-- Container matching the overview design (p-6, flex-col) -->
         <div class="w-full bg-[#EFF5F2] border border-gray-200 rounded-xl p-6 flex flex-col shadow-sm relative min-h-[250px]">
 
           <!-- Badge -->
@@ -310,7 +310,7 @@ const handleSubmit = async () => {
 
           <!-- Header: Icon & Titel nebeneinander -->
           <div class="flex items-center gap-4 mb-4 mt-2">
-            <!-- Icon/Logo Box analog zur Übersicht -->
+            <!-- Icon/logo box, matching the overview -->
             <div class="bg-white p-3 rounded-lg shadow-sm text-gray-700 flex items-center justify-center w-[56px] h-[56px] flex-shrink-0">
               <img
                   v-if="imagePreviewUrl"
@@ -331,7 +331,7 @@ const handleSubmit = async () => {
             </h3>
           </div>
 
-          <!-- Beschreibung (linksbündig mit line-clamp) -->
+          <!-- Description (left-aligned with line-clamp) -->
           <div :lang="locale" class="text-sm mb-6 flex-grow text-left break-words hyphens-auto">
             <MarkdownRenderer
               v-if="form.description.trim()"
@@ -344,9 +344,8 @@ const handleSubmit = async () => {
             </p>
           </div>
 
-          <!-- Preview-Button — selbe Optik wie auf der App-Übersicht
-               (BaseButton variant="green"), nicht klickbar weil's nur
-               eine Vorschau ist. -->
+          <!-- Preview button — same look as on the app overview
+               (BaseButton variant="green"), not clickable since it's a preview. -->
           <div class="mt-auto">
             <BaseButton
                 variant="green"

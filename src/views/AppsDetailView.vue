@@ -76,12 +76,8 @@ const isOwner = computed(() =>
   !!app.value && String(app.value.userId) === String(authStore.userId)
 )
 
-// RBAC-Plan Bug #2: App edit/delete/version-management ist
-// "Owner ODER Admin" — Teacher haben KEINEN Bypass mehr. Vorher
-// erlaubte ``isTeacherOrAdmin`` Teachern Apps fremder Owner zu
-// löschen, was der refactored Backend (``capabilities.can_edit_app``)
-// jetzt mit 403 abweist; das UI muss matchen, sonst klickt der
-// Teacher ins Leere.
+// App edit/delete/version-management is "owner or admin". Mirrors the backend
+// ``capabilities.can_edit_app`` so the UI doesn't offer actions that would 403.
 const canDelete = computed(() =>
   !!app.value && (isAdmin.value || isOwner.value)
 )

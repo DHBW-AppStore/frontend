@@ -433,61 +433,57 @@ export interface DeploymentQueryParams extends PaginationParams {
 // FRONTEND UI TYPES (Wizard State & Helper)
 // ================================================================
 
-// 1. Erweiterte App-Konfiguration für die UI (Summary View)
-// Diese Daten kommen evtl. später hardcoded aus dem Frontend oder als JSON vom Backend
+// Extended app configuration for the UI (summary view).
 export interface AppUIConfig {
-  flavor: string      // z.B. "m1.medium"
-  image: string       // z.B. "kali:latest"
-  ports: string       // z.B. "22, 8080"
-  network: string     // z.B. "Isolated VLAN"
-  software: string    // z.B. "Wireshark"
-  secGroup?: string   // z.B. "SSH only"
-  storage?: string    // z.B. "40 GB"
+  flavor: string      // e.g. "m1.medium"
+  image: string       // e.g. "kali:latest"
+  ports: string       // e.g. "22, 8080"
+  network: string     // e.g. "Isolated VLAN"
+  software: string    // e.g. "Wireshark"
+  secGroup?: string   // e.g. "SSH only"
+  storage?: string    // e.g. "40 GB"
 }
 
-// Wir erweitern deinen Backend-App-Typ für die Nutzung im Store
+// Backend app type extended for use in the store.
 export interface AppDefinition extends App {
-  // Optional, da nicht jede App Configs haben muss oder diese erst gemockt werden
-  defaultConfig?: AppUIConfig 
-  // Icon Name als String für Lucide Icons (z.B. "Terminal", "ShieldAlert")
-  iconStr?: string 
+  defaultConfig?: AppUIConfig
+  // Icon name string for Lucide icons (e.g. "Terminal", "ShieldAlert").
+  iconStr?: string
 }
 
-// 2. Wizard State (Der "Warenkorb" vor dem Absenden)
+// Wizard state (the "cart" before submission).
 export type GroupMode = 'one' | 'eachUser' | 'custom'
 
 export interface DeploymentDraft {
-  // Schritt 1: App Auswahl
+  // Step 1: app selection
   appId: string | null
-  
-  // Schritt 2: Basis Konfiguration
+
+  // Step 2: base configuration
   name: string
-  courseIds: string[]    // Mehrere Kurse möglich
-  studentIds: string[]   // Ausgewählte Studenten IDs
-  
-  // Schritt 3: Gruppen Anzahl
+  courseIds: string[]    // multiple courses possible
+  studentIds: string[]   // selected student IDs
+
+  // Step 3: group count
   groupMode: GroupMode
   groupCount: number,
-  userInputVar: Record<string, any> | string // Kann Object oder JSON-String sein
-  
-  // Schritt 4: Zuweisung (Wer ist in welcher Gruppe?)
-  // Key = Gruppen-Index (0, 1, 2...), Value = Array von UserIDs
+  userInputVar: Record<string, any> | string // object or JSON string
+
+  // Step 4: assignment (which user is in which group).
+  // Key = group index (0, 1, 2...), value = array of user IDs.
   assignments: Record<number, string[]>
   releaseTag: string
-          // Für den JSON-String aus dem Textfeld
-  variables: Record<string, any> // Für die geparsten/gemergten Variablen
-  version: string                // Optional, falls du es explizit brauchst
+  variables: Record<string, any> // parsed/merged variables
+  version: string
   groupNames: string[]
-  variableDefinitions?: AppVariable[] // API-Definitionen für die Variablen
-  // Wizard-side state for ``@openstack:file:<scope>``-marked
-  // variables. Outer key: variable name. Inner key: scope-specific
-  // routing token (``"all"`` for scope=all, team name for scope=team,
-  // ``Team-User`` composite for scope=user). The store flushes this
-  // verbatim into ``DeploymentCreate.files`` on submit.
+  variableDefinitions?: AppVariable[] // API definitions for the variables
+  // Wizard-side state for ``@openstack:file:<scope>``-marked variables.
+  // Outer key: variable name. Inner key: scope routing token (``"all"``,
+  // team name, or ``Team-User`` composite). Flushed verbatim into
+  // ``DeploymentCreate.files`` on submit.
   fileUploads?: Record<string, Record<string, DeploymentFile>>
 }
 
-// 3. Helper Type für die finale Zusammenfassung
+// Helper type for the final summary.
 export interface WizardSummary {
   appName: string
   deploymentName: string
@@ -501,78 +497,43 @@ export interface AppVariable {
   type: string
   description?: string
   // Backend coerces the HCL default literal to its native Python type
-  // (siehe ``apps.py`` Bug #7-Fix): ``number`` → number, ``bool`` →
-  // boolean, ``list/set/tuple`` → Array, ``map(...)`` → Object,
-  // ``null`` → null (in dem Fall setzt das Backend zusätzlich
-  // ``required = true``). Strings bleiben Strings — ohne äußere
-  // Quotes. ``unknown[]`` / ``Record<string, unknown>`` statt ``any``,
-  // damit Konsumenten den Wert vor der Verwendung narrowen müssen.
+  // (number, bool, list/set/tuple → Array, map → Object, null). A null
+  // default also makes the variable required. Strings stay unquoted strings.
   default?: string | number | boolean | unknown[] | Record<string, unknown> | null
   required?: boolean
-  // ADD THIS PROPERTY:
   source?: 'terraform' | 'packer' | 'unknown'
-  // Value-Help-Metadaten — gefüllt vom Backend, wenn die Variable
-  // einen ``@openstack:<type>[:<mode>][:<multi>]``-Marker in der
-  // ``description`` trägt. Ohne Marker bleibt das Feld undefined und
-  // das Frontend rendert einen Free-Text-Input. Es gibt KEINE
-  // Auto-Detection auf Variablennamen oder Description-Inhalt.
+  // Value-help metadata, set by the backend when the variable carries an
+  // ``@openstack:<type>[:<mode>][:<multi>]`` marker. Undefined for free-text inputs.
   osType?: AppVariableOsType
-  // 'id' (UUID) oder 'name'. Wird vom Backend gesetzt — entweder
-  // explizit aus dem Marker (``:id`` / ``:name``) oder per Default
-  // ('name' für die meisten Resource-Kinds).
+  // 'id' (UUID) or 'name'; defaults to 'name' for most resource kinds.
   osMode?: 'id' | 'name'
-  // Multi-Select — vom Backend aus Marker (``:multi`` / ``:single``)
-  // ODER aus dem HCL-Type abgeleitet (``list(string)``/``set(...)``
-  // → multi).
+  // Multi-select, from the marker or derived from the HCL list/set type.
   osMulti?: boolean
-  // Scope für ``@openstack:file:<scope>``. Nur gesetzt wenn
-  // ``osType === 'file'``. Bestimmt, ob der Wizard genau eine
-  // FileDropZone (``all``), eine pro Team (``team``) oder eine pro
-  // User (``user``) rendert. ``osMode`` und ``osMulti`` bleiben für
-  // file-Variablen ungesetzt — das Frontend liest am ``osScope``,
-  // nicht am Mode/Multi-Slot.
+  // Scope for ``@openstack:file:<scope>``. Set only when ``osType === 'file'``;
+  // controls whether the wizard renders one FileDropZone, one per team, or one per user.
   osScope?: 'all' | 'team' | 'user'
-  // Per-Variable-Scope für ALLE Variablen, unabhängig vom Resource-
-  // Type. ``all`` (default) → ein Wert für alle. ``team`` → ein Wert
-  // pro Team. ``user`` → ein Wert pro User (Composite-Slot-Key
-  // ``TeamName-Username``). Backend setzt das aus dem optionalen
-  // vierten Marker-Slot (z.B. ``@openstack:flavor:id:single:team``
-  // oder dem reinen Scope-Marker ``@openstack:::team``). Für file-
-  // Variablen wird das Feld vom Backend mit ``osScope`` synchron
-  // gehalten, sodass das Frontend für die Slot-Berechnung nur EINE
-  // Quelle lesen muss.
+  // Per-variable scope for all variables. 'all' = one shared value, 'team' = one
+  // value per team, 'user' = one value per user (slot key ``TeamName-Username``).
   varScope?: 'all' | 'team' | 'user'
-  // Erlaubte Dateiendungen für ``@openstack:file:<scope>:<exts>``.
-  // Pflicht bei File-Variablen — der Wizard nutzt das als
-  // ``accept``-Attribut der FileDropZone, das Backend rejected jeden
-  // Upload mit einer nicht-aufgeführten Endung mit 422.
+  // Allowed file extensions for file variables; used as the FileDropZone
+  // ``accept`` attribute. The backend rejects other extensions with 422.
   fileExtensions?: string[]
-  // Marker-Fehler. Backend setzt das, wenn die Variable einen
-  // ``@openstack``-Marker hat aber dieser malformiert oder
-  // widersprüchlich ist. Frontend zeigt das als Inline-Banner an
-  // der Variable, rendert sie aber als normalen Free-Text-Input,
-  // damit der Wizard nutzbar bleibt.
+  // Marker error set by the backend when a variable's ``@openstack`` marker is
+  // malformed. The frontend shows it as an inline banner and falls back to free text.
   markerError?: AppVariableMarkerError
-  // Multi-Image-Apps: Schlüssel des Packer-Templates, zu dem diese
-  // Variable gehört. Vom Backend gesetzt für ``source === 'packer'``
-  // (z.B. ``"webserver"`` oder ``"database"``). Legacy-Apps mit einem
-  // einzigen ``packer/template.pkr.hcl`` erhalten den Sentinel
-  // ``"default"``. Für ``source === 'terraform'`` bleibt das Feld
-  // ``null``/undefined.
+  // Multi-image apps: key of the Packer template this variable belongs to
+  // (for ``source === 'packer'``). Single-template apps use the sentinel
+  // ``"default"``; Terraform variables leave this null/undefined.
   template_key?: string | null
 }
 
 export interface AppVariableMarkerError {
   variable: string
   message: string
-  // ``terraform/variables.tf:42``-style Hint, damit App-Autoren den
-  // Bug ohne Grep finden.
+  // ``terraform/variables.tf:42``-style hint pointing app authors to the marker location.
   location?: string
-  // Stabile Error-Codes (z.B. ``MARKER_WHITESPACE``,
-  // ``MARKER_UNKNOWN_OS_TYPE``) — Backend setzt das parallel zur
-  // deutschen ``message``-Property, damit das Frontend ohne
-  // String-Matching i18n machen kann. Schema-readiness für Bug #15;
-  // Übersetzungen folgen später.
+  // Stable error codes (e.g. ``MARKER_WHITESPACE``, ``MARKER_UNKNOWN_OS_TYPE``)
+  // set alongside the ``message`` so the frontend can i18n without string matching.
   code?: string
 }
 
@@ -580,19 +541,12 @@ export interface AppVariableMarkerError {
 // OPENSTACK DISPLAY-CACHE TYPES
 // ----------------------------------------------------------------
 /**
- * Return-Shape von ``useOpenStackResourceCache.getDisplayName``.
+ * Return shape of ``useOpenStackResourceCache.getDisplayName``.
  *
- * ``known = true`` heißt: Wert wurde im geladenen Cache gefunden und
- * ``name`` ist die menschenlesbare Bezeichnung. ``known = false``
- * heißt: Wert ist im Cache nicht enthalten — Aufrufer rendert den
- * Rohwert und kann optional eine "unbekannt"-Markierung zeigen.
- *
- * ``modeMismatch = true`` signalisiert, dass der Wert nicht im
- * angeforderten Mode (z.B. ``id``) gefunden wurde, aber im anderen
- * Mode (``name``) ein Treffer existiert — die Variable speichert also
- * eine UUID, während der Default ein Name ist (oder umgekehrt).
- * Konsumenten können das als subtilen Hinweis ("falscher Mode-Default")
- * rendern.
+ * ``known = true`` means the value was found in the cache and ``name`` is the
+ * human-readable label; ``known = false`` means the caller should render the raw value.
+ * ``modeMismatch = true`` means the value was found in the other mode (e.g. a UUID
+ * stored while the default is a name), which callers can surface as a subtle hint.
  */
 export interface OpenStackDisplayName {
   name: string
@@ -600,12 +554,11 @@ export interface OpenStackDisplayName {
   modeMismatch?: boolean
 }
 
-// Liste der unterstützten OpenStack-Resource-Types. MUSS konsistent
-// sein mit:
+// List of supported OpenStack resource types. Must stay consistent with:
 //  - backend/app/routers/apps.py (``_OS_TYPES``)
-//  - backend/app/routers/openstack_resources.py (Listen-Endpoints)
+//  - backend/app/routers/openstack_resources.py (list endpoints)
 //  - frontend/src/api/openstack-resources.api.ts (``OsResourceType``)
-//  - frontend/src/components/OpenStackResourcePicker.vue (Render)
+//  - frontend/src/components/OpenStackResourcePicker.vue (render)
 export type AppVariableOsType =
   | 'network'
   | 'subnet'
@@ -617,9 +570,7 @@ export type AppVariableOsType =
   | 'volume'
   | 'router'
   | 'availability_zone'
-  // ``file`` is a pseudo-resource: not picked from a remote API but
-  // rendered as a FileDropZone widget that produces a base64 payload
-  // shipped to the backend in ``DeploymentCreate.files``. The
-  // ``osScope`` field tells the wizard whether to render one zone
-  // (``all``), one per team (``team``) or one per user (``user``).
+  // ``file`` is a pseudo-resource: rendered as a FileDropZone widget that
+  // produces a base64 payload shipped to the backend in ``DeploymentCreate.files``.
+  // ``osScope`` tells the wizard whether to render one zone, one per team, or one per user.
   | 'file'

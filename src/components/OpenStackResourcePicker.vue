@@ -1,44 +1,38 @@
 <script setup lang="ts">
 /**
- * OpenStack-Resource-Picker.
+ * OpenStack resource picker.
  *
- * Wird im Wizard für Variablen gerendert, deren Backend-Antwort einen
- * ``osType`` trägt. Das Backend setzt diesen Wert AUSSCHLIESSLICH, wenn
- * die Variable in ihrer ``description`` einen ``@openstack:<type>``-
- * Marker hat — siehe ``backend/app/routers/apps.py`` für die Marker-
- * Grammatik. Es gibt keine Auto-Detection an dieser Komponente vorbei.
+ * Rendered in the wizard for variables whose backend response carries an
+ * ``osType`` (set only when the variable's ``description`` has an
+ * ``@openstack:<type>`` marker; see ``backend/app/routers/apps.py``).
  *
- * Lädt die passende Liste vom Backend (Cache 60 s im Backend +
- * Display-Cache im Frontend, geteilt zwischen Picker-Instanzen). Zeigt
- * einen Single- oder Multi-Select.
+ * Loads the matching list from the backend (60s backend cache + a frontend
+ * display cache shared between picker instances) and shows a single- or
+ * multi-select.
  *
- * Wire-Format (``v-model``):
- *  - osMode='id'   → speichert die UUID(s)
- *  - osMode='name' → speichert den Namen / die Namen
- *  - multi=false   → String
- *  - multi=true    → Array<String> ODER kommaseparierter String
- *                    (was reinkommt, kommt auch raus — Wizard speichert
- *                    historisch CSV für ``list(string)``-Variablen)
+ * Wire format (``v-model``):
+ *  - osMode='id'   → stores the UUID(s)
+ *  - osMode='name' → stores the name(s)
+ *  - multi=false   → string
+ *  - multi=true    → Array<String> or comma-separated string (echoes input)
  *
- * Im UI wird IMMER der Display-Name gezeigt, auch wenn der gespeicherte
- * Wert eine UUID ist. Cache-Lookup läuft über
- * ``composables/useOpenStackResourceCache``.
+ * The UI always shows the display name even when the stored value is a UUID;
+ * lookups go through ``composables/useOpenStackResourceCache``.
  *
- * Dropdown öffnet sich als Floating-Layer via ``<Teleport to="body">`` —
- * andere Wizard-Felder verschieben sich nicht. Position wird aus der
- * Trigger-Bounding-Rect berechnet und auf Scroll/Resize neu kalibriert;
- * scrollt der Trigger aus dem Viewport, schließt das Dropdown.
+ * The dropdown opens as a floating layer via ``<Teleport to="body">`` so other
+ * wizard fields don't shift. Position is computed from the trigger's bounding
+ * rect and recalibrated on scroll/resize; scrolling the trigger out of view
+ * closes the dropdown.
  *
- * Edge-Cases die berücksichtigt sind:
- *  - 412 Credentials missing → CTA-Banner statt leerer Liste
- *  - 502 OpenStack down → Banner + Fallback auf Free-Text-Input
- *  - Default-Wert ist eine UUID, deren Name (noch) nicht im Cache steckt
- *    → wir zeigen den Roh-Wert mit "(manuell)"-Tag, bis Cache lädt
- *  - Liste ist leer → Hint mit Free-Text-Option
- *  - Subnet-Filter: networkId-Prop kann zur Laufzeit von einer
- *    anderen Variable kommen → reaktiv neu laden bei Wechsel
- *  - Dropdown größer als Platz unten → flippt nach oben
- *  - Component unmount mit offenem Dropdown → Body-Teleport sauber weg
+ * Edge cases handled:
+ *  - 412 credentials missing → CTA banner instead of an empty list
+ *  - 502 OpenStack down → banner + fallback to free-text input
+ *  - default value is a UUID whose name isn't cached yet → show the raw value
+ *    with a "(manual)" tag until the cache loads
+ *  - empty list → hint with free-text option
+ *  - subnet filter: ``networkId`` prop can change at runtime → reactive reload
+ *  - dropdown taller than space below → flips up
+ *  - unmount with dropdown open → body teleport cleaned up
  */
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -63,11 +57,10 @@ import {
   getDisplayName,
   ensureLoaded,
 } from '@/composables/useOpenStackResourceCache'
-// CredentialMissingBanner wird hier NICHT mehr importiert — der Parent
-// (NewDeploymentVariableView) rendert den vollen Banner einmal über dem
-// Variables-Grid, sobald irgendein Picker ``credentials-missing`` emit'et.
-// Im Picker selbst zeigen wir nur einen kompakten Platzhalter, damit
-// nicht N×Banner stacken.
+// CredentialMissingBanner is not imported here — the parent
+// (NewDeploymentVariableView) renders the full banner once above the variables
+// grid when any picker emits ``credentials-missing``. Here we only show a
+// compact placeholder so banners don't stack.
 
 // ----------------------------------------------------------------
 // Props / Emits
@@ -87,11 +80,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: string | string[]): void
-  // Wird beim Wechsel in/aus dem ``credentials_missing``-State gefeuert.
-  // Der Parent (``NewDeploymentVariableView``) rendert daraufhin EINEN
-  // gemeinsamen Banner über dem Variables-Grid — andernfalls würde jeder
-  // Picker seinen eigenen Banner zeigen (N×Stacking), was bei vielen
-  // OpenStack-Variablen den Wizard unbenutzbar macht.
+  // Fired when entering/leaving the ``credentials_missing`` state. The parent
+  // renders a single shared banner above the variables grid in response.
   (e: 'credentials-missing', missing: boolean): void
 }>()
 
@@ -118,17 +108,17 @@ const searchQuery = ref('')
 const isFreeTextMode = ref(false)
 const freeTextValue = ref('')
 
-// Floating-Layer-Anchor: live-getrackte Bounding-Rect des Triggers,
-// sodass das Teleport-Panel exakt unter (oder über) dem Trigger landet.
+// Floating-layer anchor: live-tracked bounding rect of the trigger so the
+// teleport panel lands exactly below (or above) it.
 const triggerEl = ref<HTMLElement | null>(null)
 const dropdownEl = ref<HTMLElement | null>(null)
 const searchInputEl = ref<HTMLInputElement | null>(null)
 const popupStyle = ref<Record<string, string>>({})
-// 'down' | 'up' — flip wenn nicht genug Platz darunter
+// 'down' | 'up' — flip when there isn't enough space below.
 const popupDir = ref<'down' | 'up'>('down')
 
 // ----------------------------------------------------------------
-// Resource-spezifische Mappings
+// Resource-specific mappings
 // ----------------------------------------------------------------
 function fetchByType(): Promise<{ data: any[] }> {
   switch (props.osType) {
@@ -156,7 +146,7 @@ function fetchByType(): Promise<{ data: any[] }> {
 }
 
 function adapt(raw: any): ResourceItem {
-  // Pro Type eine Anzeige-Adaptation. Sekundär = grobe Spec-Info.
+  // Per-type display adaptation. Secondary = rough spec info.
   switch (props.osType) {
     case 'flavor':
       return {
@@ -239,19 +229,13 @@ function adapt(raw: any): ResourceItem {
 }
 
 // ----------------------------------------------------------------
-// Selection-Logik
+// Selection logic
 // ----------------------------------------------------------------
 const selectedKeys = computed<Set<string>>(() => {
   const v = props.modelValue
-  // String-Coerce: HCL-Defaults landen je nach Typ als Number/Boolean im
-  // ``modelValue`` (``default = 2``, ``default = true``). Ohne Coerce
-  // wären die wegen ``typeof v === 'string'`` unsichtbar — der Trigger
-  // würde Placeholder zeigen, obwohl ein Default gesetzt ist. ``null``/
-  // ``undefined`` weiterhin als „leer" werten. Zusätzlich: die LITERALEN
-  // Strings ``"null"`` / ``"undefined"`` ebenfalls als leer behandeln —
-  // sie entstehen z.B. wenn ein Persistenz-Layer ``String(null)`` macht,
-  // statt den Wert auszulassen, und würden sonst als gültige Selection
-  // im Trigger erscheinen.
+  // String-coerce: HCL defaults can arrive as number/boolean (``default = 2``),
+  // which would be invisible without coercion. ``null``/``undefined`` and the
+  // literal strings ``"null"``/``"undefined"`` are treated as empty.
   const toKey = (x: unknown): string => {
     if (x === null || x === undefined) return ''
     const s = String(x)
@@ -276,24 +260,21 @@ const isSelected = (item: ResourceItem): boolean =>
   selectedKeys.value.has(valueOf(item))
 
 /**
- * Anzeige-Liste der aktuellen Selection. Zwei Quellen:
- *  1. ``items`` (= dieser Picker hat schon geladen)
- *  2. Display-Cache (= ein anderer Picker / Summary-View hat geladen)
- *
- * Wenn weder noch greift, fallen wir auf den Roh-Wert zurück und
- * markieren ihn als ``known: false``.
+ * Display list of the current selection. Two sources: this picker's ``items``
+ * if loaded, otherwise the shared display cache. Falls back to the raw value
+ * marked ``known: false`` when neither has it.
  */
 const selectedDisplay = computed(() => {
   const out: { value: string; displayName: string; known: boolean }[] = []
   const mode: Mode = props.osMode || 'name'
   for (const key of selectedKeys.value) {
-    // Lokale items sind die Quelle der Wahrheit, falls geladen
+    // Local items are the source of truth when loaded.
     const local = items.value.find((it) => valueOf(it) === key)
     if (local) {
       out.push({ value: key, displayName: local.name, known: true })
       continue
     }
-    // Sonst Display-Cache fragen — geteilt zwischen allen Pickern
+    // Otherwise ask the shared display cache.
     const cached = getDisplayName(props.osType, mode, key)
     if (cached) {
       out.push({ value: key, displayName: cached.name, known: cached.known })
@@ -314,11 +295,8 @@ const filteredItems = computed<ResourceItem[]>(() => {
           (it.secondary || '').toLowerCase().includes(q),
       )
     : items.value
-  // Ausgewählte Einträge nach oben ziehen. Wichtig, wenn ein Default
-  // gesetzt ist und die Liste lang ist (z.B. 30 Flavors) — der User
-  // sieht sofort, was schon „dranliegt", ohne scrollen zu müssen.
-  // Bei mehrfachen Auswahlen bleibt die relative Reihenfolge der
-  // selektierten gleich (stable sort).
+  // Pull selected entries to the top so a set default is immediately visible in
+  // a long list. Relative order of selected items is preserved (stable sort).
   return [...base].sort((a, b) => {
     const sa = isSelected(a) ? 0 : 1
     const sb = isSelected(b) ? 0 : 1
@@ -333,12 +311,8 @@ function toggle(item: ResourceItem) {
     if (current.has(key)) current.delete(key)
     else current.add(key)
     // Multi-select always emits an Array, regardless of how the parent
-    // initialised ``modelValue``. The previous code branched on
-    // ``Array.isArray(props.modelValue)``, which broke scoped variables
-    // (initial value is ``''`` → first pick emitted a CSV string → from
-    // then on the variable was stuck as a string instead of progressing
-    // to an array, and the backend's ``map(list(string))`` HCL type
-    // rejected the value).
+    // initialised ``modelValue`` (the backend's ``map(list(string))`` HCL type
+    // requires an array).
     emit('update:modelValue', Array.from(current))
   } else {
     const newVal = isSelected(item) ? '' : key
@@ -377,9 +351,8 @@ async function load(opts: { forceRefresh?: boolean } = {}) {
     }
     const res = await fetchByType()
     items.value = (res.data || []).map(adapt)
-    // Display-Cache befüllen für andere Picker / Summary-View. Nur,
-    // wenn wir UNGEFILTERT geladen haben — eine subnet-pro-network-
-    // gefilterte Liste darf nicht den globalen Cache stören.
+    // Prime the display cache for other pickers / summary view, but only for an
+    // unfiltered load — a per-network subnet list must not pollute the global cache.
     if (!props.filterNetworkId) {
       primeDisplayCache(props.osType, res.data || [])
     }
@@ -403,11 +376,9 @@ async function load(opts: { forceRefresh?: boolean } = {}) {
 }
 
 async function handleRefresh() {
-  // Snapshot der vor-Refresh-Selektion + ihrer ``known``-Flags, damit wir
-  // nach dem Reload erkennen können, ob Einträge VERSCHWUNDEN sind (z.B.
-  // Flavor wurde im Project gelöscht). Wir warnen nur für Keys, die vorher
-  // bekannt waren — wenn der Wert sowieso schon „extern" war, ist „weiterhin
-  // nicht in Liste" keine neue Information.
+  // Snapshot the pre-refresh selection and its ``known`` flags so we can detect
+  // entries that disappeared after the reload (e.g. a flavor deleted in the
+  // project). We only warn for keys that were known before.
   const previouslyKnown = new Map<string, string>()
   for (const entry of selectedDisplay.value) {
     if (entry.known) previouslyKnown.set(entry.value, entry.displayName)
@@ -427,15 +398,14 @@ async function handleRefresh() {
   }
 }
 
-// Credentials-Missing-Bubble-Up: Parent rendert nur EINEN Banner für ALLE
-// Picker zusammen. Wir emit'en bei jedem Wechsel — Parent kann ent-
-// duplizieren (z.B. mehrere Picker reporten gleichzeitig fehlende Creds).
+// Credentials-missing bubble-up: the parent renders a single banner for all
+// pickers, so we emit on every change and the parent de-duplicates.
 watch(
   () => errorReason.value === 'credentials_missing',
   (missing) => emit('credentials-missing', missing),
 )
 
-// Subnet-Filter / AZ-Service: bei Wechsel neu laden.
+// Reload when the subnet filter / AZ service / os type changes.
 watch(
   () => [props.filterNetworkId, props.azService, props.osType],
   () => {
@@ -444,12 +414,9 @@ watch(
 )
 
 onMounted(() => {
-  // CSV-to-array migration: older wizard persistence stored
-  // ``list(string)`` variables as a comma-separated string. So the
-  // parent can work with an array consistently from now on (instead of
-  // handling CSV or array depending on the incoming value), we
-  // normalize once on mount — only when we actually see a CSV string and
-  // are running in multi mode.
+  // CSV-to-array migration: some persisted ``list(string)`` variables arrive
+  // as a comma-separated string, so normalize once on mount (multi mode only)
+  // so the parent can consistently work with an array.
   if (props.multi && typeof props.modelValue === 'string' && props.modelValue.trim()) {
     const parts = props.modelValue
       .split(',')
@@ -536,22 +503,17 @@ const placeholderText = computed(() => {
 // Floating Dropdown — Position + Lifecycle
 // ----------------------------------------------------------------
 /**
- * Positioniert das Dropdown-Panel relativ zur Trigger-Rect.
- *
- * Wir nutzen ``position: fixed`` + ``top``/``left``/``width`` aus der
- * Bounding-Rect. Vorteil: kein Scroll-Container-Surfing nötig, und der
- * Body ist die Anchor — passt zum ``Teleport to="body"``.
- *
- * Flip-Logik: liegt der Trigger so weit unten, dass das Panel nicht
- * mehr in den Viewport passt, klappen wir nach OBEN.
+ * Positions the dropdown panel relative to the trigger rect using
+ * ``position: fixed`` + ``top``/``left``/``width``, with the body as anchor
+ * (matches ``Teleport to="body"``). Flips up when the panel doesn't fit below.
  */
 function recalcPosition() {
   const trigger = triggerEl.value
   if (!trigger) return
   const rect = trigger.getBoundingClientRect()
   const viewportH = window.innerHeight
-  // Wenn Trigger aus dem Viewport raus ist, schließen wir das
-  // Dropdown — sonst hängt es ohne sichtbaren Anker irgendwo.
+  // Close the dropdown if the trigger scrolled out of the viewport, otherwise
+  // it would hang with no visible anchor.
   if (rect.bottom < 0 || rect.top > viewportH) {
     isOpen.value = false
     return
@@ -586,15 +548,13 @@ function recalcPosition() {
 
 function openDropdown() {
   isOpen.value = true
-  // nextTick: warten bis das Panel im DOM ist, dann positionieren
-  // und Search-Input fokussieren.
+  // nextTick: wait for the panel in the DOM, then position it and focus search.
   nextTick(() => {
     recalcPosition()
     searchInputEl.value?.focus()
   })
-  // Listener so lange registrieren, wie das Dropdown auf ist.
-  // ``capture: true`` bei Scroll, damit auch Scroll innerhalb von
-  // overflow-Containern (Wizard-Card) reagiert.
+  // Register listeners while the dropdown is open. ``capture: true`` on scroll
+  // so scrolling inside overflow containers (the wizard card) also reacts.
   window.addEventListener('scroll', recalcPosition, true)
   window.addEventListener('resize', recalcPosition)
   document.addEventListener('mousedown', onDocumentMouseDown)
@@ -628,9 +588,8 @@ function onKeydown(ev: KeyboardEvent) {
   if (ev.key === 'Escape') closeDropdown()
 }
 
-// Component-Unmount: garantiert Listener entfernen, sonst bleibt das
-// Body-Teleport-Panel als Zombie-Listener aktiv, wenn der User
-// während offenem Dropdown zur nächsten Wizard-Page navigiert.
+// Guarantee listener removal on unmount, otherwise the body teleport panel
+// leaves a zombie listener if the user navigates away with the dropdown open.
 onBeforeUnmount(() => {
   closeDropdown()
 })
@@ -639,7 +598,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="space-y-2">
     <!-- ============================================================ -->
-    <!-- Free-Text-Modus (Fallback bei OS-down oder explizit gewählt) -->
+    <!-- Free-text mode (fallback when OpenStack is down, or chosen explicitly) -->
     <!-- ============================================================ -->
     <div v-if="isFreeTextMode" class="space-y-2">
       <div class="flex items-center justify-between">
@@ -665,10 +624,8 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- ============================================================ -->
-    <!-- Credentials fehlen → kompakter Inline-Hinweis                 -->
-    <!-- Den vollen CredentialMissingBanner rendert der Parent EINMAL  -->
-    <!-- über dem Variables-Grid (vgl. credentials-missing-Emit oben). -->
-    <!-- Hier nur ein platzhaltender, dezenter Hinweis pro Picker.     -->
+    <!-- Credentials missing → compact inline hint. The full banner is rendered -->
+    <!-- once by the parent above the variables grid; here only a subtle per-picker note. -->
     <!-- ============================================================ -->
     <div v-else-if="errorReason === 'credentials_missing'">
       <div
@@ -688,7 +645,7 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- ============================================================ -->
-    <!-- Picker (Single oder Multi) — Trigger-Button + Floating Panel  -->
+    <!-- Picker (single or multi) — trigger button + floating panel -->
     <!-- ============================================================ -->
     <div v-else class="space-y-2">
       <div class="flex items-start gap-2">
@@ -706,9 +663,8 @@ onBeforeUnmount(() => {
                   <span class="text-gray-400 text-sm">{{ placeholderText }}</span>
                 </template>
                 <template v-else>
-                  <!-- Selection-Pille: gleicher Akzent wie die Highlight-
-                       Zeile im Dropdown — sofort lesbar, dass hier was
-                       AUSGEWÄHLT ist (statt nur „irgendwo getippt"). -->
+                  <!-- Selection pill: same accent as the highlight row in the
+                       dropdown, so it reads clearly as a selected value. -->
                   <span
                     class="inline-flex items-center gap-1.5 max-w-full px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200"
                     :title="selectedDisplay[0]?.value"
@@ -718,11 +674,9 @@ onBeforeUnmount(() => {
                       {{ selectedDisplay[0]?.displayName }}
                     </span>
                   </span>
-                  <!-- Subtiler Hinweis, wenn der Wert nicht in der aktuell
-                       geladenen Liste auftaucht (z.B. Default-UUID einer
-                       gelöschten Ressource oder noch nicht geladene
-                       Items). Kein Alarm-Amber — wir zeigen es nur als
-                       Tooltip-fähige graue Pille. -->
+                  <!-- Subtle hint when the value isn't in the currently loaded
+                       list (e.g. a default UUID of a deleted resource or not-yet
+                       -loaded items). Shown as a grey, tooltip-capable pill. -->
                   <span
                     v-if="!selectedDisplay[0]?.known"
                     class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 border border-gray-200"
@@ -773,9 +727,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <!-- ============================================================ -->
-    <!-- Floating Dropdown — Teleport auf Body-Level                  -->
-    <!-- ============================================================ -->
+    <!-- Floating dropdown — teleported to body level -->
     <Teleport to="body">
       <div
         v-if="isOpen && !isFreeTextMode && errorReason !== 'credentials_missing'"
@@ -846,8 +798,8 @@ onBeforeUnmount(() => {
           </template>
         </div>
 
-        <!-- Items — flex-grow + overflow-auto, damit max-height
-             aus popupStyle die Scrolling-Region begrenzt -->
+        <!-- Items — flex-grow + overflow-auto so max-height from popupStyle
+             bounds the scrolling region -->
         <ul v-else class="flex-grow overflow-y-auto divide-y divide-gray-100">
           <li
             v-for="item in filteredItems"
@@ -880,10 +832,8 @@ onBeforeUnmount(() => {
               <div v-if="item.secondary" class="text-xs text-gray-500 truncate">
                 {{ item.secondary }}
               </div>
-              <!-- ID-Anzeige in id-Mode als sekundärer Hinweis;
-                   im UI selbst wird der ``name`` als Hauptlabel
-                   gezeigt (auch wenn der gespeicherte Wert die UUID
-                   ist), das hier ist nur die Disambiguierung. -->
+              <!-- Show the ID in id-mode as a secondary disambiguation hint;
+                   the ``name`` remains the main label. -->
               <div v-if="osMode === 'id' && item.id" class="text-[10px] text-gray-400 font-mono truncate">
                 {{ item.id }}
               </div>
@@ -891,7 +841,7 @@ onBeforeUnmount(() => {
           </li>
         </ul>
 
-        <!-- Footer mit Mode-Hint -->
+        <!-- Footer with mode hint -->
         <div class="border-t border-gray-100 px-3 py-1.5 bg-gray-50 flex items-center justify-between text-[11px] text-gray-500 flex-shrink-0">
           <span>
             <template v-if="osMode === 'id'">{{ t('openstackPicker.hints.storesUuid') }}</template>

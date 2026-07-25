@@ -117,9 +117,8 @@ export const useAuthStore = defineStore('auth', {
       initializePromise = null
       fetchMePromise = null
       useOpenStackCredentialsStore().reset()
-      // OpenStack-Resource-Display-Cache leeren — der nächste User
-      // hat eigene Credentials und sieht ein anderes Project; alte
-      // Resource-Listen dürfen nicht stehenbleiben.
+      // Clear the OpenStack resource display cache — the next user has their own
+      // credentials and a different project, so old resource lists must not persist.
       invalidateOpenStackCache()
 
       try {

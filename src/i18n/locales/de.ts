@@ -643,7 +643,7 @@ export default {
     groups: {
       title: 'Legen Sie die Anzahl der Gruppen fest',
       one: 'Eine Gruppe',
-      eachUser: 'Jeder Nutzer einzeln',  // <--- WICHTIG: Hier stand vorher "each", es muss "eachUser" heißen!
+      eachUser: 'Jeder Nutzer einzeln',
       custom: 'Individuell',
       autoAssigned: 'Automatisch zugewiesen',
       autoDistributed: 'Automatisch verteilt',

@@ -1,23 +1,16 @@
 <script setup lang="ts">
 /**
  * Inline detail panel for ONE VM, shown directly under the clicked
- * ``InfrastructureVmCard`` inside the deployment-detail page's
- * Infrastruktur section.
+ * ``InfrastructureVmCard`` in the deployment-detail page's Infrastructure section.
  *
- * Previously this was a side-drawer (fixed-position slide-in over a
- * darkened backdrop) — that pulled focus too aggressively and felt
- * detached from the rest of the page. The new shape is a normal
- * Vue component that renders as part of the parent's flow, looking
- * like just another card in the Infrastruktur section.
+ * Renders as part of the parent's flow, like another card in the section.
  *
- * Layout: a rounded card with the same ``bg-white border shadow-sm``
- * vocabulary as the surrounding deployment-page sections, internal
- * sub-cards on ``bg-gray-50`` for each data group (Identity,
- * Lifecycle, Hardware, Addresses, Ports, SGs, Volumes, Metadata).
+ * Layout: a rounded ``bg-white border shadow-sm`` card matching the surrounding
+ * sections, with ``bg-gray-50`` sub-cards per data group (Identity, Lifecycle,
+ * Hardware, Addresses, Ports, SGs, Volumes, Metadata).
  *
- * The component still owns its own fetch+loading+error state — the
- * parent only mounts it with a target address and listens for
- * ``close`` to collapse the inline panel.
+ * The component owns its own fetch/loading/error state; the parent mounts it
+ * with a target address and listens for ``close`` to collapse the panel.
  */
 import { onMounted, ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'

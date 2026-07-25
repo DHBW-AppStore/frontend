@@ -5,13 +5,12 @@ import { useRole } from "@/composables/useRole"
 /**
  * Conditional slot wrapper for permission-gated template content.
  *
- *   <RoleGate admin>…</RoleGate>          – nur Admins sehen den Slot
- *   <RoleGate staff>…</RoleGate>          – Teacher + Admin
+ *   <RoleGate admin>…</RoleGate>          – only admins see the slot
+ *   <RoleGate staff>…</RoleGate>          – teacher + admin
  *   <RoleGate :can="canEditApp(app)">…</RoleGate>
  *
- * The capability checks (``can``) are evaluated by the parent and
- * passed in as a plain boolean — the gate component itself stays
- * thin and does not know about specific resources.
+ * Capability checks (``can``) are evaluated by the parent and passed in as a
+ * plain boolean; the gate stays thin and knows nothing about specific resources.
  */
 const props = defineProps<{
   admin?: boolean

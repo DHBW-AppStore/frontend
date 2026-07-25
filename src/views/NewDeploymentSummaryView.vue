@@ -37,10 +37,9 @@ const toastStore = useToastStore()
 // State
 const isLoadingVariables = ref(false)
 const appVariables = ref<AppVariable[]>([])
-// Lokales Submit-Lock. Verhindert Doppel-Submit zwischen dem ersten
-// Klick und dem Moment, in dem der Store ``isLoading`` setzt — dazwischen
-// liegt mindestens ein API-Roundtrip (`userApi.list`), genug für einen
-// zweiten Klick. Wird auch von der Button-Anzeige gelesen.
+// Local submit lock. Prevents a double-submit between the first click and the
+// moment the store sets ``isLoading`` (there's at least one API roundtrip in
+// between). Also read by the button display.
 const isSubmitting = ref(false)
 
 const selectedApp = computed(() => {
@@ -63,27 +62,16 @@ const groupModeDisplay = computed(() => {
   return t('deployment.groups.custom')
 })
 
-// Getrennte Listen für Packer und Terraform Variablen.
-// Reaktivität für Display-Namen kommt aus ``getDisplayName`` — die
-// Funktion liest ``cacheVersion.value`` aus dem Cache-Modul, sodass
-// Vue automatisch re-computed sobald der Cache befüllt wird.
+// Separate lists for Packer and Terraform variables. Display-name reactivity
+// comes from ``getDisplayName``, which reads ``cacheVersion.value`` so Vue
+// re-computes once the cache is populated.
 //
-// Multi-Image-Packer ist der knifflige Fall: Step 3
-// (``NewDeploymentVariableView.handleNext``) schreibt für solche Apps
-// die Packer-Werte verschachtelt in
-// ``draft.variables.packer[<tkey>][<name>]`` statt flach unter
-// ``draft.variables[<name>]``. Hier müssen wir die gleiche Verschachtelung
-// nachvollziehen, sonst landen wir auf dem ``apiDef.default``-Fallback
-// und das Summary zeigt fest Defaults statt dem, was der User getippt
-// hat.
-//
-// Detection: ``draft.variables.packer`` ist ein nicht-leeres Objekt UND
-// jedes Top-Level-Element darin ist selbst ein Objekt (ein ``tkey``-
-// Bucket). Single-Image-Packer-Apps haben keine packer-Key oder einen,
-// dessen Werte direkt die Variable-Werte sind — das fängt der explizite
-// Object-Check ab. Bei false-positives (z.B. eine Variable hieße
-// zufällig ``packer`` und enthielte ein Map-of-Maps) wäre der Worst-
-// Case eine schief gerenderte Zeile, kein Datenverlust.
+// Multi-image Packer is the tricky case: step 3 writes such apps' Packer values
+// nested under ``draft.variables.packer[<tkey>][<name>]`` instead of flat under
+// ``draft.variables[<name>]``, so we mirror that nesting here to avoid falling
+// back to ``apiDef.default``. Detection: ``draft.variables.packer`` is a
+// non-empty object whose every top-level element is itself an object (a
+// ``tkey`` bucket). A false positive would at worst render one skewed line.
 const isMultiImagePackerLayout = computed<boolean>(() => {
   const pk = (deploymentStore.draft.variables as any)?.packer
   if (!pk || typeof pk !== 'object' || Array.isArray(pk)) return false
@@ -131,9 +119,8 @@ const terraformVars = computed(() => {
   const defs = appVariables.value || []
   const result: Array<{label: string, value: string, raw?: string}> = []
   defs.forEach((apiDef: AppVariable) => {
-    // File-Variablen haben einen separaten Renderer unterhalb —
-    // das Summary-Strang würde sonst ihren ``default = {}``-Wert
-    // anzeigen statt die hochgeladenen Files. Skip + own block.
+    // File variables have a separate renderer below; skip them here so the
+    // summary doesn't show their ``default = {}`` instead of the uploaded files.
     if (apiDef.osType === 'file') return
     if (apiDef.source === 'terraform') {
       const val = currentVars[apiDef.name] !== undefined ? currentVars[apiDef.name] : apiDef.default
@@ -208,11 +195,9 @@ function _formatSubmitError(err: any): string {
 
 
 /**
- * Files-Sektion der Summary. Eine Karte pro ``@openstack:file:*``-
- * Variable, mit einer Chip-Liste der hochgeladenen Slots — wir zeigen
- * Filename + Größe, NIE den base64-Inhalt. Die Größe formatieren wir
- * in KB/MB damit der Lehrende vor dem Submit ein Gefühl dafür hat,
- * was er gleich an die Plattform schickt.
+ * Files section of the summary. One card per ``@openstack:file:*`` variable,
+ * with a chip list of uploaded slots showing filename + size (never the base64
+ * content). Size is formatted in KB/MB.
  */
 function _formatBytes(n: number): string {
   if (n < 1024) return `${n} B`
@@ -250,13 +235,12 @@ const fileVarSummaries = computed(() => {
 })
 
 /**
- * Erzeugt die Summary-Zeile für eine Variable.
+ * Builds the summary row for a variable.
  *
- * - Marker-Variablen (osType gesetzt): Wir zeigen IMMER den Display-
- * Namen aus dem Frontend-Cache. Im id-Mode steht der gespeicherte
- * Roh-Wert (UUID) zusätzlich als ``title``-Tooltip — Submit-Wert
- * geht aber unverändert ans Backend.
- * - Plain-Variablen: alter Code-Pfad, Roh-Wert formatieren.
+ * - Marker variables (osType set): always show the display name from the
+ *   frontend cache. In id-mode the raw value (UUID) is added as a ``title``
+ *   tooltip, but the submitted value goes to the backend unchanged.
+ * - Plain variables: format the raw value.
  */
 function toSummaryEntry(def: AppVariable, val: any): {label: string, value: string, raw?: string} {
   // Scoped variables (``varScope = team|user``) arrive as a map
@@ -289,8 +273,7 @@ function toSummaryEntry(def: AppVariable, val: any): {label: string, value: stri
     return {
       label: def.name,
       value: display,
-      // raw nur mitgeben, wenn er sich vom Display unterscheidet —
-      // sonst doppelt sich's im Tooltip
+      // Only pass raw if it differs from the display, to avoid a duplicate tooltip.
       raw: display !== rawString ? rawString : undefined,
     }
   }
@@ -298,10 +281,9 @@ function toSummaryEntry(def: AppVariable, val: any): {label: string, value: stri
 }
 
 /**
- * Display-String für einen OS-Marker-Wert. Single → ein Name; Multi →
- * komma-separierte Namen. Fällt auf den Roh-Wert zurück, wenn der Cache
- * (noch) keinen Display-Namen hat — der UUID-Look ist zwar hässlich,
- * aber besser als Leer.
+ * Display string for an OS-marker value. Single → one name; multi → comma-
+ * separated names. Falls back to the raw value when the cache has no display
+ * name yet.
  */
 function renderOsValue(
   osType: NonNullable<AppVariable['osType']>,
@@ -311,8 +293,7 @@ function renderOsValue(
 ): string {
   if (val === null || val === undefined || val === '') return '-'
 
-  // Werte zerlegen — kann String, CSV oder Array sein. Genau wie im
-  // Picker.
+  // Split the value — may be a string, CSV, or array. Same as in the picker.
   let parts: string[] = []
   if (Array.isArray(val)) {
     parts = val.map((v) => String(v).trim()).filter(Boolean)
@@ -334,7 +315,7 @@ function renderOsValue(
   return names.join(', ')
 }
 
-// Helper zum Formatieren der Werte
+// Helper to format the values.
 const formatValue = (val: any): string => {
   if (typeof val === 'boolean') return val ? t('deployment.summary.yes') : t('deployment.summary.no')
   if (Array.isArray(val)) return val.map(item => String(item).replace(/^"|"$/g, '')).join(', ')
@@ -344,15 +325,13 @@ const formatValue = (val: any): string => {
 }
 
 /**
- * Sorgt dafür, dass der Display-Cache für alle OS-Resource-Types
- * geladen ist, die in den aktuellen Variablen vorkommen. Wird im
- * Mount-Pfad aufgerufen, NACHDEM die Variablen-Definitionen vorliegen.
+ * Ensures the display cache is loaded for all OS resource types present in the
+ * current variables. Called in the mount path after the variable definitions
+ * are available.
  *
- * Race-tolerant: ``ensureLoaded`` dedupliziert parallele Aufrufe (wenn
- * z.B. Picker und Summary gleichzeitig laden) — das Backend bekommt
- * trotzdem nur einen Roundtrip pro Type. Computeds, die ``getDisplayName``
- * aufrufen, re-laufen automatisch sobald der Cache aktualisiert wird
- * (siehe ``cacheVersion`` in useOpenStackResourceCache.ts).
+ * Race-tolerant: ``ensureLoaded`` deduplicates parallel calls, so the backend
+ * only gets one roundtrip per type. Computeds calling ``getDisplayName`` re-run
+ * automatically once the cache updates (see ``cacheVersion``).
  */
 async function primeOsDisplayCache(defs: AppVariable[]): Promise<void> {
   const types = new Set<NonNullable<AppVariable['osType']>>()
@@ -408,26 +387,23 @@ const fetchAndSyncVariables = async () => {
       versionString = rawTag
     }
 
-    // B. API Variablen laden — nur erreicht, wenn der Cache aus Step 3
-    // leer war (siehe oben). Der Backend-Endpoint klont das App-Repo
-    // sparse + parst variables.tf, das kann je nach Git-Latenz mehrere
-    // Sekunden dauern. Cache-Hit aus dem Store wird oben schon
-    // bedient; dieser Fetch ist der Fallback für Deep-Link / Reload.
+    // B. Load API variables — only reached when the cache from step 3 was
+    // empty. The backend endpoint sparse-clones the app repo and parses
+    // variables.tf, which can take a few seconds. This fetch is the fallback
+    // for deep-link / reload.
     let variables: AppVariable[] = []
     try {
       variables = await appStore.fetchAppVariables(selectedApp.value.appId, versionString)
       deploymentStore.draft.variableDefinitions = variables
     } catch (varError: any) {
       console.warn('Could not load variables:', varError)
-      // FEHLER WEITERWERFEN, damit der äußere Catch-Block den Toast anzeigt!
+      // Re-throw so the outer catch block shows the toast.
       throw varError
     }
     appVariables.value = variables || []
 
-    // C. User-Input parsen. ``userInputVar`` kann historisch entweder ein
-    // JSON-String oder bereits ein Record sein (Type sagt
-    // ``Record<string, any> | string``). Vorher wurde ``.trim()`` blind
-    // aufgerufen — das wirft bei Objekten. Saubere Fallunterscheidung:
+    // C. Parse user input. ``userInputVar`` can be either a JSON string or a
+    // Record (type ``Record<string, any> | string``), so branch on the type.
     let userOverrides: Record<string, any> = {}
     const rawUserInput: any = deploymentStore.draft.userInputVar
     if (rawUserInput && typeof rawUserInput === 'object' && !Array.isArray(rawUserInput)) {
@@ -460,10 +436,9 @@ const fetchAndSyncVariables = async () => {
        deploymentStore.draft.variables![key] = userOverrides[key]
     })
 
-    // F. Display-Cache für OS-Marker-Variablen befüllen — damit die
-    // Summary-Karten Resource-Namen statt UUIDs zeigen. Asynchron;
-    // der initialen Render-Pass zeigt UUIDs, sobald der Cache da ist
-    // wird der Tick erhöht und die Computeds rendern Namen nach.
+    // F. Prime the display cache for OS-marker variables so the summary cards
+    // show resource names instead of UUIDs. Async: the initial pass shows UUIDs
+    // and the computeds re-render names once the cache lands.
     primeOsDisplayCache(appVariables.value)
 
   } catch (error: any) {
@@ -486,22 +461,21 @@ onMounted(() => {
 
 // --- Actions ---
 const handleCustomize = () => {
-  // WICHTIG: Hier zur Variablen-Seite navigieren
+  // Navigate to the variables page.
   router.push({ name: 'deployment.variables' })
 }
 
 const handleDeploy = async () => {
-  // Lokales Lock vor jedem await. Der Store-isLoading-Flag greift erst
-  // im Inneren von ``submitDraft`` → bis dahin würde ein zweiter Klick
-  // einen zweiten Deployment-Erstellungs-Roundtrip starten.
+  // Local lock before any await. The store's isLoading flag only flips inside
+  // ``submitDraft``, so a second click before then would start a second
+  // deployment-creation roundtrip.
   if (isSubmitting.value) return
   isSubmitting.value = true
 
   try {
-    // 1) Keycloak-ID → User-ID-Mapping. Wird LOKAL gehalten und NICHT in
-    //    den Draft zurückgeschrieben, sonst sind nach einem fehlgeschlagenen
-    //    Submit die IDs im Draft mit dem ``studentCache`` (Keycloak-keyed)
-    //    nicht mehr kompatibel — Anzeige in Step 2/3 würde brechen.
+    // 1) Keycloak ID → user ID mapping. Kept local and not written back into
+    //    the draft, otherwise the draft IDs would no longer match the
+    //    Keycloak-keyed ``studentCache`` after a failed submit.
     let backendUsers: any[] = []
     try {
       const res = await userApi.list()
@@ -515,10 +489,10 @@ const handleDeploy = async () => {
     const keycloakToUserId = new Map<string, string>()
     backendUsers.forEach((u: any) => {
       if (u.keycloak_id) keycloakToUserId.set(u.keycloak_id, u.userId)
-      keycloakToUserId.set(u.userId, u.userId) // Fallback: falls schon userId
+      keycloakToUserId.set(u.userId, u.userId) // fallback: already a userId
     })
 
-    // 2) Lokale Kopien der ID-Listen mit übersetzten IDs.
+    // 2) Local copies of the ID lists with translated IDs.
     const sourceAssignments = (deploymentStore.draft.assignments || {}) as Record<number, string[]>
     const mappedAssignments: Record<number, string[]> = {}
     Object.entries(sourceAssignments).forEach(([teamIdx, arr]) => {
@@ -531,10 +505,8 @@ const handleDeploy = async () => {
       .map((id: string) => keycloakToUserId.get(id) || id)
       .filter(Boolean)
 
-    // 3) Draft NUR transient für ``submitDraft`` patchen, dann zurückrollen.
-    //    So sieht der Wizard bei Fehler weiterhin die ursprünglichen
-    //    Keycloak-IDs (für die Anzeige), und nach Erfolg räumen wir
-    //    sowieso den ganzen Draft via ``resetDraft`` weg.
+    // 3) Patch the draft transiently for ``submitDraft`` only, then roll back
+    //    so the wizard still shows the original Keycloak IDs on failure.
     const originalAssignments = deploymentStore.draft.assignments
     const originalStudentIds = deploymentStore.draft.studentIds
     deploymentStore.draft.assignments = mappedAssignments
@@ -544,25 +516,20 @@ const handleDeploy = async () => {
     try {
       deployment = await deploymentStore.submitDraft()
     } catch (err: any) {
-      // Draft wieder auf Keycloak-IDs zurückrollen, damit der User in
-      // Step 2/3 wieder seine Auswahl sieht.
+      // Roll the draft back to Keycloak IDs so the user sees their selection
+      // again in steps 2/3.
       deploymentStore.draft.assignments = originalAssignments
       deploymentStore.draft.studentIds = originalStudentIds
       // Backend returns ``{detail: {reason, variable, slot, limit_bytes,
-      // actual_bytes, ...}}`` for size/extension/encoding violations
-      // (HTTP 413/422). Previously we passed ``detail`` straight to the
-      // toast, which rendered ``[object Object]`` because the toast
-      // signature expects a string. Now we branch on ``reason`` and
-      // format a localized message with the size numbers the user
-      // needs to act on.
+      // actual_bytes, ...}}`` for size/extension/encoding violations (413/422).
+      // Branch on ``reason`` and format a localized message with the size numbers.
       const message = _formatSubmitError(err)
       toastStore.addToast({ message, type: 'error' })
       return
     }
 
     if (deployment?.deploymentId) {
-      // Erfolgreich erstellt → Draft komplett zurücksetzen, damit der
-      // nächste Wizard-Lauf nicht alte Werte vorschlägt.
+      // Created successfully → reset the draft so the next wizard run starts clean.
       deploymentStore.resetDraft()
       toastStore.addToast({ message: t('deployment.summary.submitSuccess'), type: 'success' })
       await router.push({ name: 'deployments.list' })
@@ -573,7 +540,7 @@ const handleDeploy = async () => {
 }
 
 const handleBack = () => {
-    // Zurück führt jetzt zur Variablen-Seite (Step 3)
+    // Back leads to the variables page (step 3).
     router.push({ name: 'deployment.variables' })
 }
 </script>
@@ -752,11 +719,9 @@ const handleBack = () => {
             </div>
           </div>
 
-          <!-- Files-Sektion. Eine Karte pro File-Variable; Chips
-               listen die hochgeladenen Slots (filename + size).
-               Hidden wenn der App keine File-Variablen erklärt — der
-               Lehrende sieht eine leere Section sonst nur als
-               Rauschen. -->
+          <!-- Files section. One card per file variable; chips list the
+               uploaded slots (filename + size). Hidden when the app declares
+               no file variables. -->
           <div
             v-if="fileVarSummaries.length > 0"
             class="bg-white rounded-lg border-2 border-amber-200 overflow-hidden col-span-1 md:col-span-2"
