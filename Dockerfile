@@ -1,13 +1,14 @@
 # ===============================
 # Build Stage
 # ===============================
-FROM node:20-alpine AS build
+FROM node:24-alpine AS build
 
 WORKDIR /app
 
-# Nur Abhängigkeiten für sauberes Caching
+# Nur Abhängigkeiten für sauberes Caching. ``npm ci`` statt ``npm install``:
+# baut exakt aus package-lock.json und ändert die Datei nicht.
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # Restlichen Code kopieren
 COPY . .

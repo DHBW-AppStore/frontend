@@ -1,18 +1,18 @@
 # Frontend
 
-[![Coverage](https://img.shields.io/endpoint?url=https://six7-click-n-deploy.github.io/frontend/badge.json)](https://six7-click-n-deploy.github.io/frontend/)
+[![Coverage](https://img.shields.io/endpoint?url=https://dhbw-appstore.github.io/frontend/badge.json)](https://dhbw-appstore.github.io/frontend/)
 
 Vue 3 SPA für den App Store. Studierende und Dozierende verwalten hier Apps, deployen sie auf OpenStack und sehen ihre Deployments.
 
 ## Setup
 
-Dieses Repository wird nicht eigenständig gestartet. Der gesamte Stack — inklusive Frontend — wird über das deployment-Repository hochgefahren. Vollständige Anleitung: [deployment/README.md](https://github.com/six7-click-n-deploy/deployment#readme).
+Dieses Repository wird nicht eigenständig gestartet. Der gesamte Stack — inklusive Frontend — wird über das deployment-Repository hochgefahren. Vollständige Anleitung: [deployment/README.md](https://github.com/DHBW-AppStore/deployment#readme).
 
 Voraussetzung für alle folgenden Befehle: `make dev-up` aus dem `deployment/`-Verzeichnis wurde ausgeführt und der Stack läuft.
 
 ## Entwicklung
 
-Alle `make`-Befehle werden aus dem `deployment/`-Verzeichnis des [deployment-Repos](https://github.com/six7-click-n-deploy/deployment) ausgeführt — dort liegt das Makefile.
+Alle `make`-Befehle werden aus dem `deployment/`-Verzeichnis des [deployment-Repos](https://github.com/DHBW-AppStore/deployment) ausgeführt — dort liegt das Makefile.
 
 ```bash
 # in app-store/deployment
@@ -71,5 +71,5 @@ src/
 
 ## Mehr
 
-- Architektur und projektübergreifende Doku: [.github-Repo](https://github.com/six7-click-n-deploy/.github)
+- Architektur und projektübergreifende Doku: [.github-Repo](https://github.com/DHBW-AppStore/.github)
 - API-Docs (Backend Swagger): http://localhost:8000/docs (nach `make dev-up`)
