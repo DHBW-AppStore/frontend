@@ -1108,6 +1108,7 @@ export default {
     listPlaceholder: 'Wert 1, Wert 2',
     defaultPlaceholder: 'Standard: {value}',
     enterValue: 'Wert eingeben...',
+    chooseValue: 'Wert auswählen...',
   },
 
 };
