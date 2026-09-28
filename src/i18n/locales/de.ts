@@ -33,6 +33,10 @@ export default {
     approvals: "Freigaben",
   },
 
+  theme: {
+    dark: "Dunkles Design",
+  },
+
   action: {
     back: "Zurück",
   },

@@ -19,6 +19,7 @@ import { useAuth } from '@/composables/useAuth'
 import { useRouteAccess } from '@/composables/useRouteAccess'
 import { useRole } from '@/composables/useRole'
 import { ROUTE_NAMES } from '@/router/route-names'
+import ThemeToggle from '@/components/ui/ThemeToggle.vue'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -175,6 +176,8 @@ const navItems = computed(() => [
               class="px-2.5 py-1 transition-colors border-l border-white/20"
             >EN</button>
           </div>
+
+          <ThemeToggle />
 
           <!-- User menu -->
           <div class="relative user-menu-root">
