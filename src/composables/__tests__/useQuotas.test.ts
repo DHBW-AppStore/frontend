@@ -9,24 +9,24 @@ const { getColorClass, getTextColorClass, isQuotaCritical } = useQuotas()
 // One scale for bar, text and warning icon (see QUOTA_THRESHOLDS).
 describe('Quota-Schwellen', () => {
   it.each([
-    [0, 'bg-green-500'],
-    [49, 'bg-green-500'],
-    [50, 'bg-yellow-500'],
-    [74, 'bg-yellow-500'],
-    [75, 'bg-orange-500'],
-    [89, 'bg-orange-500'],
-    [90, 'bg-red-500'],
-    [100, 'bg-red-500'],
+    [0, 'meter-fill-low'],
+    [49, 'meter-fill-low'],
+    [50, 'meter-fill-mid'],
+    [74, 'meter-fill-mid'],
+    [75, 'meter-fill-mid'],
+    [89, 'meter-fill-mid'],
+    [90, 'meter-fill-high'],
+    [100, 'meter-fill-high'],
   ])('färbt den Balken bei %s%% %s', (percentage, expected) => {
     expect(getColorClass(percentage)).toBe(expected)
   })
 
   it.each([
-    [0, 'text-gray-600'],
-    [74, 'text-gray-600'],
-    [75, 'text-amber-500'],
-    [89, 'text-amber-500'],
-    [90, 'text-red-500'],
+    [0, 'text-fg-muted'],
+    [74, 'text-fg-muted'],
+    [75, 'text-warning'],
+    [89, 'text-warning'],
+    [90, 'text-danger'],
   ])('färbt den Text bei %s%% %s', (percentage, expected) => {
     expect(getTextColorClass(percentage)).toBe(expected)
   })

@@ -70,15 +70,15 @@ onMounted(() => {
     />
 
     <!-- Hero banner -->
-    <div class="hero-banner">
-      <div class="hero-content">
-        <p class="text-white/60 text-xs font-semibold uppercase tracking-widest mb-1">{{ timeGreeting }}</p>
-        <h1 class="text-white text-3xl font-bold mb-1">{{ firstName }}</h1>
-        <p class="text-white/60 text-sm">{{ $t('DashboardView.subtitle') }}</p>
+    <div class="surface-banner hero-banner">
+      <div>
+        <p class="text-fg-muted text-xs font-semibold uppercase tracking-[0.08em] mb-2">{{ timeGreeting }}</p>
+        <h1 class="text-fg text-[28px] leading-tight font-semibold tracking-[-0.01em] mb-2">{{ firstName }}</h1>
+        <p class="text-fg-muted text-sm">{{ $t('DashboardView.subtitle') }}</p>
       </div>
       <RouterLink
         :to="{ name: ROUTE_NAMES.apps }"
-        class="hero-cta group"
+        class="btn-primary group inline-flex items-center gap-2 h-10 px-5 rounded-control text-sm font-semibold whitespace-nowrap"
       >
         <Rocket :size="16" class="group-hover:translate-x-0.5 transition-transform" />
         {{ $t('DashboardView.deploymentNew') }}
@@ -86,29 +86,29 @@ onMounted(() => {
     </div>
 
     <!-- KPI row -->
-    <div class="kpi-row">
+    <div class="surface-panel kpi-row">
       <RouterLink :to="{ name: ROUTE_NAMES.deploymentsList }" class="kpi-item group">
-        <div class="kpi-icon-wrap" style="background:rgba(49,113,83,0.10)">
-          <BarChart3 :size="16" class="text-primary" />
+        <div class="kpi-icon-wrap">
+          <BarChart3 :size="16" class="text-icon" />
         </div>
         <div>
           <p class="kpi-num">{{ stats.deployments }}</p>
           <p class="kpi-lbl">{{ $t('DashboardView.deployments') }}</p>
         </div>
-        <ArrowRight :size="14" class="ml-auto text-gray-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+        <ArrowRight :size="14" class="ml-auto text-icon group-hover:text-fg group-hover:translate-x-0.5 transition-all" />
       </RouterLink>
 
       <div class="kpi-divider" />
 
       <RouterLink :to="{ name: ROUTE_NAMES.apps }" class="kpi-item group">
-        <div class="kpi-icon-wrap" style="background:rgba(228,140,42,0.10)">
-          <Layers :size="16" class="text-accentYellow" />
+        <div class="kpi-icon-wrap">
+          <Layers :size="16" class="text-icon" />
         </div>
         <div>
           <p class="kpi-num">{{ stats.apps }}</p>
           <p class="kpi-lbl">{{ $t('DashboardView.apps') }}</p>
         </div>
-        <ArrowRight :size="14" class="ml-auto text-gray-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+        <ArrowRight :size="14" class="ml-auto text-icon group-hover:text-fg group-hover:translate-x-0.5 transition-all" />
       </RouterLink>
 
       <!-- Courses tile: students have no courses access (staff-only route),
@@ -117,23 +117,23 @@ onMounted(() => {
       <div class="kpi-divider" />
 
       <RouterLink :to="{ name: ROUTE_NAMES.courses }" class="kpi-item group">
-        <div class="kpi-icon-wrap" style="background:rgba(59,130,246,0.08)">
-          <GraduationCap :size="16" class="text-blue-500" />
+        <div class="kpi-icon-wrap">
+          <GraduationCap :size="16" class="text-icon" />
         </div>
         <div>
           <p class="kpi-num">{{ stats.courses }}</p>
           <p class="kpi-lbl">{{ $t('DashboardView.courses') }}</p>
         </div>
-        <ArrowRight :size="14" class="ml-auto text-gray-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+        <ArrowRight :size="14" class="ml-auto text-icon group-hover:text-fg group-hover:translate-x-0.5 transition-all" />
       </RouterLink>
       </template>
     </div>
 
     <!-- Available resources — full width, two-column quotas list -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-50">
-        <h2 class="text-sm font-semibold text-gray-900">{{ $t('DashboardView.availableResources') }}</h2>
-        <span v-if="quotasLoading && hasCachedQuotas" class="flex items-center gap-1.5 text-xs text-gray-400">
+    <div class="surface-panel overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-subtle">
+        <h2 class="text-[15px] font-semibold text-fg">{{ $t('DashboardView.availableResources') }}</h2>
+        <span v-if="quotasLoading && hasCachedQuotas" class="flex items-center gap-1.5 text-xs text-fg-muted">
           <Loader2 :size="12" class="animate-spin" />
         </span>
       </div>
@@ -142,10 +142,10 @@ onMounted(() => {
       <div v-if="quotasLoading && !hasCachedQuotas" class="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
         <div v-for="i in 6" :key="i" class="animate-pulse space-y-2">
           <div class="flex justify-between">
-            <div class="h-3 bg-gray-100 rounded w-20" />
-            <div class="h-3 bg-gray-100 rounded w-10" />
+            <div class="h-3 bg-line/[.07] rounded w-20" />
+            <div class="h-3 bg-line/[.07] rounded w-10" />
           </div>
-          <div class="h-1.5 bg-gray-100 rounded-full" />
+          <div class="meter-track h-2" />
         </div>
       </div>
 
@@ -154,8 +154,8 @@ onMounted(() => {
         <div v-for="quota in formattedQuotas" :key="quota.label">
           <div class="flex items-center justify-between mb-1.5">
             <div class="flex items-center gap-1.5">
-              <component :is="quota.icon" :size="13" class="text-gray-400" />
-              <span class="text-xs font-medium text-gray-700">{{ quota.label }}</span>
+              <component :is="quota.icon" :size="13" class="text-fg-muted" />
+              <span class="text-xs font-medium text-fg">{{ quota.label }}</span>
             </div>
             <span
               class="text-xs font-semibold tabular-nums"
@@ -164,29 +164,29 @@ onMounted(() => {
               {{ quota.used }}/{{ quota.limit }}{{ quota.unit }}
             </span>
           </div>
-          <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+          <div class="meter-track w-full h-2">
             <div
               :class="getColorClass(quota.percentage)"
-              class="h-1.5 rounded-full transition-all duration-700"
+              class="h-full transition-all duration-700"
               :style="{ width: `${quota.percentage}%` }"
             />
           </div>
           <div class="flex items-center justify-between mt-1.5">
-            <p class="text-xs text-gray-400">{{ t('DashboardView.quotaUsed', { percentage: quota.percentage }) }}</p>
-            <AlertCircle v-if="isQuotaCritical(quota.percentage)" :size="11" class="text-red-400" />
+            <p class="text-xs text-fg-muted">{{ t('DashboardView.quotaUsed', { percentage: quota.percentage }) }}</p>
+            <AlertCircle v-if="isQuotaCritical(quota.percentage)" :size="11" class="text-danger" />
           </div>
         </div>
       </div>
       <!-- No credentials -->
       <div v-else-if="needsCredentials" class="px-6 py-12 text-center">
-        <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-          <XCircle :size="22" class="text-gray-400" />
+        <div class="w-12 h-12 rounded-full bg-line/[.07] flex items-center justify-center mx-auto mb-3">
+          <XCircle :size="22" class="text-icon" />
         </div>
-        <p class="text-sm font-medium text-gray-700">{{ t('DashboardView.noCredentialsTitle') }}</p>
-        <p class="text-xs text-gray-400 mt-1 mb-4">{{ t('DashboardView.noCredentialsHint') }}</p>
+        <p class="text-sm font-medium text-fg">{{ t('DashboardView.noCredentialsTitle') }}</p>
+        <p class="text-xs text-fg-muted mt-1 mb-4">{{ t('DashboardView.noCredentialsHint') }}</p>
         <RouterLink
           :to="{ name: ROUTE_NAMES.userOpenStack }"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primaryDark transition-colors"
+          class="btn-secondary inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-control transition"
         >
           {{ t('DashboardView.setUpNow') }} <ArrowRight :size="12" />
         </RouterLink>
@@ -194,7 +194,7 @@ onMounted(() => {
 
       <!-- Error / no data -->
       <div v-else class="px-6 py-12 text-center">
-        <p class="text-sm text-gray-400">{{ t('DashboardView.quotaLoadError') }}</p>
+        <p class="text-sm text-fg-muted">{{ t('DashboardView.quotaLoadError') }}</p>
       </div>
     </div>
 
@@ -202,75 +202,15 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Hero */
 .hero-banner {
-  background: linear-gradient(135deg, #317153 0%, #1e4a32 60%, #173325 100%);
-  border-radius: 20px;
-  padding: 28px 32px;
+  padding: 32px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: relative;
-  overflow: hidden;
+  gap: 24px;
 }
 
-.hero-banner::before {
-  content: '';
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 200px;
-  height: 200px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 50%;
-}
-
-.hero-banner::after {
-  content: '';
-  position: absolute;
-  bottom: -60px;
-  right: 80px;
-  width: 160px;
-  height: 160px;
-  background: rgba(255,255,255,0.03);
-  border-radius: 50%;
-}
-
-.hero-content {
-  position: relative;
-  z-index: 1;
-}
-
-.hero-cta {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.25);
-  color: white;
-  font-size: 0.875rem;
-  font-weight: 600;
-  border-radius: 12px;
-  text-decoration: none;
-  transition: background 150ms, border-color 150ms;
-  white-space: nowrap;
-}
-
-.hero-cta:hover {
-  background: rgba(255,255,255,0.22);
-  border-color: rgba(255,255,255,0.35);
-}
-
-/* KPI row */
 .kpi-row {
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #f0f0f0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   display: grid;
   grid-template-columns: 1fr auto 1fr auto 1fr;
   overflow: hidden;
@@ -279,45 +219,48 @@ onMounted(() => {
 .kpi-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 18px 24px;
+  gap: 16px;
+  padding: 24px;
   text-decoration: none;
   transition: background 150ms;
 }
 
 .kpi-item:hover {
-  background: #fafafa;
+  background: var(--nav-hover-bg);
 }
 
 .kpi-divider {
   width: 1px;
-  background: #f0f0f0;
-  margin: 12px 0;
+  background: var(--line-subtle);
+  margin: 16px 0;
 }
 
 .kpi-icon-wrap {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  background: var(--segment-bg);
+  border: 1px solid var(--line-subtle);
 }
 
 .kpi-num {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #111827;
+  font-size: 2rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: rgb(var(--color-fg));
   line-height: 1;
 }
 
 .kpi-lbl {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #9ca3af;
-  margin-top: 3px;
+  letter-spacing: 0.08em;
+  color: rgb(var(--color-fg-muted));
+  margin-top: 4px;
 }
 </style>

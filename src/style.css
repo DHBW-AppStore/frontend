@@ -1,3 +1,36 @@
+@import './styles/tokens.css';
+@import './styles/components.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    background-color: rgb(var(--color-canvas));
+    color: rgb(var(--color-fg));
+  }
+
+  body {
+    background: var(--canvas-bg);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: rgb(var(--color-accent));
+  }
+
+  /* Theme switch crossfade (useTheme.ts) */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 300ms;
+    animation-timing-function: ease-in-out;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--color-accent) / 0.7);
+    outline-offset: 2px;
+  }
+}

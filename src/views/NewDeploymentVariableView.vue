@@ -616,13 +616,13 @@ watch(
 </script>
 
 <template>
-  <div class="bg-white rounded-2xl p-10 border shadow-sm max-w-5xl mx-auto min-h-[600px] flex flex-col">
+  <div class="bg-panel rounded-2xl p-10 border shadow-sm max-w-5xl mx-auto min-h-[600px] flex flex-col">
 
     <div class="mb-6">
       <DeploymentProgressBar :current-step="3" class="mb-8" />
       <div class="text-center">
-        <h1 class="text-3xl font-bold text-gray-900">{{ t('deployment.summary.variablesConfigTitle') }}</h1>
-        <p class="text-emerald-600 font-medium mt-2 text-lg">
+        <h1 class="text-3xl font-bold text-fg">{{ t('deployment.summary.variablesConfigTitle') }}</h1>
+        <p class="text-fg-muted font-medium mt-2 text-lg">
           {{ t('deployment.summary.appLabel') }}: {{ deploymentStore.draft.name || t('deployment.variables.unnamed') }}
         </p>
       </div>
@@ -631,44 +631,44 @@ watch(
     <div class="flex-grow w-full max-w-7xl mx-auto mt-6">
       
       <div v-if="isLoading" class="flex flex-col items-center justify-center py-20">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mb-3"></div>
-        <span class="text-gray-400">{{ t('deployment.variables.loading') }}</span>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mb-3"></div>
+        <span class="text-fg-muted">{{ t('deployment.variables.loading') }}</span>
       </div>
 
-      <div v-else-if="variables.length === 0" class="text-center py-12 text-gray-500 italic bg-gray-50 rounded-xl border border-dashed">
+      <div v-else-if="variables.length === 0" class="text-center py-12 text-fg-muted italic bg-line/[.04] rounded-xl border border-dashed">
         {{ t('deployment.variables.noVariables') }}
       </div>
 
       <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200 overflow-hidden">
-          <div class="bg-blue-600 text-white px-6 py-4 flex items-center gap-3">
+        <div class="surface-sunken overflow-hidden">
+          <div class="bg-line/[.07] border-b border-subtle text-fg px-6 py-4 flex items-center gap-3">
             <Box :size="24" />
             <div>
               <h2 class="text-xl font-bold">{{ t('deployment.summary.packerVars') }}</h2>
-              <p class="text-xs text-blue-100 mt-0.5">{{ t('deployment.variables.packerDesc') }}</p>
+              <p class="text-xs text-fg-muted mt-0.5">{{ t('deployment.variables.packerDesc') }}</p>
             </div>
           </div>
           
           <div class="p-6 space-y-6 max-h-[600px] overflow-y-auto">
-            <div v-if="packerVariables.length === 0" class="text-center py-8 text-blue-600 italic">
+            <div v-if="packerVariables.length === 0" class="text-center py-8 text-fg-muted italic">
               {{ t('deployment.summary.noPackerVars') }}
             </div>
 
             <template v-for="tkey in templateKeys" :key="tkey">
               <div
                 v-if="templateKeys.length > 1"
-                class="-mx-6 px-6 py-2 bg-blue-50/70 border-y border-blue-200 text-sm font-semibold text-blue-900"
+                class="-mx-6 px-6 py-2 bg-line/[.04] border-y border-subtle text-sm font-semibold text-fg"
               >
                 Image: <code class="font-mono">{{ tkey }}</code>
               </div>
 
-              <div v-for="variable in packerByTemplate[tkey]" :key="`${tkey}.${variable.name}`" class="bg-white rounded-lg p-4 border border-blue-200 shadow-sm">
+              <div v-for="variable in packerByTemplate[tkey]" :key="`${tkey}.${variable.name}`" class="bg-panel rounded-lg p-4 border border-subtle shadow-sm">
               <div class="flex items-start justify-between gap-2 mb-3">
                 <label
                   :for="packerFormKey(variable)"
                   @click.prevent="focusInput(packerFormKey(variable))"
-                  class="text-base font-bold text-gray-900 cursor-pointer hover:text-blue-700 transition-colors flex-1"
+                  class="text-base font-bold text-fg cursor-pointer hover:text-fg transition-colors flex-1"
                 >
                   {{ variable.name }}
                 </label>
@@ -676,8 +676,8 @@ watch(
                 <button
                   v-if="variable.description || isList(variable.type)"
                   @click.stop="toggleTooltip(packerFormKey(variable))"
-                  class="text-gray-400 hover:text-blue-600 transition-colors focus:outline-none"
-                  :class="activeTooltip === packerFormKey(variable) ? 'text-blue-600' : ''"
+                  class="text-fg-muted hover:text-fg-muted transition-colors "
+                  :class="activeTooltip === packerFormKey(variable) ? 'text-fg-muted' : ''"
                   :title="t('deployment.variables.showInfo')"
                 >
                   <Info :size="16" />
@@ -686,31 +686,31 @@ watch(
 
               <div
                 v-if="variable.markerError"
-                class="mb-3 bg-amber-50 p-3 rounded-lg border border-amber-300 text-xs text-amber-800"
+                class="mb-3 bg-warning-dot/10 p-3 rounded-lg border border-warning-dot/30 text-xs text-warning"
               >
                 <p class="font-semibold mb-1 flex items-center gap-1.5">
                   <AlertTriangle :size="14" class="shrink-0" />
                   {{ t('deployment.variables.markerErrorTitle') }}
                 </p>
                 <p>{{ variable.markerError.message }}</p>
-                <p v-if="variable.markerError.location" class="mt-1 font-mono text-amber-700">
+                <p v-if="variable.markerError.location" class="mt-1 font-mono text-warning">
                   {{ variable.markerError.location }}
                 </p>
               </div>
 
-              <div v-if="activeTooltip === packerFormKey(variable)" class="mb-3 bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm text-gray-700">
+              <div v-if="activeTooltip === packerFormKey(variable)" class="mb-3 bg-line/[.04] p-3 rounded-lg border border-subtle text-sm text-fg">
                 <p v-if="variable.description" class="mb-2">{{ variable.description }}</p>
-                <div v-if="isList(variable.type)" class="flex gap-2 items-start text-xs text-blue-700">
+                <div v-if="isList(variable.type)" class="flex gap-2 items-start text-xs text-fg">
                   <Info :size="12" class="mt-0.5 shrink-0" />
                   <span>{{ t('deployment.variables.commaSeparated') }}</span>
                 </div>
               </div>
 
               <div class="flex flex-wrap items-center gap-2 mb-3">
-                <span class="text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                <span class="text-[10px] font-bold uppercase tracking-wider bg-line/[.07] text-fg px-2 py-0.5 rounded border border-subtle">
                   {{ variable.type }}
                 </span>
-                <span v-if="variable.required" class="text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-200">
+                <span v-if="variable.required" class="text-[10px] font-bold uppercase tracking-wider bg-danger-dot/10 text-danger px-2 py-0.5 rounded border border-danger-dot/30">
                   {{ t('deployment.variables.required') }}
                 </span>
                 <ScopeBadge :scope="effectiveScope(variable)" />
@@ -718,7 +718,7 @@ watch(
 
               <div
                 v-if="isScoped(variable)"
-                class="mb-3 text-xs text-purple-800 bg-purple-50 border border-purple-200 rounded px-3 py-2"
+                class="mb-3 text-xs text-fg bg-line/[.04] border border-subtle rounded px-3 py-2"
               >
                 <p class="font-semibold mb-0.5">
                   {{ effectiveScope(variable) === 'team' ? t('deployment.variables.scopeTitleTeam') : t('deployment.variables.scopeTitleUser') }}
@@ -743,7 +743,7 @@ watch(
                     :label="team.name"
                     :accept="fileAcceptFor(variable)"
                   />
-                  <div v-if="wizardTeams.length === 0" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                  <div v-if="wizardTeams.length === 0" class="text-xs text-warning bg-warning-dot/10 border border-warning-dot/30 rounded p-2">
                     {{ t('deployment.variables.noTeamsConfigured') }}
                   </div>
                 </template>
@@ -751,9 +751,9 @@ watch(
                   <div
                     v-for="team in wizardTeams"
                     :key="`${variable.name}::${team.name}`"
-                    class="border-l-2 border-gray-200 pl-3 space-y-2"
+                    class="border-l-2 border-subtle pl-3 space-y-2"
                   >
-                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    <div class="text-xs font-semibold text-fg-muted uppercase tracking-wide">
                       {{ team.name }}
                     </div>
                     <FileDropZone
@@ -764,11 +764,11 @@ watch(
                       :label="member.username"
                       :accept="fileAcceptFor(variable)"
                     />
-                    <div v-if="team.members.length === 0" class="text-xs text-gray-500 italic">
+                    <div v-if="team.members.length === 0" class="text-xs text-fg-muted italic">
                       {{ t('deployment.variables.noMembers') }}
                     </div>
                   </div>
-                  <div v-if="wizardTeams.length === 0" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                  <div v-if="wizardTeams.length === 0" class="text-xs text-warning bg-warning-dot/10 border border-warning-dot/30 rounded p-2">
                     {{ t('deployment.variables.noTeamsConfigured') }}
                   </div>
                 </template>
@@ -787,20 +787,20 @@ watch(
                 <div v-else class="space-y-3">
                   <div
                     v-if="slotKeysFor(variable).length === 0 && effectiveScope(variable) === 'team'"
-                    class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2"
+                    class="text-xs text-warning bg-warning-dot/10 border border-warning-dot/30 rounded p-2"
                   >
                     {{ t('deployment.variables.noTeamsConfigured') }}
                   </div>
                   <template v-if="effectiveScope(variable) === 'user'">
-                    <div v-if="wizardTeams.length === 0" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                    <div v-if="wizardTeams.length === 0" class="text-xs text-warning bg-warning-dot/10 border border-warning-dot/30 rounded p-2">
                       {{ t('deployment.variables.noTeamsConfigured') }}
                     </div>
                     <div
                       v-for="team in wizardTeams"
                       :key="`${variable.name}::team::${team.name}`"
-                      class="border-l-2 border-gray-200 pl-3 space-y-2"
+                      class="border-l-2 border-subtle pl-3 space-y-2"
                     >
-                      <div class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      <div class="text-xs font-semibold text-fg-muted uppercase tracking-wide">
                         {{ team.name }}
                       </div>
                       <div
@@ -810,7 +810,7 @@ watch(
                       >
                         <label
                           :for="`${packerFormKey(variable)}__${userSlotKey(team.name, member.username)}`"
-                          class="text-xs font-semibold text-gray-600"
+                          class="text-xs font-semibold text-fg-muted"
                         >
                           {{ member.username }}
                         </label>
@@ -823,7 +823,7 @@ watch(
                           :input-id="`${packerFormKey(variable)}__${userSlotKey(team.name, member.username)}`"
                         />
                       </div>
-                      <div v-if="team.members.length === 0" class="text-xs text-gray-500 italic">
+                      <div v-if="team.members.length === 0" class="text-xs text-fg-muted italic">
                         {{ t('deployment.variables.noMembers') }}
                       </div>
                     </div>
@@ -836,7 +836,7 @@ watch(
                     >
                       <label
                         :for="`${packerFormKey(variable)}__${slotKey}`"
-                        class="text-xs font-semibold text-gray-600"
+                        class="text-xs font-semibold text-fg-muted"
                       >
                         {{ formatSlotLabel(variable, slotKey) }}
                       </label>
@@ -857,26 +857,26 @@ watch(
           </div>
         </div>
 
-        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border-2 border-purple-200 overflow-hidden">
-          <div class="bg-purple-600 text-white px-6 py-4 flex items-center gap-3">
+        <div class="surface-sunken overflow-hidden">
+          <div class="bg-line/[.07] border-b border-subtle text-fg px-6 py-4 flex items-center gap-3">
             <Layers :size="24" />
             <div>
               <h2 class="text-xl font-bold">{{ t('deployment.summary.terraformVars') }}</h2>
-              <p class="text-xs text-purple-100 mt-0.5">{{ t('deployment.variables.terraformDesc') }}</p>
+              <p class="text-xs text-fg-muted mt-0.5">{{ t('deployment.variables.terraformDesc') }}</p>
             </div>
           </div>
           
           <div class="p-6 space-y-6 max-h-[600px] overflow-y-auto">
-            <div v-if="terraformVariables.length === 0" class="text-center py-8 text-purple-600 italic">
+            <div v-if="terraformVariables.length === 0" class="text-center py-8 text-fg-muted italic">
               {{ t('deployment.summary.noTerraformVars') }}
             </div>
             
-            <div v-for="variable in terraformVariables" :key="variable.name" class="bg-white rounded-lg p-4 border border-purple-200 shadow-sm">
+            <div v-for="variable in terraformVariables" :key="variable.name" class="bg-panel rounded-lg p-4 border border-subtle shadow-sm">
               <div class="flex items-start justify-between gap-2 mb-3">
                 <label
                   :for="variable.name"
                   @click.prevent="focusInput(variable.name)"
-                  class="text-base font-bold text-gray-900 cursor-pointer hover:text-purple-700 transition-colors flex-1"
+                  class="text-base font-bold text-fg cursor-pointer hover:text-fg transition-colors flex-1"
                 >
                   {{ variable.name }}
                 </label>
@@ -884,8 +884,8 @@ watch(
                 <button
                   v-if="variable.description || isList(variable.type)"
                   @click.stop="toggleTooltip(variable.name)"
-                  class="text-gray-400 hover:text-purple-600 transition-colors focus:outline-none"
-                  :class="activeTooltip === variable.name ? 'text-purple-600' : ''"
+                  class="text-fg-muted hover:text-fg-muted transition-colors "
+                  :class="activeTooltip === variable.name ? 'text-fg-muted' : ''"
                   :title="t('deployment.variables.showInfo')"
                 >
                   <Info :size="16" />
@@ -894,31 +894,31 @@ watch(
 
               <div
                 v-if="variable.markerError"
-                class="mb-3 bg-amber-50 p-3 rounded-lg border border-amber-300 text-xs text-amber-800"
+                class="mb-3 bg-warning-dot/10 p-3 rounded-lg border border-warning-dot/30 text-xs text-warning"
               >
                 <p class="font-semibold mb-1 flex items-center gap-1.5">
                   <AlertTriangle :size="14" class="shrink-0" />
                   {{ t('deployment.variables.markerErrorTitle') }}
                 </p>
                 <p>{{ variable.markerError.message }}</p>
-                <p v-if="variable.markerError.location" class="mt-1 font-mono text-amber-700">
+                <p v-if="variable.markerError.location" class="mt-1 font-mono text-warning">
                   {{ variable.markerError.location }}
                 </p>
               </div>
 
-              <div v-if="activeTooltip === variable.name" class="mb-3 bg-purple-50 p-3 rounded-lg border border-purple-100 text-sm text-gray-700">
+              <div v-if="activeTooltip === variable.name" class="mb-3 bg-line/[.04] p-3 rounded-lg border border-subtle text-sm text-fg">
                 <p v-if="variable.description" class="mb-2">{{ variable.description }}</p>
-                <div v-if="isList(variable.type)" class="flex gap-2 items-start text-xs text-purple-700">
+                <div v-if="isList(variable.type)" class="flex gap-2 items-start text-xs text-fg">
                   <Info :size="12" class="mt-0.5 shrink-0" />
                   <span>{{ t('deployment.variables.commaSeparated') }}</span>
                 </div>
               </div>
 
               <div class="flex flex-wrap items-center gap-2 mb-3">
-                <span class="text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 px-2 py-0.5 rounded border border-purple-200">
+                <span class="text-[10px] font-bold uppercase tracking-wider bg-line/[.07] text-fg px-2 py-0.5 rounded border border-subtle">
                   {{ variable.type }}
                 </span>
-                <span v-if="variable.required" class="text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-200">
+                <span v-if="variable.required" class="text-[10px] font-bold uppercase tracking-wider bg-danger-dot/10 text-danger px-2 py-0.5 rounded border border-danger-dot/30">
                   {{ t('deployment.variables.required') }}
                 </span>
                 <ScopeBadge :scope="effectiveScope(variable)" />
@@ -926,7 +926,7 @@ watch(
 
               <div
                 v-if="isScoped(variable)"
-                class="mb-3 text-xs text-purple-800 bg-purple-50 border border-purple-200 rounded px-3 py-2"
+                class="mb-3 text-xs text-fg bg-line/[.04] border border-subtle rounded px-3 py-2"
               >
                 <p class="font-semibold mb-0.5">
                   {{ effectiveScope(variable) === 'team' ? t('deployment.variables.scopeTitleTeam') : t('deployment.variables.scopeTitleUser') }}
@@ -951,7 +951,7 @@ watch(
                     :label="team.name"
                     :accept="fileAcceptFor(variable)"
                   />
-                  <div v-if="wizardTeams.length === 0" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                  <div v-if="wizardTeams.length === 0" class="text-xs text-warning bg-warning-dot/10 border border-warning-dot/30 rounded p-2">
                     {{ t('deployment.variables.noTeamsConfigured') }}
                   </div>
                 </template>
@@ -959,9 +959,9 @@ watch(
                   <div
                     v-for="team in wizardTeams"
                     :key="`${variable.name}::${team.name}`"
-                    class="border-l-2 border-gray-200 pl-3 space-y-2"
+                    class="border-l-2 border-subtle pl-3 space-y-2"
                   >
-                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    <div class="text-xs font-semibold text-fg-muted uppercase tracking-wide">
                       {{ team.name }}
                     </div>
                     <FileDropZone
@@ -972,11 +972,11 @@ watch(
                       :label="member.username"
                       :accept="fileAcceptFor(variable)"
                     />
-                    <div v-if="team.members.length === 0" class="text-xs text-gray-500 italic">
+                    <div v-if="team.members.length === 0" class="text-xs text-fg-muted italic">
                       {{ t('deployment.variables.noMembers') }}
                     </div>
                   </div>
-                  <div v-if="wizardTeams.length === 0" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                  <div v-if="wizardTeams.length === 0" class="text-xs text-warning bg-warning-dot/10 border border-warning-dot/30 rounded p-2">
                     {{ t('deployment.variables.noTeamsConfigured') }}
                   </div>
                 </template>
@@ -995,20 +995,20 @@ watch(
                 <div v-else class="space-y-3">
                   <div
                     v-if="slotKeysFor(variable).length === 0 && effectiveScope(variable) === 'team'"
-                    class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2"
+                    class="text-xs text-warning bg-warning-dot/10 border border-warning-dot/30 rounded p-2"
                   >
                     {{ t('deployment.variables.noTeamsConfigured') }}
                   </div>
                   <template v-if="effectiveScope(variable) === 'user'">
-                    <div v-if="wizardTeams.length === 0" class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+                    <div v-if="wizardTeams.length === 0" class="text-xs text-warning bg-warning-dot/10 border border-warning-dot/30 rounded p-2">
                       {{ t('deployment.variables.noTeamsConfigured') }}
                     </div>
                     <div
                       v-for="team in wizardTeams"
                       :key="`${variable.name}::team::${team.name}`"
-                      class="border-l-2 border-gray-200 pl-3 space-y-2"
+                      class="border-l-2 border-subtle pl-3 space-y-2"
                     >
-                      <div class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      <div class="text-xs font-semibold text-fg-muted uppercase tracking-wide">
                         {{ team.name }}
                       </div>
                       <div
@@ -1018,7 +1018,7 @@ watch(
                       >
                         <label
                           :for="`${variable.name}__${userSlotKey(team.name, member.username)}`"
-                          class="text-xs font-semibold text-gray-600"
+                          class="text-xs font-semibold text-fg-muted"
                         >
                           {{ member.username }}
                         </label>
@@ -1031,7 +1031,7 @@ watch(
                           :input-id="`${variable.name}__${userSlotKey(team.name, member.username)}`"
                         />
                       </div>
-                      <div v-if="team.members.length === 0" class="text-xs text-gray-500 italic">
+                      <div v-if="team.members.length === 0" class="text-xs text-fg-muted italic">
                         {{ t('deployment.variables.noMembers') }}
                       </div>
                     </div>
@@ -1044,7 +1044,7 @@ watch(
                     >
                       <label
                         :for="`${variable.name}__${slotKey}`"
-                        class="text-xs font-semibold text-gray-600"
+                        class="text-xs font-semibold text-fg-muted"
                       >
                         {{ formatSlotLabel(variable, slotKey) }}
                       </label>
@@ -1067,16 +1067,16 @@ watch(
       </div>
     </div>
 
-    <div class="flex justify-between items-center mt-12 pt-6 border-t border-gray-100">
+    <div class="flex justify-between items-center mt-12 pt-6 border-t border-subtle">
       <button
         @click="handleBack"
-        class="flex items-center gap-2 px-6 py-2.5 rounded-full text-gray-500 font-semibold hover:text-gray-900 hover:bg-gray-100 transition-colors"
+        class="btn-secondary flex items-center gap-2 px-6 py-2.5 rounded-control font-semibold transition"
       >
         <ArrowLeft :size="18" />
         {{ t('deployment.actions.back') }}
       </button>
 
-      <div v-if="!canSubmit && !isLoading && variables.length > 0" class="flex-1 mx-6 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+      <div v-if="!canSubmit && !isLoading && variables.length > 0" class="flex-1 mx-6 text-xs text-warning bg-warning-dot/10 border border-warning-dot/30 rounded px-3 py-2">
         <p class="font-semibold mb-0.5">{{ t('deployment.variables.missingRequiredTitle') }}</p>
         <ul class="list-disc pl-5">
           <li v-for="m in missingRequired" :key="m">{{ m }}</li>
@@ -1087,10 +1087,10 @@ watch(
         @click="handleNext"
         :disabled="!canSubmit"
         :class="[
-          'flex items-center gap-2 px-8 py-2.5 rounded-full font-bold transition-colors shadow-lg',
+          'flex items-center gap-2 px-8 py-2.5 rounded-control font-semibold transition',
           canSubmit
-            ? 'bg-emerald-700 text-white hover:bg-emerald-800 shadow-emerald-700/20'
-            : 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none',
+            ? 'btn-primary'
+            : 'bg-line/[.12] text-fg-muted cursor-not-allowed',
         ]"
       >
         {{ t('deployment.actions.next') }}

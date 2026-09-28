@@ -24,8 +24,8 @@ defineProps<{
 <template>
   <div class="flex items-center justify-between mb-8 gap-4 flex-wrap">
     <div class="min-w-0">
-      <h1 class="text-3xl font-bold text-gray-900 mb-1">{{ title }}</h1>
-      <p v-if="subtitle" class="text-gray-500">{{ subtitle }}</p>
+      <h1 class="text-[32px] leading-tight font-semibold tracking-[-0.015em] text-fg mb-1">{{ title }}</h1>
+      <p v-if="subtitle" class="text-fg-muted">{{ subtitle }}</p>
     </div>
     <!--
       Actions go right of the title row. Multiple buttons stack

@@ -36,20 +36,20 @@ const createdDate = computed(() => {
     <PageHeader :title="t('UserView.title')" :subtitle="t('UserView.subtitle')" />
 
     <div v-if="!user" class="text-center py-12">
-      <p class="text-gray-500">{{ t('UserView.loading') }}</p>
+      <p class="text-fg-muted">{{ t('UserView.loading') }}</p>
     </div>
 
     <div v-else class="space-y-6">
       <Card class="flex items-center justify-between">
         <div class="flex items-center gap-4">
           <div
-              class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center"
+              class="avatar w-16 h-16 rounded-full flex items-center justify-center"
           >
-            <User :size="32" class="text-primary" />
+            <User :size="32" class="text-icon" />
           </div>
 
           <div>
-            <div class="font-semibold text-gray-900 text-lg">
+            <div class="font-semibold text-fg text-lg">
               {{ user.username || 'N/A' }}
             </div>
             <Badge :variant="roleBadgeVariant">{{ roleLabel }}</Badge>
@@ -61,104 +61,104 @@ const createdDate = computed(() => {
 
         <Card class="flex items-center justify-between">
           <div>
-            <div class="text-sm text-gray-500 mb-1">{{ t('UserView.fields.firstName') }}</div>
-            <div class="font-medium" :class="user.firstName ? 'text-gray-900' : 'text-gray-400'">
+            <div class="text-sm text-fg-muted mb-1">{{ t('UserView.fields.firstName') }}</div>
+            <div class="font-medium" :class="user.firstName ? 'text-fg' : 'text-fg-muted'">
               {{ user.firstName || 'N/A' }}
             </div>
           </div>
-          <Contact :size="20" class="text-primary" />
+          <Contact :size="20" class="text-icon" />
         </Card>
 
         <Card class="flex items-center justify-between">
           <div>
-            <div class="text-sm text-gray-500 mb-1">{{ t('UserView.fields.lastName') }}</div>
-            <div class="font-medium" :class="user.lastName ? 'text-gray-900' : 'text-gray-400'">
+            <div class="text-sm text-fg-muted mb-1">{{ t('UserView.fields.lastName') }}</div>
+            <div class="font-medium" :class="user.lastName ? 'text-fg' : 'text-fg-muted'">
               {{ user.lastName || 'N/A' }}
             </div>
           </div>
-          <Contact :size="20" class="text-primary" />
+          <Contact :size="20" class="text-icon" />
         </Card>
 
         <Card class="flex items-center justify-between">
           <div>
-            <div class="text-sm text-gray-500 mb-1">{{ t('UserView.fields.email') }}</div>
-            <div class="font-medium" :class="user.email ? 'text-gray-900' : 'text-gray-400'">
+            <div class="text-sm text-fg-muted mb-1">{{ t('UserView.fields.email') }}</div>
+            <div class="font-medium" :class="user.email ? 'text-fg' : 'text-fg-muted'">
               {{ user.email || 'N/A' }}
             </div>
           </div>
-          <Mail :size="20" class="text-primary" />
+          <Mail :size="20" class="text-icon" />
         </Card>
 
         <Card class="flex items-center justify-between">
           <div>
-            <div class="text-sm text-gray-500 mb-1">{{ t('UserView.fields.course') }}</div>
-            <div class="font-medium" :class="user.course?.name ? 'text-gray-900' : 'text-gray-400'">
+            <div class="text-sm text-fg-muted mb-1">{{ t('UserView.fields.course') }}</div>
+            <div class="font-medium" :class="user.course?.name ? 'text-fg' : 'text-fg-muted'">
               {{ user.course?.name || 'N/A' }}
             </div>
           </div>
-          <BookOpen :size="20" class="text-primary" />
+          <BookOpen :size="20" class="text-icon" />
         </Card>
 
         <Card class="flex items-center justify-between">
           <div>
-            <div class="text-sm text-gray-500 mb-1">{{ t('UserView.fields.role') }}</div>
-            <div class="font-medium text-gray-900">{{ roleLabel }}</div>
+            <div class="text-sm text-fg-muted mb-1">{{ t('UserView.fields.role') }}</div>
+            <div class="font-medium text-fg">{{ roleLabel }}</div>
           </div>
-          <Shield :size="20" class="text-primary" />
+          <Shield :size="20" class="text-icon" />
         </Card>
 
         <Card class="flex items-center justify-between">
           <div>
-            <div class="text-sm text-gray-500 mb-1">{{ t('UserView.fields.userId') }}</div>
-            <div class="font-mono text-xs" :class="user.userId ? 'text-gray-600' : 'text-gray-400'">
+            <div class="text-sm text-fg-muted mb-1">{{ t('UserView.fields.userId') }}</div>
+            <div class="font-mono text-xs" :class="user.userId ? 'text-fg-muted' : 'text-fg-muted'">
               {{ user.userId || 'N/A' }}
             </div>
           </div>
-          <User :size="20" class="text-primary" />
+          <User :size="20" class="text-icon" />
         </Card>
 
         <Card class="flex items-center justify-between">
           <div>
-            <div class="text-sm text-gray-500 mb-1">{{ t('UserView.fields.registeredAt') }}</div>
-            <div class="font-medium text-gray-900">{{ createdDate }}</div>
+            <div class="text-sm text-fg-muted mb-1">{{ t('UserView.fields.registeredAt') }}</div>
+            <div class="font-medium text-fg">{{ createdDate }}</div>
           </div>
-          <Calendar :size="20" class="text-primary" />
+          <Calendar :size="20" class="text-icon" />
         </Card>
 
         <Card class="flex items-center justify-between">
           <div>
-            <div class="text-sm text-gray-500 mb-1">{{ t('UserView.fields.keycloakId') }}</div>
-            <div class="font-mono text-xs" :class="user.keycloak_id ? 'text-gray-600' : 'text-gray-400'">
+            <div class="text-sm text-fg-muted mb-1">{{ t('UserView.fields.keycloakId') }}</div>
+            <div class="font-mono text-xs" :class="user.keycloak_id ? 'text-fg-muted' : 'text-fg-muted'">
               {{ user.keycloak_id || 'N/A' }}
             </div>
           </div>
-          <Key :size="20" class="text-primary" />
+          <Key :size="20" class="text-icon" />
         </Card>
 
       </div>
 
       <!-- Settings — list layout rather than a card grid; same border/padding
            style as the cards above. -->
-      <div class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+      <div class="bg-panel rounded-2xl shadow-md border border-subtle overflow-hidden">
         <div class="px-6 py-4 border-b">
-          <h2 class="text-lg font-semibold text-gray-900">{{ t('UserView.settings.title') }}</h2>
+          <h2 class="text-lg font-semibold text-fg">{{ t('UserView.settings.title') }}</h2>
         </div>
         <router-link
           :to="{ name: ROUTE_NAMES.userOpenStack }"
-          class="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors"
+          class="flex items-center justify-between px-6 py-4 hover:bg-line/[.04] transition-colors"
         >
           <div class="flex items-center gap-4">
-            <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Cloud :size="20" class="text-primary" />
+            <div class="w-10 h-10 rounded-control bg-line/[.07] border border-subtle flex items-center justify-center">
+              <Cloud :size="20" class="text-icon" />
             </div>
             <div>
-              <div class="font-medium text-gray-900">{{ t('UserView.settings.openstackTitle') }}</div>
-              <div class="text-sm text-gray-500">
+              <div class="font-medium text-fg">{{ t('UserView.settings.openstackTitle') }}</div>
+              <div class="text-sm text-fg-muted">
                 {{ t('UserView.settings.openstackHint') }}
               </div>
             </div>
           </div>
-          <ChevronRight :size="18" class="text-gray-400" />
+          <ChevronRight :size="18" class="text-icon" />
         </router-link>
       </div>
     </div>

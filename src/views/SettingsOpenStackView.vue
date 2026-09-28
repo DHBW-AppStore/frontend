@@ -256,11 +256,11 @@ const maybeReturnToWizard = () => {
   <div class="p-6 max-w-4xl mx-auto">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 mb-1 flex items-center gap-2">
-        <Cloud :size="28" class="text-primary" />
+      <h1 class="text-3xl font-bold text-fg mb-1 flex items-center gap-2">
+        <Cloud :size="28" class="text-icon" />
         {{ t('SettingsOpenStackView.title') }}
       </h1>
-      <p class="text-gray-500">
+      <p class="text-fg-muted">
         {{ t('SettingsOpenStackView.intro') }}
       </p>
     </div>
@@ -277,15 +277,15 @@ const maybeReturnToWizard = () => {
     />
 
     <!-- Status card -->
-    <div class="bg-white rounded-xl border p-5 mb-6">
-      <div v-if="credStore.loading" class="text-gray-500 text-sm">
+    <div class="bg-panel rounded-xl border p-5 mb-6">
+      <div v-if="credStore.loading" class="text-fg-muted text-sm">
         {{ t('SettingsOpenStackView.status.loading') }}
       </div>
       <div v-else-if="!credStore.hasCredential" class="flex items-center gap-3">
-        <CircleHelp class="text-gray-400" :size="22" />
+        <CircleHelp class="text-icon" :size="22" />
         <div>
-          <div class="font-medium text-gray-900">{{ t('SettingsOpenStackView.status.noneTitle') }}</div>
-          <div class="text-sm text-gray-500">
+          <div class="font-medium text-fg">{{ t('SettingsOpenStackView.status.noneTitle') }}</div>
+          <div class="text-sm text-fg-muted">
             <i18n-t keypath="SettingsOpenStackView.status.noneHint" tag="span">
               <template #file><code class="font-mono">clouds.yaml</code></template>
             </i18n-t>
@@ -294,28 +294,28 @@ const maybeReturnToWizard = () => {
       </div>
       <div v-else class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
-          <CheckCircle2 v-if="credStore.isValidated && !credStore.lastError" class="text-green-500" :size="22" />
-          <XCircle v-else class="text-red-500" :size="22" />
+          <CheckCircle2 v-if="credStore.isValidated && !credStore.lastError" class="text-success" :size="22" />
+          <XCircle v-else class="text-danger" :size="22" />
           <div>
-            <div class="font-medium text-gray-900">
+            <div class="font-medium text-fg">
               {{ credStore.isValidated && !credStore.lastError ? t('SettingsOpenStackView.status.valid') : t('SettingsOpenStackView.status.invalid') }}
             </div>
-            <div class="text-sm text-gray-500">
+            <div class="text-sm text-fg-muted">
               <span v-if="lastValidated">{{ t('SettingsOpenStackView.status.lastChecked', { time: lastValidated }) }}</span>
-              <span v-if="credStore.lastError" class="block text-red-600">{{ credStore.lastError }}</span>
+              <span v-if="credStore.lastError" class="block text-danger">{{ credStore.lastError }}</span>
             </div>
           </div>
         </div>
         <div class="flex gap-2">
           <button
-            class="px-3 py-2 text-sm border rounded-md hover:bg-gray-50 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-3 py-2 text-sm border rounded-md hover:bg-line/[.04] flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
             @click="handleTest"
             :disabled="credStore.loading"
           >
             <RefreshCw :size="16" /> {{ t('SettingsOpenStackView.status.retest') }}
           </button>
           <button
-            class="px-3 py-2 text-sm border rounded-md text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-3 py-2 text-sm border rounded-md text-danger border-danger-dot/30 hover:bg-danger-dot/10 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
             @click="handleDelete"
             :disabled="credStore.loading || credStore.isLocked"
             :title="credStore.isLocked ? t('SettingsOpenStackView.tooltips.lockedActiveDeployments') : ''"
@@ -330,7 +330,7 @@ const maybeReturnToWizard = () => {
     <div
       class="border-2 border-dashed rounded-xl p-6 mb-6 transition-colors text-center"
       :class="[
-        isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 bg-white',
+        isDragging ? 'border-accent bg-accent/[.05]' : 'border-strong bg-panel',
         credStore.isLocked ? 'opacity-50 pointer-events-none' : ''
       ]"
       @dragenter.prevent.stop="!credStore.isLocked && (isDragging = true)"
@@ -338,12 +338,12 @@ const maybeReturnToWizard = () => {
       @dragleave.prevent.stop="isDragging = false"
       @drop.prevent.stop="onDrop"
     >
-      <Upload class="mx-auto text-gray-400 mb-2" :size="28" />
-      <div class="font-medium text-gray-900 mb-1">{{ t('SettingsOpenStackView.dropZone.headline') }}</div>
-      <div class="text-sm text-gray-500 mb-3">
+      <Upload class="mx-auto text-icon mb-2" :size="28" />
+      <div class="font-medium text-fg mb-1">{{ t('SettingsOpenStackView.dropZone.headline') }}</div>
+      <div class="text-sm text-fg-muted mb-3">
         {{ t('SettingsOpenStackView.dropZone.orPrefix') }}
         <button
-          class="text-primary underline disabled:opacity-50 disabled:cursor-not-allowed"
+          class="text-accent-fg underline disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="credStore.isLocked"
           @click="yamlInputRef?.click()"
         >{{ t('SettingsOpenStackView.dropZone.pickFile') }}</button>
@@ -360,19 +360,19 @@ const maybeReturnToWizard = () => {
     </div>
 
     <!-- Tabs -->
-    <div class="bg-white rounded-xl border">
+    <div class="bg-panel rounded-xl border">
       <div class="flex border-b">
         <button
           class="flex-1 px-4 py-3 text-sm font-medium transition-colors"
-          :class="activeTab === 'app' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'"
+          :class="activeTab === 'app' ? 'text-fg border-b-2 border-accent' : 'text-fg-muted hover:text-fg'"
           @click="activeTab = 'app'"
         >
           {{ t('SettingsOpenStackView.tabs.app') }}
-          <span class="ml-2 text-xs text-green-600">{{ t('SettingsOpenStackView.tabs.appRecommended') }}</span>
+          <span class="ml-2 text-xs text-success">{{ t('SettingsOpenStackView.tabs.appRecommended') }}</span>
         </button>
         <button
           class="flex-1 px-4 py-3 text-sm font-medium transition-colors"
-          :class="activeTab === 'password' ? 'text-primary border-b-2 border-primary' : 'text-gray-500 hover:text-gray-700'"
+          :class="activeTab === 'password' ? 'text-fg border-b-2 border-accent' : 'text-fg-muted hover:text-fg'"
           @click="activeTab = 'password'"
         >
           {{ t('SettingsOpenStackView.tabs.password') }}
@@ -382,41 +382,41 @@ const maybeReturnToWizard = () => {
       <!-- Application Credential -->
       <div v-if="activeTab === 'app'" class="p-6 space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('SettingsOpenStackView.fields.authUrl') }}</label>
+          <label class="block text-sm font-medium text-fg mb-1">{{ t('SettingsOpenStackView.fields.authUrl') }}</label>
           <input
             v-model="formApp.auth_url"
             type="url"
             :placeholder="t('SettingsOpenStackView.placeholders.authUrl')"
             :disabled="credStore.isLocked"
-            class="w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
+            class="field w-full px-3 py-2 text-sm disabled:bg-line/[.04] disabled:cursor-not-allowed"
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('SettingsOpenStackView.fields.region') }}</label>
+          <label class="block text-sm font-medium text-fg mb-1">{{ t('SettingsOpenStackView.fields.region') }}</label>
           <input
             v-model="formApp.region_name"
             type="text"
             :placeholder="t('SettingsOpenStackView.placeholders.region')"
             :disabled="credStore.isLocked"
-            class="w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed"
+            class="field w-full px-3 py-2 text-sm disabled:bg-line/[.04] disabled:cursor-not-allowed"
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('SettingsOpenStackView.fields.appCredentialId') }}</label>
+          <label class="block text-sm font-medium text-fg mb-1">{{ t('SettingsOpenStackView.fields.appCredentialId') }}</label>
           <input
             v-model="formApp.identifier"
             type="text"
             :disabled="credStore.isLocked"
-            class="w-full border rounded-md px-3 py-2 text-sm font-mono disabled:bg-gray-50 disabled:cursor-not-allowed"
+            class="field w-full px-3 py-2 text-sm font-mono disabled:bg-line/[.04] disabled:cursor-not-allowed"
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('SettingsOpenStackView.fields.appCredentialSecret') }}</label>
+          <label class="block text-sm font-medium text-fg mb-1">{{ t('SettingsOpenStackView.fields.appCredentialSecret') }}</label>
           <input
             v-model="formApp.secret"
             type="password"
             :disabled="credStore.isLocked"
-            class="w-full border rounded-md px-3 py-2 text-sm font-mono disabled:bg-gray-50 disabled:cursor-not-allowed"
+            class="field w-full px-3 py-2 text-sm font-mono disabled:bg-line/[.04] disabled:cursor-not-allowed"
           />
         </div>
       </div>
@@ -424,48 +424,48 @@ const maybeReturnToWizard = () => {
       <!-- Password -->
       <div v-else class="p-6 space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('SettingsOpenStackView.fields.authUrl') }}</label>
-          <input v-model="formPwd.auth_url" type="url" :disabled="credStore.isLocked" class="w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed" />
+          <label class="block text-sm font-medium text-fg mb-1">{{ t('SettingsOpenStackView.fields.authUrl') }}</label>
+          <input v-model="formPwd.auth_url" type="url" :disabled="credStore.isLocked" class="field w-full px-3 py-2 text-sm disabled:bg-line/[.04] disabled:cursor-not-allowed" />
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('SettingsOpenStackView.fields.region') }}</label>
-            <input v-model="formPwd.region_name" type="text" :disabled="credStore.isLocked" class="w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed" />
+            <label class="block text-sm font-medium text-fg mb-1">{{ t('SettingsOpenStackView.fields.region') }}</label>
+            <input v-model="formPwd.region_name" type="text" :disabled="credStore.isLocked" class="field w-full px-3 py-2 text-sm disabled:bg-line/[.04] disabled:cursor-not-allowed" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('SettingsOpenStackView.fields.userDomain') }}</label>
-            <input v-model="formPwd.user_domain_name" type="text" :disabled="credStore.isLocked" class="w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed" />
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('SettingsOpenStackView.fields.username') }}</label>
-            <input v-model="formPwd.identifier" type="text" :disabled="credStore.isLocked" class="w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('SettingsOpenStackView.fields.password') }}</label>
-            <input v-model="formPwd.secret" type="password" :disabled="credStore.isLocked" class="w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed" />
+            <label class="block text-sm font-medium text-fg mb-1">{{ t('SettingsOpenStackView.fields.userDomain') }}</label>
+            <input v-model="formPwd.user_domain_name" type="text" :disabled="credStore.isLocked" class="field w-full px-3 py-2 text-sm disabled:bg-line/[.04] disabled:cursor-not-allowed" />
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('SettingsOpenStackView.fields.projectId') }}</label>
-            <input v-model="formPwd.project_id" type="text" :disabled="credStore.isLocked" class="w-full border rounded-md px-3 py-2 text-sm font-mono disabled:bg-gray-50 disabled:cursor-not-allowed" />
+            <label class="block text-sm font-medium text-fg mb-1">{{ t('SettingsOpenStackView.fields.username') }}</label>
+            <input v-model="formPwd.identifier" type="text" :disabled="credStore.isLocked" class="field w-full px-3 py-2 text-sm disabled:bg-line/[.04] disabled:cursor-not-allowed" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('SettingsOpenStackView.fields.projectName') }}</label>
-            <input v-model="formPwd.project_name" type="text" :disabled="credStore.isLocked" class="w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed" />
+            <label class="block text-sm font-medium text-fg mb-1">{{ t('SettingsOpenStackView.fields.password') }}</label>
+            <input v-model="formPwd.secret" type="password" :disabled="credStore.isLocked" class="field w-full px-3 py-2 text-sm disabled:bg-line/[.04] disabled:cursor-not-allowed" />
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-fg mb-1">{{ t('SettingsOpenStackView.fields.projectId') }}</label>
+            <input v-model="formPwd.project_id" type="text" :disabled="credStore.isLocked" class="field w-full px-3 py-2 text-sm font-mono disabled:bg-line/[.04] disabled:cursor-not-allowed" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-fg mb-1">{{ t('SettingsOpenStackView.fields.projectName') }}</label>
+            <input v-model="formPwd.project_name" type="text" :disabled="credStore.isLocked" class="field w-full px-3 py-2 text-sm disabled:bg-line/[.04] disabled:cursor-not-allowed" />
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">{{ t('SettingsOpenStackView.fields.projectDomain') }}</label>
-          <input v-model="formPwd.project_domain_name" type="text" :disabled="credStore.isLocked" class="w-full border rounded-md px-3 py-2 text-sm disabled:bg-gray-50 disabled:cursor-not-allowed" />
+          <label class="block text-sm font-medium text-fg mb-1">{{ t('SettingsOpenStackView.fields.projectDomain') }}</label>
+          <input v-model="formPwd.project_domain_name" type="text" :disabled="credStore.isLocked" class="field w-full px-3 py-2 text-sm disabled:bg-line/[.04] disabled:cursor-not-allowed" />
         </div>
       </div>
 
       <div class="px-6 pb-6 flex justify-end">
         <button
-          class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          class="btn-primary px-4 py-2 rounded-control font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           :disabled="credStore.loading || credStore.isLocked"
           :title="credStore.isLocked ? t('SettingsOpenStackView.tooltips.lockedActiveDeployments') : ''"
           @click="handleSave"

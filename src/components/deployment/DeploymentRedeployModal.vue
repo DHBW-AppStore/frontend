@@ -26,11 +26,11 @@ defineEmits<{
     </template>
     <template #body>
       <div class="space-y-3">
-        <p class="text-gray-700">
+        <p class="text-fg">
           Diese VM wird zerstört und identisch neu erstellt.
           Andere VMs in diesem Deployment bleiben unangetastet.
         </p>
-        <p v-if="address" class="text-xs font-mono text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 break-all">
+        <p v-if="address" class="text-xs font-mono text-fg-muted bg-line/[.04] border border-subtle rounded-lg px-3 py-2 break-all">
           {{ address }}
         </p>
       </div>
