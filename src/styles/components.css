@@ -200,6 +200,18 @@
     background: rgb(var(--color-neutral-dot) / 0.10);
     border-color: rgb(var(--color-neutral-dot) / 0.30);
   }
+  /* Non-status labels (roles, scopes): no hue, only weight */
+  .status-info {
+    color: rgb(var(--color-fg));
+    background: var(--segment-bg);
+    border-color: var(--line-strong);
+  }
+  .status-emphasis {
+    color: rgb(var(--color-fg));
+    background: var(--avatar-bg);
+    border-color: var(--line-strong);
+    box-shadow: var(--control-shadow);
+  }
 
   /* Meters */
   .meter-track {

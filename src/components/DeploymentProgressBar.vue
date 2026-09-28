@@ -39,10 +39,10 @@ const getTextAlignmentClass = (step: number, total: number) => {
 <template>
   <div class="w-full mb-8 px-2"> 
     <div class="relative">
-      <div class="absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 rounded-full"></div>
+      <div class="meter-track absolute top-1/2 left-0 w-full h-1 -translate-y-1/2"></div>
 
       <div 
-        class="absolute top-1/2 left-0 h-1 bg-emerald-500 -translate-y-1/2 rounded-full transition-all duration-500 ease-out"
+        class="meter-fill-low absolute top-1/2 left-0 h-1 -translate-y-1/2 rounded-tag transition-all duration-500 ease-out"
         :style="{ width: progressWidth }"
       ></div>
 
@@ -54,15 +54,13 @@ const getTextAlignmentClass = (step: number, total: number) => {
           class="flex flex-col items-center group relative" 
         >
           <div
-            class="flex items-center justify-center w-8 h-8 rounded-full border-2 text-sm font-bold z-10 transition-all duration-300 bg-white"
+            class="step-circle flex items-center justify-center w-8 h-8 rounded-full border-2 text-sm font-bold z-10 transition-all duration-300"
             :class="[
-              currentStep >= item.step
-                ? 'border-emerald-600 text-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.4)]'
-                : 'border-gray-300 text-gray-400',
-              // Fill the circle green once the step is done.
-              currentStep > item.step ? '!bg-emerald-600 !text-white' : '',
+              currentStep >= item.step ? 'step-reached' : '',
+              // Fill the circle once the step is done.
+              currentStep > item.step ? 'step-done' : '',
               // Current step: pulse subtly so the user always sees where they are.
-              currentStep === item.step ? 'text-emerald-600 animate-step-pulse' : ''
+              currentStep === item.step ? 'animate-step-pulse' : ''
             ]"
           >
             <Check v-if="currentStep > item.step" :size="16" />
@@ -72,7 +70,7 @@ const getTextAlignmentClass = (step: number, total: number) => {
           <span 
             class="absolute top-10 text-xs font-bold uppercase tracking-wider transition-colors duration-300 whitespace-nowrap"
             :class="[
-              currentStep >= item.step ? 'text-emerald-700' : 'text-gray-400',
+              currentStep >= item.step ? 'text-success' : 'text-fg-muted',
               getTextAlignmentClass(item.step, steps.length)
             ]"
           >
@@ -88,17 +86,33 @@ const getTextAlignmentClass = (step: number, total: number) => {
 </template>
 
 <style scoped>
-/* Scale the circle slightly instead of using Tailwind's animate-pulse (which
+.step-circle {
+  background: var(--surface-panel-bg);
+  border-color: var(--line-strong);
+  color: rgb(var(--color-fg-muted));
+}
+
+.step-reached {
+  border-color: rgb(var(--color-success-dot));
+  color: rgb(var(--color-success));
+}
+
+.step-done {
+  background: var(--meter-low-bg);
+  color: rgb(var(--color-on-accent));
+}
+
+/* Scale the circle slightly instead of Tailwind's animate-pulse (which
    modulates opacity and half-hides the current step), so it stays fully visible.
    transform-origin is centered so its position on the line doesn't wobble. */
 @keyframes step-pulse {
   0%, 100% {
     transform: scale(1);
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 0 0 rgb(var(--color-success-dot) / 0.25);
   }
   50% {
-    transform: scale(1.18);
-    box-shadow: 0 0 14px rgba(16, 185, 129, 0.6);
+    transform: scale(1.12);
+    box-shadow: 0 0 0 4px rgb(var(--color-success-dot) / 0.15);
   }
 }
 

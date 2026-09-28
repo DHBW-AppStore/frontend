@@ -70,6 +70,32 @@ export default {
         overlay: 'var(--surface-overlay-shadow)',
         control: 'var(--control-shadow)',
       },
+      // Point the typography plugin's colour variables at the tokens so
+      // rendered Markdown follows the theme.
+      typography: {
+        DEFAULT: {
+          css: {
+            '--tw-prose-body': 'rgb(var(--color-fg-muted))',
+            '--tw-prose-headings': 'rgb(var(--color-fg))',
+            '--tw-prose-lead': 'rgb(var(--color-fg-muted))',
+            '--tw-prose-links': 'rgb(var(--color-accent-fg))',
+            '--tw-prose-bold': 'rgb(var(--color-fg))',
+            '--tw-prose-counters': 'rgb(var(--color-icon))',
+            '--tw-prose-bullets': 'rgb(var(--color-icon))',
+            '--tw-prose-hr': 'var(--line-subtle)',
+            '--tw-prose-quotes': 'rgb(var(--color-fg))',
+            '--tw-prose-quote-borders': 'var(--line-strong)',
+            '--tw-prose-captions': 'rgb(var(--color-fg-muted))',
+            '--tw-prose-kbd': 'rgb(var(--color-fg))',
+            '--tw-prose-kbd-shadows': 'var(--color-line)',
+            '--tw-prose-code': 'rgb(var(--color-fg))',
+            '--tw-prose-pre-code': 'rgb(var(--color-on-tooltip))',
+            '--tw-prose-pre-bg': 'rgb(var(--color-tooltip))',
+            '--tw-prose-th-borders': 'var(--line-strong)',
+            '--tw-prose-td-borders': 'var(--line-subtle)',
+          },
+        },
+      },
       fontFamily: {
         sans: ["'Segoe UI'", 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['Consolas', "'Cascadia Mono'", 'ui-monospace', 'monospace'],

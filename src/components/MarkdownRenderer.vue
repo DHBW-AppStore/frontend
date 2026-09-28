@@ -102,14 +102,12 @@ const contentClass = computed(() => {
   const base: string[] = []
   if (props.variant === 'full') {
     base.push('prose prose-sm md:prose-base max-w-none')
-    base.push('prose-a:text-primary prose-a:no-underline hover:prose-a:underline')
-    base.push('prose-headings:text-gray-900 prose-p:text-gray-600')
-    base.push('prose-code:text-gray-800 prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded')
-    base.push('prose-pre:bg-gray-900 prose-pre:text-gray-100')
+    base.push('prose-a:no-underline hover:prose-a:underline')
+    base.push('prose-code:bg-line/5 prose-code:px-1 prose-code:rounded')
   } else {
-    base.push('text-gray-600 leading-relaxed break-words')
-    base.push('[&_a]:text-primary [&_a]:underline')
-    base.push('[&_code]:bg-gray-100 [&_code]:px-1 [&_code]:rounded [&_code]:text-xs')
+    base.push('text-fg-muted leading-relaxed break-words')
+    base.push('[&_a]:text-accent-fg [&_a]:underline')
+    base.push('[&_code]:bg-line/5 [&_code]:px-1 [&_code]:rounded [&_code]:text-xs')
     base.push('[&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5')
     base.push('[&_p]:my-0 [&_strong]:font-semibold')
   }

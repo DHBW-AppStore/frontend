@@ -3,11 +3,11 @@
  * Compact scope indicator for the deployment-wizard variable cards.
  *
  * Wraps ``Badge`` with scope-specific copy:
- *   * ``team`` → purple badge "Pro Team" + ``Users`` icon
- *   * ``user`` → purple badge "Pro User" + ``User`` icon
+ *   * ``team`` → badge "Pro Team" + ``Users`` icon
+ *   * ``user`` → badge "Pro User" + ``User`` icon
  *   * ``all``/undefined → nothing rendered (the calm default)
  *
- * Purple matches the wizard's "Terraform" / scope hue. Accepts ``undefined`` so
+ * ``purple`` is the emphasised hue-free label variant. Accepts ``undefined`` so
  * callers can pass ``v.varScope`` without a guard (the backend omits it when "all").
  */
 import { Users, User } from 'lucide-vue-next'

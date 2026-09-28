@@ -3,17 +3,19 @@
  * App-wide primary button.
  *
  * Variants — kept small so all views share the same visual vocabulary:
- *   * ``primary`` / ``yellow`` (default) — main action / create / submit. Logo
- *                                          orange (``accentYellow``); ``primary``
- *                                          is a semantic alias so code needn't
- *                                          pin the colour as part of the contract.
+ *   * ``primary`` / ``yellow`` (default) — main action / create / submit. The
+ *                                          red accent button; ``yellow`` is a
+ *                                          historical alias kept so call sites
+ *                                          needn't change.
  *   * ``green``                          — confirming secondary action (resume,
  *                                          save in a non-destructive context).
+ *                                          Neutral glass button — green is a
+ *                                          status colour only.
  *   * ``red``                            — destructive action (delete, reject, reset).
  *   * ``ghost``                          — very subtle action (cancel in modals).
  *
- * Disabled: all variants drop the hover effect and switch to
- * ``opacity-50 + cursor-not-allowed``, set centrally here.
+ * Disabled: all variants switch to ``opacity-50 + cursor-not-allowed``; the
+ * hover styles in components.css skip disabled buttons.
  */
 withDefaults(defineProps<{
   variant?: 'primary' | 'yellow' | 'green' | 'red' | 'ghost'
@@ -26,23 +28,19 @@ withDefaults(defineProps<{
   <button
     :class="[
       'inline-flex items-center justify-center gap-2',
-      'px-5 py-2.5 rounded-xl font-medium text-sm transition duration-150 shadow-sm',
-      'focus:outline-none focus:ring-2 focus:ring-offset-2',
-      'disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:hover:!bg-current',
-      // ``primary`` and ``yellow`` share the same style; ``yellow`` is kept as an alias.
+      'px-5 py-2.5 rounded-control font-semibold text-sm transition duration-150',
+      'disabled:opacity-50 disabled:cursor-not-allowed',
       (variant === 'primary' || variant === 'yellow')
-        ? 'bg-lightYellow text-accentYellow hover:bg-accentYellow hover:text-white focus:ring-accentYellow/60'
+        ? 'btn-primary'
         : variant === 'green'
-        ? 'bg-lightGreen text-gray-800 hover:bg-primary hover:text-white focus:ring-primary/60'
+        ? 'btn-secondary'
         : variant === 'red'
-        ? 'bg-lightRed text-accentRed hover:bg-accentRed hover:text-white focus:ring-accentRed/60'
+        ? 'btn-danger'
         : variant === 'ghost'
-        ? 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 focus:ring-gray-300 shadow-none'
+        ? 'btn-ghost'
         : ''
     ]"
   >
     <slot />
   </button>
 </template>
-
-

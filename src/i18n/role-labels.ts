@@ -23,8 +23,9 @@ export function roleBadgeVariant(role: string | undefined | null): 'yellow' | 'g
       return "purple"
     case "teacher":
       return "blue"
+    // Green is reserved for status (running/success), not for a role.
     case "student":
-      return "green"
+      return "gray"
     default:
       return "gray"
   }
