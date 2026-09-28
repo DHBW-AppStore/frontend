@@ -1,0 +1,201 @@
+/*
+ * Shared surface and control classes for values Tailwind utilities cannot
+ * express atomically (layered gradients, compound shadows). Values come
+ * exclusively from tokens.css — no colour literals here.
+ */
+
+@layer components {
+  /* Glass chrome */
+  .surface-topbar {
+    background: var(--surface-topbar-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--line-subtle);
+    box-shadow: var(--surface-topbar-shadow);
+  }
+
+  .surface-sidebar {
+    background: var(--surface-sidebar-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-right: 1px solid var(--line-subtle);
+    box-shadow: var(--surface-sidebar-shadow);
+  }
+
+  /* Content surfaces */
+  .surface-panel {
+    background: var(--surface-panel-bg);
+    border: 1px solid var(--line-subtle);
+    border-radius: 8px;
+    box-shadow: var(--surface-panel-shadow);
+  }
+
+  .surface-sunken {
+    background: var(--surface-sunken-bg);
+    border: 1px solid var(--line-subtle);
+    border-radius: 8px;
+    box-shadow: var(--surface-sunken-shadow);
+  }
+
+  .surface-banner {
+    background: var(--surface-banner-bg);
+    border: 1px solid var(--line-subtle);
+    border-radius: 8px;
+    box-shadow: var(--surface-banner-shadow);
+  }
+
+  .surface-overlay {
+    background: var(--surface-overlay-bg);
+    border: 1px solid var(--line-subtle);
+    border-radius: 8px;
+    box-shadow: var(--surface-overlay-shadow);
+  }
+
+  .scrim {
+    background: var(--scrim);
+  }
+
+  /* Glass control: icon buttons, segmented controls, language/theme switch */
+  .glass-control {
+    background: var(--control-bg);
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    box-shadow: var(--control-shadow);
+    color: rgb(var(--color-fg-muted));
+    transition: background 150ms, color 150ms;
+  }
+  .glass-control:hover {
+    background: var(--control-hover-bg);
+    color: rgb(var(--color-fg));
+  }
+
+  .segment {
+    display: inline-flex;
+    padding: 2px;
+    gap: 2px;
+    background: var(--segment-bg);
+    border: 1px solid var(--line-subtle);
+    border-radius: 6px;
+    box-shadow: var(--segment-shadow);
+  }
+  .segment-btn {
+    border-radius: 4px;
+    color: rgb(var(--color-fg-muted));
+    transition: background 150ms, color 150ms;
+  }
+  .segment-btn:hover {
+    color: rgb(var(--color-fg));
+  }
+  .segment-btn[aria-pressed="true"] {
+    background: var(--nav-active-bg);
+    box-shadow: var(--nav-active-shadow);
+    color: rgb(var(--color-fg));
+  }
+
+  /* Buttons */
+  .btn-primary {
+    color: rgb(var(--color-on-accent));
+    background: var(--btn-primary-bg);
+    border: 1px solid rgb(var(--color-accent-strong));
+    box-shadow: var(--btn-primary-shadow);
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(0.92);
+  }
+  .btn-primary:active:not(:disabled) {
+    filter: brightness(0.82);
+  }
+
+  .btn-secondary,
+  .btn-danger {
+    background: var(--control-bg);
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--control-shadow);
+  }
+  .btn-secondary {
+    color: rgb(var(--color-fg));
+  }
+  .btn-danger {
+    color: rgb(var(--color-danger));
+  }
+  .btn-secondary:hover:not(:disabled),
+  .btn-danger:hover:not(:disabled) {
+    background: var(--control-hover-bg);
+  }
+  .btn-secondary:active:not(:disabled),
+  .btn-danger:active:not(:disabled) {
+    background: var(--control-active-bg);
+    border-color: rgb(var(--color-accent-strong));
+  }
+
+  .btn-ghost {
+    color: rgb(var(--color-fg-muted));
+    background: transparent;
+    border: 1px solid transparent;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    color: rgb(var(--color-fg));
+    background: var(--nav-hover-bg);
+  }
+
+  /* Form fields */
+  .field {
+    color: rgb(var(--color-fg));
+    background: var(--field-bg);
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    box-shadow: var(--field-shadow);
+  }
+  .field::placeholder {
+    color: rgb(var(--color-fg-muted));
+  }
+  .field:focus {
+    border-color: rgb(var(--color-accent) / 0.6);
+  }
+
+  /* Status badges */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid;
+    border-radius: 4px;
+  }
+  .status-success {
+    color: rgb(var(--color-success));
+    background: rgb(var(--color-success-dot) / 0.14);
+    border-color: rgb(var(--color-success-dot) / 0.40);
+  }
+  .status-warning {
+    color: rgb(var(--color-warning));
+    background: rgb(var(--color-warning-dot) / 0.14);
+    border-color: rgb(var(--color-warning-dot) / 0.40);
+  }
+  .status-danger {
+    color: rgb(var(--color-danger));
+    background: rgb(var(--color-danger-dot) / 0.10);
+    border-color: rgb(var(--color-danger-dot) / 0.35);
+  }
+  .status-neutral {
+    color: rgb(var(--color-neutral));
+    background: rgb(var(--color-neutral-dot) / 0.10);
+    border-color: rgb(var(--color-neutral-dot) / 0.30);
+  }
+
+  /* Meters */
+  .meter-track {
+    background: var(--meter-track-bg);
+    border-radius: 4px;
+    box-shadow: var(--meter-track-shadow);
+    overflow: hidden;
+  }
+  .meter-fill-low {
+    background: var(--meter-low-bg);
+  }
+  .meter-fill-mid {
+    background: var(--meter-mid-bg);
+  }
+  .meter-fill-high {
+    background: var(--meter-high-bg);
+  }
+}
