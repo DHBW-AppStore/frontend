@@ -61,8 +61,8 @@ vi.mock('@/composables/useQuotas', () => ({
     get needsCredentials() { return mockNeedsCredentials },
     get hasCachedQuotas() { return mockHasCachedQuotas },
     fetchQuotas: mockFetchQuotas,
-    getColorClass: (percentage: number) => percentage >= 90 ? 'bg-red-500' : 'bg-green-500',
-    getTextColorClass: (percentage: number) => percentage >= 90 ? 'text-red-500' : percentage >= 75 ? 'text-amber-500' : 'text-gray-600',
+    getColorClass: (percentage: number) => percentage >= 90 ? 'meter-fill-high' : 'meter-fill-low',
+    getTextColorClass: (percentage: number) => percentage >= 90 ? 'text-danger' : percentage >= 75 ? 'text-warning' : 'text-fg-muted',
     isQuotaCritical: (percentage: number) => percentage >= 90
   })
 }))
@@ -236,16 +236,16 @@ describe('DashboardView.vue', () => {
   })
 
   it.each([
-    [70, 'text-gray-600', false],
-    [85, 'text-amber-500', false],
-    [95, 'text-red-500', true],
+    [70, 'text-fg-muted', false],
+    [85, 'text-warning', false],
+    [95, 'text-danger', true],
   ])('nutzt bei %s%% die Schwellen aus useQuotas', (percentage, expectedClass, expectWarning) => {
     mockQuotas = [quota({ percentage })]
 
     const wrapper = mountComponent()
 
     expect(wrapper.find('.tabular-nums').classes()).toContain(expectedClass)
-    expect(wrapper.find('.text-red-400').exists()).toBe(expectWarning)
+    expect(wrapper.find('svg.text-danger').exists()).toBe(expectWarning)
   })
 
   it('zeigt das Skeleton beim ersten Laden', () => {

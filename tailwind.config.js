@@ -35,21 +35,6 @@ export default {
         warning: { DEFAULT: token('warning'), dot: token('warning-dot') },
         danger: { DEFAULT: token('danger'), dot: token('danger-dot') },
         neutral: { DEFAULT: token('neutral'), dot: token('neutral-dot') },
-
-        // Legacy palette — removed once no component references it.
-        primary: "#317153",        // Hauptgrün
-        primaryDark: "#336A4A",
-        primaryLight: "#4e7d67",
-        lightGreen: "#b9d4c0ff",
-        ultraLightGreen: "#dbe5de" ,
-
-        accentYellow: "#E48C2A",   // Gelb aus Logo
-        lightYellow: "#fbe6cf",
-
-        accentRed: "#e73501",      // Rot aus Logo
-        lightRed: "#f8d6ccff",
-
-        bgSoft: "#F4F7F5",
       },
       borderColor: {
         DEFAULT: 'var(--line-subtle)',
@@ -59,12 +44,24 @@ export default {
       divideColor: {
         DEFAULT: 'var(--line-subtle)',
       },
+      // Aero radii stay between 6 and 8px; the larger steps are capped so
+      // existing rounded-xl/2xl/3xl classes follow the rule.
       borderRadius: {
         tag: '4px',
         control: '6px',
         panel: '8px',
+        xl: '8px',
+        '2xl': '8px',
+        '3xl': '8px',
       },
+      // Tailwind's stock shadow steps resolve to the themed token shadows.
       boxShadow: {
+        sm: 'var(--control-shadow)',
+        DEFAULT: 'var(--surface-panel-shadow)',
+        md: 'var(--surface-panel-shadow)',
+        lg: 'var(--surface-banner-shadow)',
+        xl: 'var(--surface-overlay-shadow)',
+        '2xl': 'var(--surface-overlay-shadow)',
         panel: 'var(--surface-panel-shadow)',
         banner: 'var(--surface-banner-shadow)',
         overlay: 'var(--surface-overlay-shadow)',

@@ -98,29 +98,29 @@ const studentStateLabel = (status: string | null | undefined) =>
 // colour would only make them think they did.
 const studentStateColor = (status: string | null | undefined) =>
   ({
-    ready: 'bg-green-100 text-green-800 border-green-300',
-    preparing: 'bg-blue-100 text-blue-800 border-blue-300',
-    unavailable: 'bg-slate-100 text-slate-700 border-slate-300',
+    ready: 'status-success',
+    preparing: 'status-warning',
+    unavailable: 'status-neutral',
   })[studentState(status)]
 
-// Status pills. Color semantics: orange = destroy, amber = lifecycle-pending,
-// slate = paused.
+// Status pills. Same four tones as ``getStatusStyles``: green = running,
+// yellow = in flight / needs attention, red = failed, grey = idle.
 const getStatusColor = (status: string) => {
   const colors = {
-    'success': 'bg-green-100 text-green-800 border-green-300',
-    'failed': 'bg-red-100 text-red-800 border-red-300',
-    'running': 'bg-blue-100 text-blue-800 border-blue-300',
-    'pending': 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    'cancelled': 'bg-gray-100 text-gray-700 border-gray-300',
-    'destroyed': 'bg-orange-100 text-orange-800 border-orange-300',
-    'destroying': 'bg-orange-100 text-orange-700 border-orange-300',
-    'pausing': 'bg-amber-100 text-amber-800 border-amber-300',
-    'paused': 'bg-slate-100 text-slate-700 border-slate-300',
-    'resuming': 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    'pause_failed': 'bg-amber-100 text-amber-900 border-amber-300',
-    'resume_failed': 'bg-amber-100 text-amber-900 border-amber-300',
+    'success': 'status-success',
+    'failed': 'status-danger',
+    'running': 'status-success',
+    'pending': 'status-neutral',
+    'cancelled': 'status-neutral',
+    'destroyed': 'status-neutral',
+    'destroying': 'status-warning',
+    'pausing': 'status-warning',
+    'paused': 'status-neutral',
+    'resuming': 'status-warning',
+    'pause_failed': 'status-warning',
+    'resume_failed': 'status-warning',
   }
-  return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800 border-gray-300'
+  return colors[status as keyof typeof colors] || 'status-neutral'
 }
 </script>
 
@@ -162,7 +162,7 @@ const getStatusColor = (status: string) => {
         </RouterLink>
         <!-- No button for students — there is nothing for them to do
              here. Name who acts next instead of leaving a dead end. -->
-        <p v-else class="text-sm text-gray-500">
+        <p v-else class="text-sm text-fg-muted">
           {{ $t('DeploymentsView.emptyStudentHint') }}
         </p>
       </template>
@@ -176,17 +176,17 @@ const getStatusColor = (status: string) => {
           :to="{ name: ROUTE_NAMES.deploymentsDetail, params: { id: deployment.deploymentId } }"
           class="block"
         >
-          <Card class="flex flex-col h-full cursor-pointer hover:border-emerald-200 transition">
+          <Card class="flex flex-col h-full cursor-pointer hover:border-strong transition">
             <div class="flex items-start justify-between gap-3 mb-3">
               <div class="flex items-center gap-3 min-w-0">
-                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <BarChart3 :size="20" class="text-primary" />
+                <div class="w-10 h-10 rounded-control bg-line/[.07] border border-subtle flex items-center justify-center flex-shrink-0">
+                  <BarChart3 :size="20" class="text-icon" />
                 </div>
                 <div class="min-w-0">
-                  <h3 class="font-semibold text-gray-900 truncate" :title="deployment.name">
+                  <h3 class="font-semibold text-fg truncate" :title="deployment.name">
                     {{ deployment.name }}
                   </h3>
-                  <p class="text-xs text-gray-500 truncate mt-0.5">
+                  <p class="text-xs text-fg-muted truncate mt-0.5">
                     <Box :size="11" class="inline-block mr-1 align-text-bottom" />
                     {{ getAppName(deployment.appId) }}
                   </p>
@@ -217,17 +217,17 @@ const getStatusColor = (status: string) => {
                  only the person who built it asks. -->
             <div
               v-if="isStudent"
-              class="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between text-xs"
+              class="mt-auto pt-3 border-t border-subtle flex items-center justify-between text-xs"
             >
               <span
                 v-if="studentState(deployment.status) === 'unavailable'"
-                class="text-gray-500"
+                class="text-fg-muted"
               >
                 {{ $t('DeploymentsView.studentUnavailableHint') }}
               </span>
               <span
                 v-else
-                class="inline-flex items-center gap-1 font-medium text-primary"
+                class="inline-flex items-center gap-1 font-medium text-fg"
               >
                 {{ $t('DeploymentsView.studentOpenAccess') }}
                 <ArrowRight :size="12" />
@@ -236,9 +236,9 @@ const getStatusColor = (status: string) => {
 
             <div
               v-else
-              class="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500"
+              class="mt-auto pt-3 border-t border-subtle flex items-center justify-between text-xs text-fg-muted"
             >
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 font-mono">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-line/[.04] text-fg border border-subtle font-mono">
                 <GitBranch :size="11" />
                 {{ deployment.releaseTag }}
               </span>

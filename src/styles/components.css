@@ -49,6 +49,11 @@
     box-shadow: var(--surface-panel-shadow);
   }
 
+  /* Panel fill only, for elements that bring their own border and radius */
+  .bg-panel {
+    background: var(--surface-panel-bg);
+  }
+
   .surface-sunken {
     background: var(--surface-sunken-bg);
     border: 1px solid var(--line-subtle);
@@ -211,6 +216,22 @@
     background: var(--avatar-bg);
     border-color: var(--line-strong);
     box-shadow: var(--control-shadow);
+  }
+
+  /* Switches: red track when on, recessed grey when off */
+  .toggle-on {
+    background: var(--toggle-on-bg);
+    border-color: rgb(var(--color-accent-strong));
+    box-shadow: var(--toggle-shadow);
+  }
+  .toggle-off {
+    background: var(--toggle-off-bg);
+    border-color: var(--toggle-off-border);
+    box-shadow: var(--toggle-shadow);
+  }
+  .toggle-knob {
+    background: var(--toggle-knob-bg);
+    box-shadow: var(--toggle-knob-shadow);
   }
 
   /* Meters */

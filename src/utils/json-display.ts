@@ -62,20 +62,20 @@ export function highlightJson(jsonString: string): string {
   return safeStr.replace(
     /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
     (match) => {
-      let cls = 'text-amber-400'
+      let cls = 'text-warning'
 
       if (/^"/.test(match)) {
         if (/:$/.test(match)) {
-          cls = 'text-blue-500 font-medium' // keys
+          cls = 'text-fg font-medium' // keys
         } else {
-          cls = 'text-emerald-500' // string values
+          cls = 'text-success' // string values
         }
       } else if (/true|false/.test(match)) {
-        cls = 'text-purple-500 font-bold' // booleans
+        cls = 'text-accent-fg font-bold' // booleans
       } else if (/null/.test(match)) {
-        cls = 'text-gray-500 italic' // null
+        cls = 'text-fg-muted italic' // null
       } else {
-        cls = 'text-cyan-500' // numbers
+        cls = 'text-warning' // numbers
       }
 
       return `<span class="${cls}">${match}</span>`

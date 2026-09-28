@@ -105,8 +105,8 @@ onMounted(async () => {
   <div class="flex flex-col items-center justify-center min-h-screen px-4">
     <div class="max-w-md w-full text-center flex flex-col items-center gap-4">
       <div v-if="state === 'loading'" class="flex flex-col items-center gap-4">
-        <Loader2 class="animate-spin text-primary" :size="48" />
-        <p class="text-gray-600">Moodle-Kurs wird geladen…</p>
+        <Loader2 class="animate-spin text-icon" :size="48" />
+        <p class="text-fg-muted">Moodle-Kurs wird geladen…</p>
       </div>
 
       <div
@@ -114,15 +114,15 @@ onMounted(async () => {
         data-testid="map-form"
         class="flex flex-col items-center gap-4 w-full"
       >
-        <GraduationCap class="text-primary" :size="48" />
+        <GraduationCap class="text-icon" :size="48" />
         <div>
           <p class="font-semibold">Moodle-Kurs zuordnen</p>
-          <p class="text-sm text-gray-600 mt-2">
+          <p class="text-sm text-fg-muted mt-2">
             Du hast diese Aktivität aus
             <strong>{{ moodleName }}</strong>
             gestartet. Welche Studiengruppe ist das?
           </p>
-          <p class="text-xs text-gray-500 mt-2">
+          <p class="text-xs text-fg-muted mt-2">
             Die Zuordnung sorgt dafür, dass Studierende beim Klick in Moodle
             direkt in ihrer Umgebung landen statt in einer Liste.
           </p>
@@ -132,7 +132,7 @@ onMounted(async () => {
           v-model="selected"
           data-testid="map-course"
           :disabled="state === 'saving'"
-          class="w-full px-3 py-2 rounded-md border border-gray-300 bg-white"
+          class="field w-full px-3 py-2"
         >
           <option value="" disabled>Studiengruppe wählen…</option>
           <option v-for="course in courses" :key="course.courseId" :value="course.courseId">
@@ -144,14 +144,14 @@ onMounted(async () => {
           <button
             data-testid="map-submit"
             :disabled="!selected || state === 'saving'"
-            class="px-4 py-2 rounded-md bg-primary text-white hover:opacity-90 disabled:opacity-50"
+            class="btn-primary px-4 py-2 rounded-control font-semibold disabled:opacity-50"
             @click="save"
           >
             Zuordnen
           </button>
           <button
             data-testid="map-skip"
-            class="px-4 py-2 rounded-md text-gray-600 hover:text-gray-900"
+            class="px-4 py-2 rounded-md text-fg-muted hover:text-fg"
             @click="skip"
           >
             Später
@@ -164,16 +164,16 @@ onMounted(async () => {
         data-testid="map-success"
         class="flex flex-col items-center gap-4"
       >
-        <CheckCircle2 class="text-green-600" :size="48" />
+        <CheckCircle2 class="text-success" :size="48" />
         <div>
           <p class="font-semibold">Zugeordnet</p>
-          <p class="text-sm text-gray-600 mt-2">
+          <p class="text-sm text-fg-muted mt-2">
             Studierende, die diese Aktivität in Moodle öffnen, landen ab jetzt
             direkt in ihrer Umgebung.
           </p>
         </div>
         <button
-          class="px-4 py-2 rounded-md bg-primary text-white hover:opacity-90"
+          class="btn-primary px-4 py-2 rounded-control font-semibold"
           @click="skip"
         >
           Weiter zu den Deployments
@@ -183,7 +183,7 @@ onMounted(async () => {
       <div
         v-else
         data-testid="map-error"
-        class="flex flex-col items-center gap-4 text-red-500"
+        class="flex flex-col items-center gap-4 text-danger"
       >
         <AlertCircle :size="48" />
         <div>

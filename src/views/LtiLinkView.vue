@@ -112,15 +112,15 @@ onMounted(async () => {
   <div class="flex flex-col items-center justify-center min-h-screen px-4">
     <div class="max-w-md w-full text-center flex flex-col items-center gap-4">
       <div v-if="state === 'working'" class="flex flex-col items-center gap-4">
-        <Loader2 class="animate-spin text-primary" :size="48" />
-        <p class="text-gray-600">Moodle-Konto wird verknüpft…</p>
+        <Loader2 class="animate-spin text-icon" :size="48" />
+        <p class="text-fg-muted">Moodle-Konto wird verknüpft…</p>
       </div>
 
       <div v-else-if="state === 'needs-login'" class="flex flex-col items-center gap-4">
-        <Link2 class="text-primary" :size="48" />
+        <Link2 class="text-icon" :size="48" />
         <div>
           <p class="font-semibold">Konto bestätigen</p>
-          <p class="text-sm text-gray-600 mt-2">
+          <p class="text-sm text-fg-muted mt-2">
             Diese E-Mail-Adresse gehört bereits zu einem Konto im App Store.
             Melde dich einmal direkt an — danach ist dein Moodle-Zugang mit
             diesem Konto verknüpft und der Start aus Moodle funktioniert
@@ -129,7 +129,7 @@ onMounted(async () => {
         </div>
         <button
           data-testid="link-login"
-          class="px-4 py-2 rounded-md bg-primary text-white hover:opacity-90"
+          class="btn-primary px-4 py-2 rounded-control font-semibold"
           @click="signIn"
         >
           Jetzt anmelden und verknüpfen
@@ -141,10 +141,10 @@ onMounted(async () => {
         data-testid="link-success"
         class="flex flex-col items-center gap-4"
       >
-        <CheckCircle2 class="text-green-600" :size="48" />
+        <CheckCircle2 class="text-success" :size="48" />
         <div>
           <p class="font-semibold">Moodle-Konto verknüpft</p>
-          <p class="text-sm text-gray-600 mt-2">
+          <p class="text-sm text-fg-muted mt-2">
             Ab jetzt meldet dich der Start aus Moodle direkt an.
             {{ RELAUNCH_HINT }}
           </p>
@@ -154,7 +154,7 @@ onMounted(async () => {
       <div
         v-else
         data-testid="link-error"
-        class="flex flex-col items-center gap-4 text-red-500"
+        class="flex flex-col items-center gap-4 text-danger"
       >
         <AlertCircle :size="48" />
         <div>

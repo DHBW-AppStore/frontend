@@ -17,6 +17,11 @@
     min-height: 100vh;
   }
 
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: rgb(var(--color-accent));
+  }
+
   :focus-visible {
     outline: 2px solid rgb(var(--color-accent) / 0.7);
     outline-offset: 2px;

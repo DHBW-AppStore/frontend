@@ -32,18 +32,18 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-8">
+  <div class="bg-panel rounded-xl border border-subtle p-6 shadow-sm mb-8">
     <div class="flex items-center justify-between mb-5 gap-3 flex-wrap">
       <div class="flex items-center gap-3">
-        <div class="p-2 bg-gray-100 rounded-lg">
-          <Server :size="20" class="text-gray-600" />
+        <div class="p-2 bg-line/[.07] rounded-lg">
+          <Server :size="20" class="text-icon" />
         </div>
-        <span class="text-lg font-semibold text-gray-900">{{ $t('DeploymentDetailView.infrastructure') }}</span>
+        <span class="text-lg font-semibold text-fg">{{ $t('DeploymentDetailView.infrastructure') }}</span>
       </div>
       <button
         @click="$emit('refresh')"
         :disabled="resourcesLoading"
-        class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-1.5 transition-colors"
+        class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-strong hover:bg-line/[.04] disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-1.5 transition-colors"
         :title="$t('DeploymentDetailView.refreshLiveStatus')"
       >
         <RefreshCw :size="13" :class="resourcesLoading ? 'animate-spin' : ''" />
@@ -53,7 +53,7 @@ defineEmits<{
 
     <div
       v-if="resourcesError"
-      class="text-sm p-3 rounded-lg border bg-red-50 text-red-800 border-red-200 mb-4 flex items-start gap-2"
+      class="text-sm p-3 rounded-lg border bg-danger-dot/10 text-danger border-danger-dot/30 mb-4 flex items-start gap-2"
     >
       <AlertCircle :size="16" class="mt-0.5 shrink-0" />
       <p>{{ resourcesError }}</p>
@@ -63,26 +63,26 @@ defineEmits<{
                  styling from ``InfrastructureVmCard``. -->
     <section class="mb-6">
       <div class="flex items-center gap-2 mb-3">
-        <Server :size="14" class="text-gray-400" />
-        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-600">
+        <Server :size="14" class="text-icon" />
+        <h3 class="text-sm font-bold uppercase tracking-wider text-fg-muted">
           Virtuelle Maschinen
         </h3>
         <span
           v-if="vmResources.length > 0"
-          class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded"
+          class="px-2 py-0.5 bg-line/[.07] text-fg-muted text-xs font-bold rounded"
         >
           {{ vmResources.length }}
         </span>
       </div>
       <div
         v-if="resourcesLoading && vmResources.length === 0"
-        class="text-sm text-gray-500 italic px-4 py-6 bg-gray-50 rounded-lg border border-gray-100 text-center"
+        class="text-sm text-fg-muted italic px-4 py-6 bg-line/[.04] rounded-lg border border-subtle text-center"
       >
         Lade VMs…
       </div>
       <div
         v-else-if="vmResources.length === 0"
-        class="text-sm text-gray-500 italic px-4 py-6 bg-gray-50 rounded-lg border border-gray-100 text-center"
+        class="text-sm text-fg-muted italic px-4 py-6 bg-line/[.04] rounded-lg border border-subtle text-center"
       >
         Keine VMs im aktuellen Terraform-State.
       </div>
@@ -102,11 +102,11 @@ defineEmits<{
     <!-- Networks / Subnets / Floating IPs (read-only) -->
     <section v-if="networkResources.length > 0" class="mb-6">
       <div class="flex items-center gap-2 mb-3">
-        <Network :size="14" class="text-gray-400" />
-        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-600">
+        <Network :size="14" class="text-icon" />
+        <h3 class="text-sm font-bold uppercase tracking-wider text-fg-muted">
           Netzwerk
         </h3>
-        <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded">
+        <span class="px-2 py-0.5 bg-line/[.07] text-fg-muted text-xs font-bold rounded">
           {{ networkResources.length }}
         </span>
       </div>
@@ -114,17 +114,17 @@ defineEmits<{
         <li
           v-for="res in networkResources"
           :key="res.address"
-          class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-between"
+          class="px-3 py-2 bg-line/[.04] rounded-lg border border-subtle flex items-center justify-between"
         >
           <div class="min-w-0">
-            <p class="font-semibold text-gray-900 truncate">
+            <p class="font-semibold text-fg truncate">
               {{ res.display_name }}
             </p>
-            <p class="text-gray-500 font-mono truncate" :title="res.address">
+            <p class="text-fg-muted font-mono truncate" :title="res.address">
               {{ res.address }}
             </p>
           </div>
-          <span class="text-[10px] uppercase tracking-wider bg-white px-2 py-0.5 rounded border border-gray-300 text-gray-600 ml-2 shrink-0">
+          <span class="text-[10px] uppercase tracking-wider bg-panel px-2 py-0.5 rounded border border-strong text-fg-muted ml-2 shrink-0">
             {{ res.category }}
           </span>
         </li>
@@ -134,11 +134,11 @@ defineEmits<{
     <!-- Security Groups (read-only) -->
     <section v-if="securityResources.length > 0">
       <div class="flex items-center gap-2 mb-3">
-        <Shield :size="14" class="text-gray-400" />
-        <h3 class="text-sm font-bold uppercase tracking-wider text-gray-600">
+        <Shield :size="14" class="text-icon" />
+        <h3 class="text-sm font-bold uppercase tracking-wider text-fg-muted">
           Sicherheit
         </h3>
-        <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded">
+        <span class="px-2 py-0.5 bg-line/[.07] text-fg-muted text-xs font-bold rounded">
           {{ securityResources.length }}
         </span>
       </div>
@@ -146,10 +146,10 @@ defineEmits<{
         <li
           v-for="res in securityResources"
           :key="res.address"
-          class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-100"
+          class="px-3 py-2 bg-line/[.04] rounded-lg border border-subtle"
         >
-          <p class="font-semibold text-gray-900">{{ res.display_name }}</p>
-          <p class="text-gray-500 font-mono">{{ res.address }}</p>
+          <p class="font-semibold text-fg">{{ res.display_name }}</p>
+          <p class="text-fg-muted font-mono">{{ res.address }}</p>
         </li>
       </ul>
     </section>

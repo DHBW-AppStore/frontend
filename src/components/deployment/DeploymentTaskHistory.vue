@@ -35,34 +35,34 @@ const showTaskLogsTrace = ref(false)
 </script>
 
 <template>
-  <div v-if="!isOwnerView" class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+  <div v-if="!isOwnerView" class="bg-panel rounded-xl border border-subtle p-6 shadow-sm">
     <div class="flex items-center gap-3 mb-3">
-      <div class="p-2 bg-gray-100 rounded-lg">
-        <Terminal :size="20" class="text-gray-400" />
+      <div class="p-2 bg-line/[.07] rounded-lg">
+        <Terminal :size="20" class="text-icon" />
       </div>
-      <span class="text-lg font-semibold text-gray-700">{{ $t('DeploymentDetailView.tasksAndLogs') }}</span>
+      <span class="text-lg font-semibold text-fg">{{ $t('DeploymentDetailView.tasksAndLogs') }}</span>
     </div>
-    <div class="text-sm text-gray-500 flex items-start gap-2 px-2">
-      <AlertCircle :size="16" class="text-gray-400 mt-0.5 flex-shrink-0" />
+    <div class="text-sm text-fg-muted flex items-start gap-2 px-2">
+      <AlertCircle :size="16" class="text-icon mt-0.5 flex-shrink-0" />
       <span>{{ $t('DeploymentDetailView.tasksOwnerOnly') }}</span>
     </div>
   </div>
-  <div v-else class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+  <div v-else class="bg-panel rounded-xl border border-subtle p-6 shadow-sm">
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
-        <div class="p-2 bg-gray-100 rounded-lg">
-          <Terminal :size="20" class="text-gray-600" />
+        <div class="p-2 bg-line/[.07] rounded-lg">
+          <Terminal :size="20" class="text-icon" />
         </div>
-        <span class="text-lg font-semibold text-gray-900">
+        <span class="text-lg font-semibold text-fg">
           {{ isStreamRelevant ? $t('DeploymentDetailView.taskHistory') : $t('DeploymentDetailView.tasksAndLogs') }}
         </span>
         <span v-if="historyTasks.length > 0"
-          class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded">
+          class="px-2 py-0.5 bg-line/[.07] text-fg-muted text-xs font-bold rounded">
           {{ historyTasks.length }}
         </span>
       </div>
       <button v-if="selectedTask" @click="$emit('deselect')"
-        class="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors text-sm">
+        class="flex items-center gap-2 text-fg hover:text-accent-fg transition-colors text-sm">
         <CircleArrowLeft :size="16" />
         <span>{{ $t('DeploymentDetailView.backToTaskList') }}</span>
       </button>
@@ -71,35 +71,35 @@ const showTaskLogsTrace = ref(false)
     <!-- Task List View -->
     <div v-if="!selectedTask">
       <div v-if="loadingTasks" class="flex justify-center py-10">
-        <Loader2 class="animate-spin text-primary" :size="32" />
+        <Loader2 class="animate-spin text-icon" :size="32" />
       </div>
 
-      <div v-else-if="historyTasks.length === 0" class="text-center py-10 text-gray-500">
+      <div v-else-if="historyTasks.length === 0" class="text-center py-10 text-fg-muted">
         {{ isStreamRelevant ? $t('DeploymentDetailView.noPreviousTasks') : $t('DeploymentDetailView.noTasks') }}
       </div>
 
       <div v-else class="space-y-2">
         <div v-for="task in historyTasks" :key="task.taskId" @click="$emit('select', task)"
-          class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200 hover:border-primary/30">
+          class="flex items-center justify-between p-4 bg-line/[.04] rounded-lg hover:bg-line/[.07] transition-colors cursor-pointer border border-subtle hover:border-strong">
           <div class="flex items-center gap-4 flex-1">
-            <component :is="getStatusStyles(task.status).icon" :size="18" :class="task.status === 'success' ? 'text-green-600' :
-              task.status === 'failed' ? 'text-red-600' :
-                task.status === 'running' ? 'text-blue-600' : 'text-yellow-600'" />
+            <component :is="getStatusStyles(task.status).icon" :size="18" :class="task.status === 'success' ? 'text-success' :
+              task.status === 'failed' ? 'text-danger' :
+                task.status === 'running' ? 'text-fg-muted' : 'text-warning'" />
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-1">
-                <span class="font-medium text-gray-900 capitalize">{{ task.type }}</span>
+                <span class="font-medium text-fg capitalize">{{ task.type }}</span>
                 <span
                   class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border capitalize"
                   :class="getStatusStyles(task.status).badgeClass">
                   {{ task.status }}
                 </span>
               </div>
-              <div class="text-xs text-gray-500">
+              <div class="text-xs text-fg-muted">
                 Created: {{ formatDate(task.created_at) }}
               </div>
             </div>
           </div>
-          <ChevronDown :size="20" class="text-gray-400 transform -rotate-90" />
+          <ChevronDown :size="20" class="text-icon transform -rotate-90" />
         </div>
       </div>
     </div>

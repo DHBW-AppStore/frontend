@@ -135,9 +135,9 @@ describe('DeploymentsListView.vue', () => {
   })
 
   it.each([
-    ['failed', ['bg-red-100', 'text-red-800']],
-    ['paused', ['bg-slate-100', 'text-slate-700']],
-    ['unbekannt', ['bg-gray-100', 'text-gray-800']]
+    ['failed', ['status-danger']],
+    ['paused', ['status-neutral']],
+    ['unbekannt', ['status-neutral']]
   ])('färbt den Status %s passend ein', (status, expectedClasses) => {
     mockDeployments = [makeDeployment({ status })]
 

@@ -111,6 +111,8 @@
   --toggle-off-bg: linear-gradient(180deg, #D9DEE4 0%, #C6CDD6 100%);
   --toggle-off-border: rgba(15, 25, 40, 0.12);
   --toggle-knob-bg: linear-gradient(180deg, #FFFFFF 0%, #D4D9DC 100%);
+  --toggle-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 2px rgba(0, 0, 0, 0.35);
+  --toggle-knob-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="dark"] {

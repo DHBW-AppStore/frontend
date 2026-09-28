@@ -286,7 +286,7 @@ const { isDeploymentBusy, resendState, resendAccess } = useResendAccess({
              skip the section entirely so they don't see an empty/
              permission-error panel. Visually mirrors the other
              page sections (Teams, Tasks, Outputs): same
-             ``bg-white rounded-xl border ... p-6 shadow-sm`` shell,
+             ``bg-panel rounded-xl border ... p-6 shadow-sm`` shell,
              same icon-tile header, same sub-section spacing. -->
         <DeploymentInfrastructureSection
             v-if="isOwnerView"
@@ -377,14 +377,14 @@ const { isDeploymentBusy, resendState, resendAccess } = useResendAccess({
 
     <!-- Load error: the deployment could not be loaded -->
     <div v-else-if="loadFailed" class="flex flex-col items-center justify-center py-20 gap-3 text-center">
-        <p class="text-gray-600">{{ $t('DeploymentDetailView.loadError') }}</p>
-        <RouterLink :to="{ name: ROUTE_NAMES.deploymentsList }" class="text-sm font-medium text-primary hover:underline">
+        <p class="text-fg-muted">{{ $t('DeploymentDetailView.loadError') }}</p>
+        <RouterLink :to="{ name: ROUTE_NAMES.deploymentsList }" class="text-sm font-medium text-accent-fg hover:underline">
             {{ $t('DeploymentDetailView.backToList') }}
         </RouterLink>
     </div>
 
     <!-- Loading State -->
     <div v-else class="flex items-center justify-center py-20">
-        <Loader2 class="animate-spin text-primary" :size="40" />
+        <Loader2 class="animate-spin text-icon" :size="40" />
     </div>
 </template>
