@@ -44,6 +44,33 @@ describe('useTheme', () => {
     expect(localStorage.getItem('theme')).toBe('light')
   })
 
+  it('crossfades via a view transition when the browser supports it', async () => {
+    const startViewTransition = vi.fn((update: () => void) => update())
+    Object.defineProperty(document, 'startViewTransition', { value: startViewTransition, configurable: true })
+    try {
+      const { isDark, toggleTheme } = await loadUseTheme()
+      toggleTheme()
+      expect(startViewTransition).toHaveBeenCalledOnce()
+      expect(isDark.value).toBe(true)
+    } finally {
+      delete (document as { startViewTransition?: unknown }).startViewTransition
+    }
+  })
+
+  it('switches instantly when the user prefers reduced motion', async () => {
+    const startViewTransition = vi.fn()
+    Object.defineProperty(document, 'startViewTransition', { value: startViewTransition, configurable: true })
+    vi.spyOn(window, 'matchMedia').mockReturnValue({ matches: true } as MediaQueryList)
+    try {
+      const { isDark, toggleTheme } = await loadUseTheme()
+      toggleTheme()
+      expect(startViewTransition).not.toHaveBeenCalled()
+      expect(isDark.value).toBe(true)
+    } finally {
+      delete (document as { startViewTransition?: unknown }).startViewTransition
+    }
+  })
+
   it('still switches when storage is unavailable', async () => {
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new Error('blocked')

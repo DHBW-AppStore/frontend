@@ -22,8 +22,19 @@ function applyTheme(next: Theme) {
   }
 }
 
+// Crossfades the whole page, gradients included (CSS transitions cannot
+// animate gradients). Without the API or with reduced motion: instant switch.
+function switchTheme(next: Theme) {
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  if (!document.startViewTransition || reduceMotion) {
+    applyTheme(next)
+    return
+  }
+  document.startViewTransition(() => applyTheme(next))
+}
+
 export function useTheme() {
   const isDark = computed(() => theme.value === 'dark')
-  const toggleTheme = () => applyTheme(isDark.value ? 'light' : 'dark')
+  const toggleTheme = () => switchTheme(isDark.value ? 'light' : 'dark')
   return { theme, isDark, toggleTheme }
 }
