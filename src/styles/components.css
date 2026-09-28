@@ -22,6 +22,25 @@
     box-shadow: var(--surface-sidebar-shadow);
   }
 
+  .logo-plate {
+    background: var(--logo-plate-bg);
+    box-shadow: var(--logo-plate-shadow);
+  }
+
+  .avatar {
+    background: var(--avatar-bg);
+    border: 1px solid var(--line-strong);
+    color: rgb(var(--color-fg));
+  }
+
+  /* Rows in dropdown menus */
+  .menu-item {
+    transition: background 150ms;
+  }
+  .menu-item:hover {
+    background: var(--nav-hover-bg);
+  }
+
   /* Content surfaces */
   .surface-panel {
     background: var(--surface-panel-bg);

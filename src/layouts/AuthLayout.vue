@@ -1,13 +1,13 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-primary">
+  <div class="min-h-screen flex items-center justify-center px-4">
 
     <!-- Card -->
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-10">
+    <div class="surface-banner w-full max-w-md p-10">
 
       <!-- Logo / Titel -->
       <div class="mb-8 text-center">
-        <h1 class="text-3xl font-bold text-primary">SIX7</h1>
-        <p class="text-gray-500 mt-2">
+        <h1 class="text-3xl font-bold tracking-tight text-fg">SIX7</h1>
+        <p class="text-fg-muted mt-2">
           Click'n Deploy
         </p>
       </div>
