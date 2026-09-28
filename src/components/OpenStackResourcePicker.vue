@@ -76,6 +76,10 @@ const props = defineProps<{
   azService?: 'compute' | 'network' | 'volume'
   placeholder?: string
   allowFreeText?: boolean
+  /** The app author's HCL default for this variable. Used only to mark the
+   *  matching entry in the option list as "recommended" — it never
+   *  pre-selects anything, that is the caller's job via ``modelValue``. */
+  recommendedValue?: string | number | boolean | unknown[] | null
 }>()
 
 const emit = defineEmits<{
@@ -231,18 +235,19 @@ function adapt(raw: any): ResourceItem {
 // ----------------------------------------------------------------
 // Selection logic
 // ----------------------------------------------------------------
-const selectedKeys = computed<Set<string>>(() => {
-  const v = props.modelValue
-  // String-coerce: HCL defaults can arrive as number/boolean (``default = 2``),
-  // which would be invisible without coercion. ``null``/``undefined`` and the
-  // literal strings ``"null"``/``"undefined"`` are treated as empty.
-  const toKey = (x: unknown): string => {
-    if (x === null || x === undefined) return ''
-    const s = String(x)
-    if (s === 'null' || s === 'undefined') return ''
-    return s
-  }
-  if (props.multi) {
+// String-coerce: HCL defaults can arrive as number/boolean (``default = 2``),
+// which would be invisible without coercion. ``null``/``undefined`` and the
+// literal strings ``"null"``/``"undefined"`` are treated as empty.
+const toKey = (x: unknown): string => {
+  if (x === null || x === undefined) return ''
+  const s = String(x)
+  if (s === 'null' || s === 'undefined') return ''
+  return s
+}
+
+/** Normalises a scalar, list or comma-string value into a set of item keys. */
+const toKeySet = (v: unknown, multi: boolean): Set<string> => {
+  if (multi) {
     if (Array.isArray(v)) return new Set(v.map(toKey).filter(Boolean))
     if (typeof v === 'string' && v.trim()) {
       return new Set(v.split(',').map((s) => s.trim()).filter(Boolean))
@@ -251,13 +256,30 @@ const selectedKeys = computed<Set<string>>(() => {
   }
   const key = toKey(v)
   return new Set(key ? [key] : [])
-})
+}
+
+const selectedKeys = computed<Set<string>>(() =>
+  toKeySet(props.modelValue, Boolean(props.multi)),
+)
+
+/**
+ * The author's default as a key set. Marking it in the option list is what
+ * keeps the recommendation findable AFTER the user picked something else —
+ * at that moment the "recommended" badge on the variable card disappears,
+ * and without this the original suggestion would be lost in the list.
+ */
+const recommendedKeys = computed<Set<string>>(() =>
+  toKeySet(props.recommendedValue, Boolean(props.multi)),
+)
 
 const valueOf = (item: ResourceItem): string =>
   props.osMode === 'id' ? item.id : item.name
 
 const isSelected = (item: ResourceItem): boolean =>
   selectedKeys.value.has(valueOf(item))
+
+const isRecommended = (item: ResourceItem): boolean =>
+  recommendedKeys.value.has(valueOf(item))
 
 /**
  * Display list of the current selection. Two sources: this picker's ``items``
@@ -296,11 +318,16 @@ const filteredItems = computed<ResourceItem[]>(() => {
       )
     : items.value
   // Pull selected entries to the top so a set default is immediately visible in
-  // a long list. Relative order of selected items is preserved (stable sort).
+  // a long list, then the recommended one — otherwise it would be buried once
+  // the user has selected something else, which is exactly when it is needed.
+  // Relative order inside a group is preserved (stable sort).
   return [...base].sort((a, b) => {
     const sa = isSelected(a) ? 0 : 1
     const sb = isSelected(b) ? 0 : 1
-    return sa - sb
+    if (sa !== sb) return sa - sb
+    const ra = isRecommended(a) ? 0 : 1
+    const rb = isRecommended(b) ? 0 : 1
+    return ra - rb
   })
 })
 
@@ -827,6 +854,15 @@ onBeforeUnmount(() => {
                   class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium flex-shrink-0"
                 >
                   {{ item.tertiary }}
+                </span>
+                <!-- The app author's default. Stays marked even after the user
+                     picked something else, so the suggestion is findable. -->
+                <span
+                  v-if="isRecommended(item)"
+                  data-testid="picker-recommended"
+                  class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200 font-bold flex-shrink-0"
+                >
+                  {{ t('openstackPicker.recommended') }}
                 </span>
               </div>
               <div v-if="item.secondary" class="text-xs text-gray-500 truncate">

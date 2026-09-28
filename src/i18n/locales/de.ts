@@ -681,7 +681,11 @@ export default {
       noTeamsConfigured: 'Noch keine Teams konfiguriert — bitte den vorigen Schritt zuerst durchlaufen.',
       noMembers: 'Keine Mitglieder',
       missingRequiredTitle: 'Es fehlen noch Pflichteingaben:',
-      teamRenameToast: 'Team-/User-Änderung erkannt — {count} verwaiste Eingabe(n) entfernt:\n{lines}'
+      teamRenameToast: 'Team-/User-Änderung erkannt — {count} verwaiste Eingabe(n) entfernt:\n{lines}',
+      advancedSettings: 'Erweiterte Einstellungen',
+      allPreconfigured: 'Alles vorkonfiguriert, hier ist keine Eingabe nötig. Für Anpassungen die erweiterten Einstellungen öffnen.',
+      recommended: 'Empfohlen',
+      recommendedHint: 'Vom App-Entwickler empfohlener Wert. Kann angepasst werden.'
     },
     summary: {
       title: 'Empfohlene Konfiguration',
@@ -958,6 +962,7 @@ export default {
       externalGateway: 'External Gateway',
     },
     unnamed: '(unbenannt)',
+    recommended: 'Empfohlen',
     toasts: {
       removed: '{label} wurde entfernt',
       listRefreshed: 'Liste aktualisiert.',
