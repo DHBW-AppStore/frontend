@@ -63,10 +63,11 @@ const { removeToast } = toastStore
   align-items: flex-start;
   gap: 0.75rem;
   padding: 1rem;
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  background: var(--surface-overlay-bg);
+  border: 1px solid var(--line-subtle);
   border-left: 4px solid;
+  border-radius: 8px;
+  box-shadow: var(--surface-overlay-shadow);
   pointer-events: auto;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -74,23 +75,23 @@ const { removeToast } = toastStore
 
 .toast:hover {
   transform: translateX(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .toast-success {
-  border-left-color: #10b981;
+  border-left-color: rgb(var(--color-success-dot));
 }
 
 .toast-error {
-  border-left-color: #ef4444;
+  border-left-color: rgb(var(--color-danger-dot));
 }
 
 .toast-warning {
-  border-left-color: #f59e0b;
+  border-left-color: rgb(var(--color-warning-dot));
 }
 
+/* No blue in the palette: info is the neutral grey. */
 .toast-info {
-  border-left-color: #3b82f6;
+  border-left-color: rgb(var(--color-neutral-dot));
 }
 
 .toast-icon {
@@ -100,19 +101,19 @@ const { removeToast } = toastStore
 }
 
 .toast-success .toast-icon {
-  color: #10b981;
+  color: rgb(var(--color-success));
 }
 
 .toast-error .toast-icon {
-  color: #ef4444;
+  color: rgb(var(--color-danger));
 }
 
 .toast-warning .toast-icon {
-  color: #f59e0b;
+  color: rgb(var(--color-warning));
 }
 
 .toast-info .toast-icon {
-  color: #3b82f6;
+  color: rgb(var(--color-icon));
 }
 
 .toast-content {
@@ -122,7 +123,7 @@ const { removeToast } = toastStore
 
 .toast-message {
   margin: 0;
-  color: #1f2937;
+  color: rgb(var(--color-fg));
   font-size: 0.875rem;
   line-height: 1.25rem;
   word-break: break-word;
@@ -132,7 +133,7 @@ const { removeToast } = toastStore
   flex-shrink: 0;
   width: 1.25rem;
   height: 1.25rem;
-  color: #6b7280;
+  color: rgb(var(--color-icon));
   background: none;
   border: none;
   padding: 0;
@@ -141,7 +142,7 @@ const { removeToast } = toastStore
 }
 
 .toast-close:hover {
-  color: #1f2937;
+  color: rgb(var(--color-fg));
 }
 
 .toast-close svg {

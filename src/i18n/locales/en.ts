@@ -32,6 +32,10 @@ export default {
     approvals: "Approvals",
   },
 
+  theme: {
+    dark: "Dark theme",
+  },
+
   action: {
     back: "Back",
   },

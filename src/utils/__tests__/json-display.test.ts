@@ -42,20 +42,20 @@ describe('highlightJson', () => {
 
   it('wraps keys, strings, numbers, booleans and null in colour classes', () => {
     expect(highlightJson('{"k": "v", "n": -1.5, "b": true, "z": null}')).toBe(
-      '{<span class="text-blue-500 font-medium">"k":</span> '
-      + '<span class="text-emerald-500">"v"</span>, '
-      + '<span class="text-blue-500 font-medium">"n":</span> '
-      + '<span class="text-cyan-500">-1.5</span>, '
-      + '<span class="text-blue-500 font-medium">"b":</span> '
-      + '<span class="text-purple-500 font-bold">true</span>, '
-      + '<span class="text-blue-500 font-medium">"z":</span> '
-      + '<span class="text-gray-500 italic">null</span>}',
+      '{<span class="text-fg font-medium">"k":</span> '
+      + '<span class="text-success">"v"</span>, '
+      + '<span class="text-fg font-medium">"n":</span> '
+      + '<span class="text-warning">-1.5</span>, '
+      + '<span class="text-fg font-medium">"b":</span> '
+      + '<span class="text-accent-fg font-bold">true</span>, '
+      + '<span class="text-fg font-medium">"z":</span> '
+      + '<span class="text-fg-muted italic">null</span>}',
     )
   })
 
   it('escapes HTML before highlighting', () => {
     expect(highlightJson('"<img src=x onerror=alert(1)>"')).toBe(
-      '<span class="text-emerald-500">"&lt;img src=x onerror=alert(1)&gt;"</span>',
+      '<span class="text-success">"&lt;img src=x onerror=alert(1)&gt;"</span>',
     )
     expect(highlightJson('a & b')).toBe('a &amp; b')
   })

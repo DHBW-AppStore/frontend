@@ -14,10 +14,10 @@ import { Clock } from 'lucide-vue-next'
 <template>
   <div class="flex flex-col items-center justify-center min-h-screen">
     <div class="flex flex-col items-center gap-4 text-center max-w-md px-4">
-      <Clock class="text-gray-400" :size="48" />
+      <Clock class="text-icon" :size="48" />
       <div>
         <p class="font-semibold">Sitzung abgelaufen</p>
-        <p class="text-sm text-gray-600 mt-2">
+        <p class="text-sm text-fg-muted mt-2">
           Die Anmeldung über Moodle ist abgelaufen. Bitte die Aktivität im
           Moodle-Kurs erneut öffnen, um weiterzuarbeiten.
         </p>

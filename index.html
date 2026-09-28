@@ -5,6 +5,17 @@
     <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Six7 Click'n'Deploy</title>
+    <!-- Applies the saved theme before first paint (no flash). Light is the
+         default regardless of the OS setting. Key shared with useTheme.ts. -->
+    <script>
+      (function () {
+        try {
+          if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark')
+          }
+        } catch (e) {}
+      })()
+    </script>
     <script src="/env-config.js"></script>
   </head>
   <body>

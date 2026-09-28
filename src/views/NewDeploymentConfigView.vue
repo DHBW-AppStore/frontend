@@ -344,13 +344,13 @@ onMounted(async () => {
 <template>
   <div class="max-w-6xl mx-auto w-full">
     
-    <div class="bg-white rounded-2xl p-10 border shadow-sm min-h-[700px] flex flex-col">
+    <div class="bg-panel rounded-2xl p-10 border shadow-sm min-h-[700px] flex flex-col">
       
       <div class="flex items-center gap-3 mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">
+        <h1 class="text-3xl font-bold text-fg">
           {{ t('deployment.title') }}
         </h1>
-        <BarChart3 :size="32" class="text-emerald-600" />
+        <BarChart3 :size="32" class="text-icon" />
       </div>
 
       <DeploymentProgressBar :current-step="1" />
@@ -368,7 +368,7 @@ onMounted(async () => {
 
       <template v-if="!credStore.isResolved || credStore.hasCredential">
       <div class="mb-8">
-        <label class="block text-xl font-bold text-gray-900 mb-3">
+        <label class="block text-xl font-bold text-fg mb-3">
           {{ t('deployment.config.nameLabel') }}
         </label>
         <input 
@@ -376,22 +376,22 @@ onMounted(async () => {
           type="text" 
           :placeholder="t('deployment.config.namePlaceholder')"
           data-testid="deployment-name"
-          class="w-full px-4 py-3 rounded-full border-2 border-gray-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none transition-all"
+          class="field w-full px-4 py-3 focus:border-accent/60 transition-all"
         />
       </div>
 
       <div class="flex-grow">
-        <h2 class="text-xl font-bold text-gray-900 mb-4">
+        <h2 class="text-xl font-bold text-fg mb-4">
           {{ t('deployment.config.targetGroupTitle') }}
         </h2>
 
-        <div class="flex border-b border-gray-200 mb-6">
+        <div class="flex border-b border-subtle mb-6">
           <button
             @click="activeTab = 'courses'"
             class="px-6 py-3 font-semibold transition-colors border-b-2"
             :class="activeTab === 'courses' 
-              ? 'border-emerald-500 text-emerald-600' 
-              : 'border-transparent text-gray-500 hover:text-gray-700'"
+              ? 'border-accent text-fg-muted' 
+              : 'border-transparent text-fg-muted hover:text-fg'"
           >
             <BookOpen :size="20" class="inline mr-2" />
             {{ t('deployment.config.courseLabel') }}
@@ -400,8 +400,8 @@ onMounted(async () => {
             @click="activeTab = 'individuals'"
             class="px-6 py-3 font-semibold transition-colors border-b-2"
             :class="activeTab === 'individuals' 
-              ? 'border-emerald-500 text-emerald-600' 
-              : 'border-transparent text-gray-500 hover:text-gray-700'"
+              ? 'border-accent text-fg-muted' 
+              : 'border-transparent text-fg-muted hover:text-fg'"
           >
             <UserPlus :size="20" class="inline mr-2" />
             {{ t('deployment.config.studentsLabel') }}
@@ -412,7 +412,7 @@ onMounted(async () => {
           
           <div>
             <div v-if="activeTab === 'courses'">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">{{ t('CoursesView.title') }}</h3>
+              <h3 class="text-lg font-semibold text-fg mb-4">{{ t('CoursesView.title') }}</h3>
               <div class="space-y-3 max-h-[400px] overflow-y-auto">
                 <div 
                   v-for="course in courses"
@@ -421,17 +421,17 @@ onMounted(async () => {
                   :data-testid="`course-${course.courseId}`"
                   class="flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all"
                   :class="isCourseSelected(course.courseId) 
-                    ? 'bg-emerald-50 border-emerald-300' 
-                    : 'bg-gray-50 border-gray-200 hover:border-gray-300'"
+                    ? 'bg-line/[.07] border-strong' 
+                    : 'bg-line/[.04] border-subtle hover:border-strong'"
                 >
                   <div class="w-6 h-6 flex items-center justify-center rounded border transition-colors"
-                       :class="isCourseSelected(course.courseId) ? 'bg-emerald-500 border-emerald-500' : 'border-gray-400 bg-white'"
+                       :class="isCourseSelected(course.courseId) ? 'bg-accent border-accent' : 'border-strong bg-panel'"
                   >
-                     <Check v-if="isCourseSelected(course.courseId)" :size="16" class="text-white" />
+                     <Check v-if="isCourseSelected(course.courseId)" :size="16" class="text-on-accent" />
                   </div>
                   <div class="flex-grow">
-                    <div class="font-semibold text-gray-900">{{ course.name }}</div>
-                    <div class="text-sm text-gray-600">
+                    <div class="font-semibold text-fg">{{ course.name }}</div>
+                    <div class="text-sm text-fg-muted">
                       <span v-if="loadingCourseStudents.has(course.courseId)">{{ t('CoursesView.loading') }}</span>
                       <span v-else>{{ t('DeploymentDetailView.deploymentStudentCount', getStudentCountForCourse(course.courseId)) }}</span>
                     </div>
@@ -441,41 +441,41 @@ onMounted(async () => {
             </div>
 
             <div v-if="activeTab === 'individuals'">
-              <h3 class="text-lg font-semibold text-gray-800 mb-4">{{ t('deployment.config.studentsLabel') }}</h3>
+              <h3 class="text-lg font-semibold text-fg mb-4">{{ t('deployment.config.studentsLabel') }}</h3>
               
               <div class="relative mb-4">
-                <Search class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" :size="20" />
+                <Search class="absolute left-4 top-1/2 transform -translate-y-1/2 text-icon" :size="20" />
                 <input 
                   v-model="studentSearchQuery"
                   type="text"
                   :placeholder="t('deployment.config.searchPlaceholder')"
                   data-testid="student-search"
-                  class="w-full pl-12 pr-4 py-3 rounded-full border-2 border-gray-200 focus:border-emerald-500 outline-none transition-all"
+                  class="field w-full pl-12 pr-4 py-3 focus:border-accent/60 transition-all"
                 />
               </div>
 
-              <div class="bg-gray-50 rounded-lg overflow-hidden border-2 border-gray-200 max-h-[350px] overflow-y-auto">
+              <div class="bg-line/[.04] rounded-lg overflow-hidden border-2 border-subtle max-h-[350px] overflow-y-auto">
                 <div 
                   v-for="student in filteredStudents"
-                  :key="student.userId"
-                  @click="toggleStudent(student.userId)"
-                  :data-testid="`student-${student.userId}`"
-                  class="flex items-center gap-3 px-4 py-3 cursor-pointer border-b last:border-b-0 border-gray-200 transition-colors select-none"
-                  :class="store.draft.studentIds.includes(student.userId) ? 'bg-emerald-50' : 'hover:bg-gray-100'"
+                  :key="student.keycloak_id"
+                  @click="toggleStudent(student.keycloak_id)"
+                  :data-testid="`student-${student.keycloak_id}`"
+                  class="flex items-center gap-3 px-4 py-3 cursor-pointer border-b last:border-b-0 border-subtle transition-colors select-none"
+                  :class="store.draft.studentIds.includes(student.keycloak_id) ? 'bg-line/[.07]' : 'hover:bg-line/[.07]'"
                 >
                   <div class="w-6 h-6 flex items-center justify-center rounded border transition-colors"
-                       :class="store.draft.studentIds.includes(student.userId) ? 'bg-emerald-500 border-emerald-500' : 'border-gray-400 bg-white'"
+                       :class="store.draft.studentIds.includes(student.keycloak_id) ? 'bg-accent border-accent' : 'border-strong bg-panel'"
                   >
-                     <Check v-if="store.draft.studentIds.includes(student.userId)" :size="16" class="text-white" />
+                     <Check v-if="store.draft.studentIds.includes(student.keycloak_id)" :size="16" class="text-on-accent" />
                   </div>
-                  <span class="text-gray-700 font-medium">
+                  <span class="text-fg font-medium">
                     {{ (student.firstName || student.lastName) 
                         ? `${student.firstName || ''} ${student.lastName || ''}`.trim()
                         : (student.username || student.email || student.name || student.userId) }}
                   </span>
                 </div>
                 
-                <div v-if="filteredStudents.length === 0" class="p-4 text-gray-500 text-center">
+                <div v-if="filteredStudents.length === 0" class="p-4 text-fg-muted text-center">
                   {{ t('CourseDetailView.addModal.noUsersFound') }}
                 </div>
               </div>
@@ -483,29 +483,29 @@ onMounted(async () => {
           </div>
 
           <div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <h3 class="text-lg font-semibold text-fg mb-4 flex items-center gap-2">
               <Users :size="20" />
               {{ t('deployment.groups.studentsSelected', { count: selectedStudents.length }) }}
             </h3>
             
-            <div class="bg-gray-50 rounded-lg border-2 border-gray-200 p-4 max-h-[400px] overflow-y-auto">
-              <div v-if="selectedStudents.length === 0" class="text-gray-500 text-center py-8">
+            <div class="bg-line/[.04] rounded-lg border-2 border-subtle p-4 max-h-[400px] overflow-y-auto">
+              <div v-if="selectedStudents.length === 0" class="text-fg-muted text-center py-8">
                 {{ t('deployment.assignment.noStudents') }}
               </div>
               <div v-else class="space-y-2">
                 <div
                   v-for="student in selectedStudents"
-                  :key="student.userId"
-                  class="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200"
+                  :key="student.keycloak_id"
+                  class="flex items-center justify-between bg-panel p-3 rounded-lg border border-subtle"
                 >
-                  <span class="text-gray-700 font-medium">
+                  <span class="text-fg font-medium">
                     {{ (student.firstName || student.lastName) 
                         ? `${student.firstName || ''} ${student.lastName || ''}`.trim()
                         : (student.username || student.email || student.name || student.userId) }}
                   </span>
                   <button 
-                    @click="toggleStudent(student.userId)" 
-                    class="text-red-500 hover:text-red-700 font-bold text-lg leading-none"
+                    @click="toggleStudent(student.keycloak_id)" 
+                    class="text-danger hover:text-danger font-bold text-lg leading-none"
                     :title="t('CourseDetailView.removeModal.remove')"
                     :data-testid="`remove-${student.userId}`"
                   >
@@ -515,8 +515,8 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p class="text-sm text-blue-800">
+            <div class="mt-4 p-4 bg-line/[.04] border border-subtle rounded-lg">
+              <p class="text-sm text-fg">
                 <strong>{{ t('deployment.config.infoTitle') }}</strong> {{ t('deployment.config.infoText') }}
               </p>
             </div>
@@ -526,11 +526,11 @@ onMounted(async () => {
       </div>
       </template>
 
-      <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-200">
+      <div class="flex justify-between items-center mt-8 pt-4 border-t border-subtle">
         <button 
           @click="handleBack"
           data-testid="btn-back"
-          class="px-8 py-2.5 rounded-full bg-gray-400 text-white font-semibold hover:bg-gray-500 transition-colors"
+          class="btn-secondary px-8 py-2.5 rounded-control font-semibold transition"
         >
           {{ t('deployment.actions.back') }}
         </button>
@@ -539,7 +539,7 @@ onMounted(async () => {
           @click="handleNext"
           data-testid="btn-next"
           :disabled="credStore.isResolved && !credStore.hasCredential"
-          class="px-8 py-2.5 rounded-full bg-emerald-700 text-white font-bold hover:bg-emerald-800 transition-colors shadow-lg shadow-emerald-700/20 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="btn-primary px-8 py-2.5 rounded-control font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {{ t('deployment.actions.next') }}
         </button>

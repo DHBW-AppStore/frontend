@@ -31,31 +31,31 @@ defineProps<{
 </script>
 
 <template>
-  <div class="bg-white rounded-xl border border-blue-300 shadow-sm overflow-hidden">
-    <!-- Header strip: gradient + live indicator + task type/status -->
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-200">
+  <div class="bg-panel rounded-xl border border-strong shadow-sm overflow-hidden">
+    <!-- Header strip: live indicator + task type/status -->
+    <div class="bg-line/[.04] px-6 py-4 border-b border-subtle">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <div class="relative">
-            <div class="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
-            <div class="absolute inset-0 w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></div>
+            <div class="w-2.5 h-2.5 bg-success-dot rounded-full"></div>
+            <div class="absolute inset-0 w-2.5 h-2.5 bg-success-dot rounded-full animate-ping"></div>
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <span class="text-sm font-semibold text-gray-900 capitalize">{{ activeTask.type
+              <span class="text-sm font-semibold text-fg capitalize">{{ activeTask.type
               }}</span>
-              <span class="text-xs font-medium text-gray-500">·</span>
-              <span class="text-xs text-gray-600">running since {{ formatDate(activeTask.started_at ||
+              <span class="text-xs font-medium text-fg-muted">·</span>
+              <span class="text-xs text-fg-muted">running since {{ formatDate(activeTask.started_at ||
                 activeTask.created_at) }}</span>
             </div>
-            <div class="text-xs text-gray-500 font-mono mt-0.5">{{ activeTask.taskId }}</div>
+            <div class="text-xs text-fg-muted font-mono mt-0.5">{{ activeTask.taskId }}</div>
           </div>
         </div>
         <span class="text-xs px-2 py-1 rounded-md font-medium" :class="streamConnectionState === 'live'
-          ? 'bg-green-100 text-green-700 border border-green-200'
+          ? 'bg-success-dot/10 text-success border border-success-dot/30'
           : streamConnectionState === 'reconnecting'
-            ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
-            : 'bg-gray-100 text-gray-600 border border-gray-200'">
+            ? 'bg-warning-dot/10 text-warning border border-warning-dot/30'
+            : 'bg-line/[.07] text-fg-muted border border-subtle'">
           {{ streamConnectionState === 'live' ? $t('DeploymentDetailView.streamLive') : streamConnectionState }}
         </span>
       </div>
@@ -72,7 +72,7 @@ defineProps<{
                      guess from the DB seed, so checking it alone is
                      enough to decide whether to render the stepper. -->
       <template v-if="streamCurrentPhaseIndex === null && !streamCurrentPhase">
-        <div class="flex items-center gap-3 py-6 justify-center text-gray-500">
+        <div class="flex items-center gap-3 py-6 justify-center text-fg-muted">
           <Loader2 class="animate-spin" :size="20" />
           <span class="text-sm">{{ $t('DeploymentDetailView.workerStarting') }}</span>
         </div>
@@ -81,15 +81,15 @@ defineProps<{
         <!-- Progress headline -->
         <div>
           <div class="flex items-baseline justify-between mb-2">
-            <span class="text-base font-semibold text-gray-900">
+            <span class="text-base font-semibold text-fg">
               {{ phaseLabel(streamCurrentPhase) || $t('DeploymentDetailView.phaseStarting') }}
             </span>
-            <span class="text-2xl font-bold text-gray-900 tabular-nums">
-              {{ streamProgress ?? 0 }}<span class="text-sm text-gray-500 font-medium">%</span>
+            <span class="text-2xl font-bold text-fg tabular-nums">
+              {{ streamProgress ?? 0 }}<span class="text-sm text-fg-muted font-medium">%</span>
             </span>
           </div>
-          <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500 ease-out"
+          <div class="w-full bg-line/[.07] rounded-full h-2 overflow-hidden">
+            <div class="meter-fill-low h-2 rounded-tag transition-all duration-500 ease-out"
               :style="{ width: (streamProgress ?? 0) + '%' }"></div>
           </div>
         </div>
@@ -104,18 +104,18 @@ defineProps<{
           <template v-for="idx in phaseStepCount" :key="idx - 1">
             <div class="flex-shrink-0 flex flex-col items-center gap-2 min-w-[60px]">
               <div class="w-2.5 h-2.5 rounded-full transition-all" :class="(idx - 1) < currentPhaseIndex
-                ? 'bg-blue-500'
+                ? 'bg-icon'
                 : (idx - 1) === currentPhaseIndex
-                  ? 'bg-blue-500 ring-4 ring-blue-200 scale-125'
-                  : 'bg-gray-200'"></div>
+                  ? 'bg-icon ring-4 ring-accent/30 scale-125'
+                  : 'bg-line/[.12]'"></div>
               <span
                 class="text-[10px] uppercase tracking-wide font-medium whitespace-nowrap text-center"
-                :class="(idx - 1) <= currentPhaseIndex ? 'text-blue-700' : 'text-gray-400'">
+                :class="(idx - 1) <= currentPhaseIndex ? 'text-fg' : 'text-fg-muted'">
                 {{ phaseStepLabel(idx - 1) }}
               </span>
             </div>
             <div v-if="(idx - 1) < phaseStepCount - 1" class="flex-1 h-px min-w-[8px] mt-[5px]"
-              :class="(idx - 1) < currentPhaseIndex ? 'bg-blue-300' : 'bg-gray-200'"></div>
+              :class="(idx - 1) < currentPhaseIndex ? 'bg-line/[.18]' : 'bg-line/[.12]'"></div>
           </template>
         </div>
       </template>
@@ -127,29 +127,29 @@ defineProps<{
                      producing output even after the box is full. -->
       <div v-if="streamLiveLogs.length > 0" class="space-y-2">
         <div class="flex items-center justify-between">
-          <span class="text-xs uppercase tracking-wide font-semibold text-gray-600">{{ $t('DeploymentDetailView.liveOutput') }}</span>
-          <span class="text-xs text-gray-500">
+          <span class="text-xs uppercase tracking-wide font-semibold text-fg-muted">{{ $t('DeploymentDetailView.liveOutput') }}</span>
+          <span class="text-xs text-fg-muted">
             {{ streamTotalLogCount.toLocaleString() }} {{ streamTotalLogCount === 1 ? $t('DeploymentDetailView.logLine') : $t('DeploymentDetailView.logLines')
             }}
-            <span v-if="streamLiveLogs.length < streamTotalLogCount" class="text-gray-400">
+            <span v-if="streamLiveLogs.length < streamTotalLogCount" class="text-fg-muted">
               · {{ $t('DeploymentDetailView.lastShown', { count: streamLiveLogs.length }) }}
             </span>
           </span>
         </div>
-        <div class="bg-gray-900 rounded-md p-3 max-h-72 overflow-y-auto font-mono text-xs">
+        <div class="surface-sunken p-3 max-h-72 overflow-y-auto font-mono text-xs">
           <div v-for="(log, idx) in streamLiveLogs" :key="`${log.timestamp}-${idx}`"
-            class="text-gray-200 whitespace-pre-wrap break-words" :class="{
-              'text-red-400': log.level === 'ERROR',
-              'text-yellow-300': log.level === 'WARNING',
-              'text-green-400': log.level === 'SUCCESS',
-              'text-gray-400': log.streaming,
+            class="text-icon whitespace-pre-wrap break-words" :class="{
+              'text-danger': log.level === 'ERROR',
+              'text-warning': log.level === 'WARNING',
+              'text-success': log.level === 'SUCCESS',
+              'text-fg-muted': log.streaming,
             }">
-            <span class="text-gray-500 mr-2">{{ log.timestamp.split('T')[1]?.slice(0, 8) || '' }}</span>
-            <span v-if="log.tool" class="text-blue-400 mr-1">[{{ log.tool }}]</span>{{ log.message }}
+            <span class="text-fg-muted mr-2">{{ log.timestamp.split('T')[1]?.slice(0, 8) || '' }}</span>
+            <span v-if="log.tool" class="text-fg-muted mr-1">[{{ log.tool }}]</span>{{ log.message }}
           </div>
         </div>
       </div>
-      <div v-else class="bg-gray-50 border border-gray-200 rounded-md p-4 text-center text-xs text-gray-500">
+      <div v-else class="bg-line/[.04] border border-subtle rounded-md p-4 text-center text-xs text-fg-muted">
         Waiting for first log line…
       </div>
     </div>

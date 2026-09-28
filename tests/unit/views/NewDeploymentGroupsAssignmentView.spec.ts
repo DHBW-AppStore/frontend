@@ -148,7 +148,7 @@ describe('NewDeploymentTeamsView.vue', () => {
     expect(wrapper.text()).toContain('Jane Smith')
     
     // Next-Button sollte deaktiviert sein (weil nicht alle zugewiesen sind)
-    const nextBtn = wrapper.find('button.bg-gradient-to-r')
+    const nextBtn = wrapper.find('button.btn-primary')
     expect(nextBtn.attributes('disabled')).toBeDefined()
   })
 
@@ -263,7 +263,7 @@ describe('NewDeploymentTeamsView.vue', () => {
     })
     await flushPromises()
 
-    const nextBtn = wrapper.find('button.bg-gradient-to-r')
+    const nextBtn = wrapper.find('button.btn-primary')
     expect(nextBtn.attributes('disabled')).toBeDefined()
 
     // Weise sie manuell im Store zu
@@ -285,7 +285,7 @@ describe('NewDeploymentTeamsView.vue', () => {
     const wrapper = createWrapper()
     await flushPromises()
 
-    const backBtn = wrapper.find('button.bg-gray-100')
+    const backBtn = wrapper.find('button.btn-secondary')
     await backBtn.trigger('click')
 
     expect(routerPushMock).toHaveBeenCalledWith({ name: 'deployment.config' })

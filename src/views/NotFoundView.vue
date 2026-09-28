@@ -20,13 +20,13 @@ const goHome = () => {
 <template>
   <div class="min-h-[60vh] flex items-center justify-center p-6">
     <div class="text-center max-w-md">
-      <div class="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-        <Compass :size="32" class="text-gray-500" />
+      <div class="mx-auto w-16 h-16 rounded-full bg-line/[.07] flex items-center justify-center mb-4">
+        <Compass :size="32" class="text-icon" />
       </div>
-      <h1 class="text-2xl font-bold text-gray-900 mb-2">
+      <h1 class="text-2xl font-bold text-fg mb-2">
         {{ t('NotFoundView.title') }}
       </h1>
-      <p class="text-gray-600 mb-6">
+      <p class="text-fg-muted mb-6">
         {{ t('NotFoundView.description') }}
       </p>
       <BaseButton @click="goHome">

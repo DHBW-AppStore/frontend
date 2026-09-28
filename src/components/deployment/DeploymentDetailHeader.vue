@@ -34,22 +34,22 @@ defineEmits<{
     <div class="flex items-center gap-4">
       <RouterLink :to="{ name: ROUTE_NAMES.deploymentsList }">
         <button
-          class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition">
-          <CircleArrowLeft :size="24" class="text-gray-700" />
+          class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-line/[.07] transition">
+          <CircleArrowLeft :size="24" class="text-icon" />
         </button>
       </RouterLink>
 
       <div>
-        <h1 class="text-3xl font-bold text-gray-900">{{ deployment.name }}</h1>
-        <p class="text-sm text-gray-500 mt-1">{{ $t('DeploymentDetailView.detailsSubtitle') }}</p>
+        <h1 class="text-3xl font-bold text-fg">{{ deployment.name }}</h1>
+        <p class="text-sm text-fg-muted mt-1">{{ $t('DeploymentDetailView.detailsSubtitle') }}</p>
       </div>
     </div>
 
     <div class="flex items-center gap-4">
       <div class="flex items-center gap-3">
-        <component :is="getStatusStyles(deployment.status).icon" :size="20" :class="deployment.status === 'success' ? 'text-green-600' :
-          deployment.status === 'failed' ? 'text-red-600' :
-            deployment.status === 'running' ? 'text-blue-600' : 'text-yellow-600'" />
+        <component :is="getStatusStyles(deployment.status).icon" :size="20" :class="deployment.status === 'success' ? 'text-success' :
+          deployment.status === 'failed' ? 'text-danger' :
+            deployment.status === 'running' ? 'text-fg-muted' : 'text-warning'" />
         <span
           class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold border capitalize"
           :class="getStatusStyles(deployment.status).badgeClass">

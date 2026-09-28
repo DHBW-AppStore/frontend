@@ -20,7 +20,6 @@ describe('Badge', () => {
   it('fällt ohne Variante auf grau zurück', () => {
     const wrapper = mount(Badge, { slots: { default: 'Text' } })
 
-    expect(wrapper.classes()).toContain('bg-gray-100')
-    expect(wrapper.classes()).toContain('text-gray-700')
+    expect(wrapper.classes()).toContain('status-neutral')
   })
 })

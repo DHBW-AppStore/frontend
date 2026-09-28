@@ -72,20 +72,8 @@ const update = (value: any) => emit('update:modelValue', value)
 // Explicit class maps — Tailwind's JIT can't read class names assembled
 // from template-literal segments. Listing both palettes here keeps
 // every utility visible to the content scanner.
-const borderClass = (() => {
-  const a = props.accent || 'blue'
-  return a === 'purple'
-    ? 'border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100'
-    : 'border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
-})()
-const toggleOn = (() => {
-  const a = props.accent || 'blue'
-  return a === 'purple' ? 'bg-purple-500' : 'bg-blue-500'
-})()
-const toggleFocus = (() => {
-  const a = props.accent || 'blue'
-  return a === 'purple' ? 'focus:ring-2 focus:ring-purple-500' : 'focus:ring-2 focus:ring-blue-500'
-})()
+// Both accents share the token look; the prop only picked a hue before.
+const borderClass = 'border-subtle focus:border-accent/60'
 </script>
 
 <template>
@@ -108,15 +96,15 @@ const toggleFocus = (() => {
       type="button"
       :disabled="disabled"
       @click="update(!modelValue)"
-      class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      :class="[modelValue ? toggleOn : 'bg-gray-300', toggleFocus]"
+      class="relative inline-flex h-6 w-11 items-center rounded-full border transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      :class="modelValue ? 'toggle-on' : 'toggle-off'"
     >
       <span
-        class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm"
+        class="toggle-knob inline-block h-4 w-4 transform rounded-full transition-transform"
         :class="modelValue ? 'translate-x-6' : 'translate-x-1'"
       />
     </button>
-    <span class="text-sm font-medium text-gray-700">
+    <span class="text-sm font-medium text-fg">
       {{ modelValue ? t('variableInput.on') : t('variableInput.off') }}
     </span>
   </div>
@@ -128,7 +116,7 @@ const toggleFocus = (() => {
     type="number"
     :id="inputId || variable.name"
     :disabled="disabled"
-    class="w-full px-3 py-2 rounded-lg border-2 outline-none transition-all font-medium text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
+    class="field w-full px-3 py-2 transition-all font-medium text-fg disabled:bg-line/[.04] disabled:text-fg-muted"
     :class="borderClass"
     placeholder="0"
   />
@@ -140,7 +128,7 @@ const toggleFocus = (() => {
     :id="inputId || variable.name"
     :disabled="disabled"
     rows="3"
-    class="w-full px-3 py-2 rounded-lg border-2 outline-none transition-all font-mono text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
+    class="field w-full px-3 py-2 transition-all font-mono text-sm text-fg disabled:bg-line/[.04] disabled:text-fg-muted"
     :class="borderClass"
     :placeholder="t('variableInput.listPlaceholder')"
   />
@@ -152,7 +140,7 @@ const toggleFocus = (() => {
     type="text"
     :id="inputId || variable.name"
     :disabled="disabled"
-    class="w-full px-3 py-2 rounded-lg border-2 outline-none transition-all font-medium text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
+    class="field w-full px-3 py-2 transition-all font-medium text-fg disabled:bg-line/[.04] disabled:text-fg-muted"
     :class="borderClass"
     :placeholder="variable.default ? t('variableInput.defaultPlaceholder', { value: variable.default }) : t('variableInput.enterValue')"
   />
