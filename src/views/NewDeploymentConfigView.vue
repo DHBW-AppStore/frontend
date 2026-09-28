@@ -32,7 +32,14 @@ const courses = ref<any[]>([])
 const allStudents = ref<any[]>([])
 const students = ref<any[]>([])
 
-// Cache map for every student ever seen (stable, keyed by keycloak_id).
+// Cache map for every student ever seen, keyed by ``userId``.
+//
+// Deliberately not ``keycloak_id``: a student who arrives through a Moodle
+// LTI launch never passes Keycloak, so that column stays NULL for them. Key
+// on it and the whole wizard drops them silently — the course still reports
+// its member count, but the picker beside it stays empty, which reads like a
+// loading bug rather than a filter. ``userId`` is this application's own
+// primary key and is there for everybody, whichever way they signed in.
 const studentCache = ref(new Map<string, any>())
 
 const studentSearchQuery = ref('')
@@ -44,15 +51,15 @@ const studentsError = ref<string | null>(null)
 // Selection tab: 'courses' or 'individuals'.
 const activeTab = ref<'courses' | 'individuals'>('courses')
 
-// Helper: store students in the cache (keyed by keycloak_id). Only overwrite
+// Helper: store students in the cache (keyed by userId). Only overwrite
 // when the new object has more info (e.g. firstName).
 function cacheStudents(list: any[]) {
   for (const s of list || []) {
-    if (!s?.keycloak_id || typeof s.keycloak_id !== 'string' || !s.keycloak_id.trim()) continue
-    const existing = studentCache.value.get(s.keycloak_id)
+    if (!s?.userId || typeof s.userId !== 'string' || !s.userId.trim()) continue
+    const existing = studentCache.value.get(s.userId)
     if (!existing || (s.firstName && !existing.firstName) || (s.lastName && !existing.lastName)) {
-      studentCache.value.set(s.keycloak_id, s)
-      store.studentCache.set(s.keycloak_id, s)
+      studentCache.value.set(s.userId, s)
+      store.studentCache.set(s.userId, s)
     }
   }
 }
@@ -67,13 +74,19 @@ const filteredStudents = computed(() => {
   // The backend already filtered by username/email/firstName/lastName (Keycloak
   // Admin API ``/users?search=…``), so we pass its response through and only use
   // the cached object when present (prevents duplicates).
+  //
+  // Note this searches *Keycloak*, so it finds nobody who exists only here —
+  // a student provisioned by a Moodle launch has no Keycloak account. Those
+  // are reachable through their course in the other tab, which reads the
+  // local member list. Making the search find them too means searching this
+  // application's own users, which is a separate change.
   return students.value.map((s: any) => {
-    const cached = s?.keycloak_id ? studentCache.value.get(s.keycloak_id) : undefined
+    const cached = s?.userId ? studentCache.value.get(s.userId) : undefined
     return cached || s
   }).filter(Boolean)
 })
 
-// Selected students: always resolved from the cache (stable, keyed by keycloak_id).
+// Selected students: always resolved from the cache (stable, keyed by userId).
 const selectedStudents = computed(() => {
   return store.draft.studentIds
     .map((kid: string) => studentCache.value.get(kid))
@@ -90,7 +103,7 @@ async function getStudentIdsForCourse(courseId: string): Promise<string[] | null
   // Check the cache.
   if (courseStudentsCache.value.has(courseId)) {
     const students = courseStudentsCache.value.get(courseId)!
-    return students.map((s: any) => s.keycloak_id)
+    return students.map((s: any) => s.userId)
   }
 
   // Load students for this course.
@@ -100,7 +113,7 @@ async function getStudentIdsForCourse(courseId: string): Promise<string[] | null
     courseStudentsCache.value.set(courseId, students)
     // Also cache in studentCache.
     cacheStudents(students)
-    return students.map((s: any) => s.keycloak_id)
+    return students.map((s: any) => s.userId)
   } catch (err) {
     // Deliberately silent here: the caller decides what to show (the count
     // stays at 0, a click reports the failed load).
@@ -152,7 +165,7 @@ function isCourseSelected(courseId: string) {
   if (!courseStudentsCache.value.has(courseId)) {
     return false // not loaded yet
   }
-  const studentIds = courseStudentsCache.value.get(courseId)!.map((s: any) => s.keycloak_id)
+  const studentIds = courseStudentsCache.value.get(courseId)!.map((s: any) => s.userId)
   return studentIds.length > 0 && studentIds.every((id) => store.draft.studentIds.includes(id))
 }
 
@@ -181,13 +194,13 @@ const toggleCourse = async (courseId: string) => {
 }
 
 // Toggle a student checkbox (for individual selection).
-const toggleStudent = (studentKeycloakId: string) => {
-  if (!studentKeycloakId || typeof studentKeycloakId !== 'string' || !studentKeycloakId.trim()) return
-  const index = store.draft.studentIds.indexOf(studentKeycloakId)
+const toggleStudent = (studentUserId: string) => {
+  if (!studentUserId || typeof studentUserId !== 'string' || !studentUserId.trim()) return
+  const index = store.draft.studentIds.indexOf(studentUserId)
   if (index > -1) {
     store.draft.studentIds.splice(index, 1)
   } else {
-    store.draft.studentIds.push(studentKeycloakId)
+    store.draft.studentIds.push(studentUserId)
   }
   // After each toggle: sync the course selection.
   syncCourseSelection()
@@ -199,7 +212,7 @@ async function syncCourseSelection() {
   const newCourseIds: string[] = []
   for (const course of courses.value) {
     if (courseStudentsCache.value.has(course.courseId)) {
-      const studentIds = courseStudentsCache.value.get(course.courseId)!.map((s: any) => s.keycloak_id)
+      const studentIds = courseStudentsCache.value.get(course.courseId)!.map((s: any) => s.userId)
       if (studentIds.length > 0 && studentIds.every((id) => store.draft.studentIds.includes(id))) {
         newCourseIds.push(course.courseId)
       }
@@ -306,7 +319,7 @@ watch(studentSearchQuery, (val) => {
       const res = await userApi.search(q, 50)
       dismissSearchError()
       students.value = res.data || []
-      cacheStudents(students.value) // Cache new students (keyed by keycloak_id)
+      cacheStudents(students.value) // Cache new students (keyed by userId)
     } catch (err) {
       console.error('User search error:', err)
       const e: any = err
@@ -458,7 +471,7 @@ onMounted(async () => {
                   <span class="text-fg font-medium">
                     {{ (student.firstName || student.lastName) 
                         ? `${student.firstName || ''} ${student.lastName || ''}`.trim()
-                        : (student.username || student.email || student.name || student.keycloak_id) }}
+                        : (student.username || student.email || student.name || student.userId) }}
                   </span>
                 </div>
                 
@@ -488,13 +501,13 @@ onMounted(async () => {
                   <span class="text-fg font-medium">
                     {{ (student.firstName || student.lastName) 
                         ? `${student.firstName || ''} ${student.lastName || ''}`.trim()
-                        : (student.username || student.email || student.name || student.keycloak_id) }}
+                        : (student.username || student.email || student.name || student.userId) }}
                   </span>
                   <button 
                     @click="toggleStudent(student.keycloak_id)" 
                     class="text-danger hover:text-danger font-bold text-lg leading-none"
                     :title="t('CourseDetailView.removeModal.remove')"
-                    :data-testid="`remove-${student.keycloak_id}`"
+                    :data-testid="`remove-${student.userId}`"
                   >
                     ×
                   </button>

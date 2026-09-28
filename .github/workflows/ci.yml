@@ -6,6 +6,10 @@ on:
     tags: ['v*.*.*']
   pull_request:
     branches: [main]
+  # Von Hand auslösbar. Ohne diesen Trigger lässt sich die Pipeline nur
+  # durch einen Commit starten — für eine Vorführung oder nach einem
+  # behobenen Infrastrukturproblem ist das unnötig umständlich.
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -105,19 +109,27 @@ jobs:
           name: coverage-html
           path: coverage
 
+      # Publishing the report must not decide whether the deploy runs.
+      # `CD - Staging-Deploy anstossen` waits for `conclusion == 'success'`
+      # on the whole workflow, so a red step here holds back a release that
+      # is otherwise built, scanned and pushed. These three steps report,
+      # they do not gate.
       - name: Configure Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: actions/configure-pages@v5
+        continue-on-error: true
 
       - name: Upload Pages artifact
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: actions/upload-pages-artifact@v3
+        continue-on-error: true
         with:
           path: coverage
 
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: actions/deploy-pages@v4
+        continue-on-error: true
 
   # ================================================================
   # 🔒 SECURITY (deps + filesystem) — blocks on HIGH/CRITICAL
@@ -361,17 +373,30 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-# Hier stand ein Job, der nach dem Push auf main den Staging-Deploy angestoßen
-# hat. Er ist entfallen, als der Deploy in unser eigenes Forgejo umgezogen ist
-# (deployment/docs/staging-setup.md), und zwar bewusst und nicht nur, weil sein
-# Secret hier fehlt:
+# Hier endet diese Datei, aber nicht die Pipeline.
 #
-# Ihn auf Forgejo umzubiegen hieße, ein Forgejo-Token als GitHub-Secret zu
-# hinterlegen — also ein Zugangsdatum, mit dem sich von einem öffentlichen
-# Repository aus unser Deploy auslösen lässt. Genau diese Kopplung soll es nicht
-# geben; deshalb baut diese CI nur das Image, und das Ausrollen beginnt auf der
-# anderen Seite.
+# Das Image liegt jetzt in GHCR. Ausgerollt wird es von
+# trigger-staging-deploy.yml nebenan: der Workflow wartet das Ende dieses
+# Laufs ab und stößt im deployment-Repository den Neuaufbau des Staging-Stacks
+# an. Siehe deployment/docs/adr/0002 und 0003.
 #
-# Der Preis dafür ist der verlorene Automatismus: ein Merge nach main rollt
-# nichts mehr aus, das geschieht in Forgejo von Hand. Wer ihn zurückholen will,
-# baut den Auslöser dort, nicht hier.
+# Der Grund ist nicht Bequemlichkeit, sondern das Netz. Die OpenStack-API der
+# DHBW ist von außen nicht erreichbar; gemessen von einem GitHub-Runner aus
+# (öffentliche IP 145.132.101.182):
+#
+#   DNS newstack.dhbw.cloud -> 141.72.5.140   löst öffentlich auf
+#   https://...:5000/v3     -> 000 TIMEOUT    Keystone
+#   https://...:443/        -> 000 TIMEOUT    Horizon
+#
+# Der Name ist öffentlich, das Netz ist es nicht. GitHubs gehostete Runner
+# können also grundsätzlich nicht ausrollen, unabhängig von Zugangsdaten.
+#
+# Deshalb läuft der Deploy auf einem self-hosted Runner im Campusnetz. Der
+# Einwand dagegen galt und gilt: dieses Repository ist öffentlich, und ein
+# self-hosted Runner daran gäbe jedem, der einen Fork-PR öffnet, eine
+# Ausführungsumgebung mit OpenStack-Zugang.
+#
+# Genau deshalb hängt der Runner nicht hier. Er ist ausschließlich am
+# deployment-Repository registriert, und kein Workflow darauf hat einen
+# pull_request-Trigger. Dieses Repository schickt nur einen repository_dispatch
+# dorthin — es kennt kein einziges Zugangsdatum zu OpenStack.

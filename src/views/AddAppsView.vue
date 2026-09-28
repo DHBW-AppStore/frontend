@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ROUTE_NAMES } from '@/router/route-names'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import { getErrorDetailMessage, getErrorStatus, getErrorStatusText, hasErrorResponse } from '@/utils/http-error'
@@ -44,6 +44,19 @@ const form = ref({
 const imagePreviewUrl = ref<string | null>(null)
 const isDragging = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
+
+// Every installation runs its own GitHub App, so the link comes from the
+// backend. Stays null when none is configured; the hint then has no link.
+const githubAppInstallUrl = ref<string | null>(null)
+
+onMounted(async () => {
+  try {
+    const { data } = await appApi.getGithubApp()
+    githubAppInstallUrl.value = data.install_url
+  } catch {
+    githubAppInstallUrl.value = null
+  }
+})
 
 const previewIcon = computed(() => {
   const name = form.value.name.toLowerCase()

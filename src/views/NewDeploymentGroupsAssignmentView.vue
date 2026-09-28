@@ -146,8 +146,10 @@ onMounted(async () => {
     ...unassignedStudents.value
   ]))
   
-  // Draft student IDs are Keycloak IDs (the cache is keyed by them); the
-  // backend ``userId`` of a user is a different ID.
+  // Draft student IDs are ``userId``s, and so is the cache key. The loop
+  // below still scans the cached objects, because an entry can have been
+  // stored under a different key by an earlier step and is then cheaper to
+  // reuse than to fetch again.
   const missingIds: string[] = []
   for (const id of allIds) {
     const cached = studentCache[id]
@@ -156,7 +158,7 @@ onMounted(async () => {
       let found = null
       for (const key in studentCache) {
         const s = studentCache[key]
-        if (s && s.keycloak_id === id && (s.firstName || s.lastName || s.username || s.email)) {
+        if (s && s.userId === id && (s.firstName || s.lastName || s.username || s.email)) {
           found = s
           break
         }
@@ -258,16 +260,32 @@ const handleDragEnterGroup = (groupIndex: number) => {
   dragOverGroup.value = groupIndex
 }
 
-const handleDragLeaveGroup = () => {
-  dragOverGroup.value = null
+// ``dragenter`` and ``dragleave`` bubble, so every child of a drop zone fires
+// them as the pointer crosses it. Clearing the highlight on each one is not
+// just a flicker: the highlight changes the zone's own geometry, so dropping
+// it moves the box out from under a stationary cursor, which fires the pair
+// again. The two states then chase each other for as long as the pointer
+// hovers, the page re-renders every frame, and the browser never gets to the
+// ``drop`` -- the drag hangs with the cursor stuck and nothing clickable.
+//
+// ``relatedTarget`` is the node the pointer moved *to*. When that node still
+// sits inside the zone, the pointer never left it.
+function hasLeftZone(event: DragEvent) {
+  const zone = event.currentTarget as Node | null
+  const entered = event.relatedTarget as Node | null
+  return !zone || !entered || !zone.contains(entered)
+}
+
+const handleDragLeaveGroup = (event: DragEvent) => {
+  if (hasLeftZone(event)) dragOverGroup.value = null
 }
 
 const handleDragEnterUnassigned = () => {
   dragOverUnassigned.value = true
 }
 
-const handleDragLeaveUnassigned = () => {
-  dragOverUnassigned.value = false
+const handleDragLeaveUnassigned = (event: DragEvent) => {
+  if (hasLeftZone(event)) dragOverUnassigned.value = false
 }
 
 const handleDropOnGroup = (groupIndex: number, event: DragEvent) => {

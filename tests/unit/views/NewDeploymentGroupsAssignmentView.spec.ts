@@ -100,27 +100,41 @@ describe('NewDeploymentTeamsView.vue', () => {
     expect(routerReplaceMock).toHaveBeenCalledWith({ name: 'deployment.config' })
   })
 
-  it('shows the name of a student loaded by Keycloak ID (backend userId differs)', async () => {
+  it('lädt einen Studenten nach, der noch gar nicht im Cache steht', async () => {
     vi.mocked(userApi.getById).mockResolvedValue({
-      data: { userId: 'u-db-3', keycloak_id: 'kc-3', firstName: 'Kira', lastName: 'Keycloak' }
+      data: { userId: 'u-db-3', keycloak_id: 'kc-3', firstName: 'Kira', lastName: 'Kirsch' }
     } as any)
-    const wrapper = createWrapper({ studentIds: ['u1', 'kc-3'] })
+    const wrapper = createWrapper({ studentIds: ['u1', 'u-db-3'] })
     await flushPromises()
 
-    expect(userApi.getById).toHaveBeenCalledWith('kc-3')
-    expect(wrapper.text()).toContain('Kira Keycloak')
-    expect(wrapper.text()).not.toContain('kc-3')
+    expect(userApi.getById).toHaveBeenCalledWith('u-db-3')
+    expect(wrapper.text()).toContain('Kira Kirsch')
+    expect(wrapper.text()).not.toContain('u-db-3')
   })
 
-  it('finds a cached student stored under another key by its Keycloak ID', async () => {
+  it('findet einen Studenten wieder, der unter einem anderen Schlüssel im Cache liegt', async () => {
     const wrapper = createWrapper(
-      { studentIds: ['u1', 'kc-9'] },
-      [['u-db-9', { userId: 'u-db-9', keycloak_id: 'kc-9', firstName: 'Cached', lastName: 'Person' }]]
+      { studentIds: ['u1', 'u-db-9'] },
+      [['irgendein-anderer-key', { userId: 'u-db-9', firstName: 'Cached', lastName: 'Person' }]]
     )
     await flushPromises()
 
     expect(userApi.getById).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('Cached Person')
+  })
+
+  it('zeigt auch Studierende ohne Keycloak-Konto', async () => {
+    // Der Fall, für den die Umstellung auf ``userId`` gemacht ist: wer über
+    // einen Moodle-Launch entstanden ist, hat kein ``keycloak_id``. Vorher
+    // fiel so jemand aus dem Assistenten heraus, ohne dass es auffiel.
+    const wrapper = createWrapper(
+      { studentIds: ['u-lti-1'] },
+      [['u-lti-1', { userId: 'u-lti-1', keycloak_id: null, firstName: 'Lea', lastName: 'Moodle' }]]
+    )
+    await flushPromises()
+
+    expect(userApi.getById).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Lea Moodle')
   })
 
   it('renders correctly with unassigned students', async () => {
@@ -275,5 +289,72 @@ describe('NewDeploymentTeamsView.vue', () => {
     await backBtn.trigger('click')
 
     expect(routerPushMock).toHaveBeenCalledWith({ name: 'deployment.config' })
+  })
+
+  // `dragenter`/`dragleave` bubble, so the student cards inside a drop zone
+  // fire them too. Clearing the highlight on those used to make the zone
+  // resize under a stationary cursor, which fired the pair again and hung the
+  // drag. The zone must only give up its highlight once the pointer is
+  // really outside it.
+  describe('Drag-Hervorhebung', () => {
+    it('behaelt die Hervorhebung, wenn der Zeiger auf ein Kind der Zone wandert', async () => {
+      const wrapper = createWrapper({ assignments: [['u1'], ['u2']] })
+      await flushPromises()
+
+      const zone = wrapper.find('[data-testid="group-dropzone-0"]')
+      await zone.trigger('dragenter')
+      expect(zone.classes()).toContain('bg-emerald-50')
+
+      // Ein Studentenkaertchen innerhalb der Zone.
+      const child = zone.element.querySelector('div')
+      expect(child).not.toBeNull()
+
+      await zone.trigger('dragleave', { relatedTarget: child })
+      expect(zone.classes()).toContain('bg-emerald-50')
+    })
+
+    it('gibt die Hervorhebung frei, wenn der Zeiger die Zone wirklich verlaesst', async () => {
+      const wrapper = createWrapper({ assignments: [['u1'], ['u2']] })
+      await flushPromises()
+
+      const zone = wrapper.find('[data-testid="group-dropzone-0"]')
+      await zone.trigger('dragenter')
+      expect(zone.classes()).toContain('bg-emerald-50')
+
+      await zone.trigger('dragleave', { relatedTarget: document.body })
+      expect(zone.classes()).toContain('bg-gray-50')
+    })
+
+    it('haelt auch die Unassigned-Spalte ueber ihren Kindern hervorgehoben', async () => {
+      const wrapper = createWrapper({ assignments: [[], []] })
+      await flushPromises()
+
+      const zone = wrapper.find('[data-testid="unassigned-dropzone"]')
+      await zone.trigger('dragenter')
+      expect(zone.classes()).toContain('bg-gray-200')
+
+      const child = zone.element.querySelector('div')
+      expect(child).not.toBeNull()
+
+      await zone.trigger('dragleave', { relatedTarget: child })
+      expect(zone.classes()).toContain('bg-gray-200')
+
+      await zone.trigger('dragleave', { relatedTarget: document.body })
+      expect(zone.classes()).not.toContain('bg-gray-200')
+    })
+
+    // Die Karte darf sich beim Ueberfahren nicht vergroessern -- genau das
+    // zog den Rand unter dem Zeiger weg und startete die Schleife neu.
+    it('vergroessert die Team-Karte beim Ueberfahren nicht', async () => {
+      const wrapper = createWrapper({ assignments: [['u1'], ['u2']] })
+      await flushPromises()
+
+      const zone = wrapper.find('[data-testid="group-dropzone-0"]')
+      await zone.trigger('dragenter')
+
+      const card = wrapper.findAll('.rounded-xl').find(el => el.element.contains(zone.element))
+      expect(card).toBeDefined()
+      expect(card!.classes().join(' ')).not.toContain('scale-')
+    })
   })
 })
