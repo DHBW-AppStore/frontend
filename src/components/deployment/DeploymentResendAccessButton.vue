@@ -28,10 +28,10 @@ defineEmits<{
       : $t('DeploymentDetailView.resendAccessTooltip')"
     class="w-full lg:w-auto flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border transition-colors"
     :class="state === 'sent'
-      ? 'bg-green-600 text-white border-green-600'
+      ? 'bg-success-dot text-on-accent border-success-dot'
       : state === 'error'
-        ? 'bg-red-50 text-red-700 border-red-300'
-        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 disabled:opacity-50'">
+        ? 'bg-danger-dot/10 text-danger border-danger-dot/30'
+        : 'bg-panel text-fg border-strong hover:bg-line/[.04] disabled:opacity-50'">
     <Loader2 v-if="state === 'sending'" :size="14"
       class="animate-spin" />
     <Check v-else-if="state === 'sent'" :size="14" />

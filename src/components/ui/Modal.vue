@@ -7,16 +7,16 @@ defineEmits(['close'])
 <template>
   <div
     v-if="show"
-    class="fixed inset-0 bg-black/10 flex items-center justify-center z-50 p-4"
+    class="scrim fixed inset-0 flex items-center justify-center z-50 p-4"
     @click.self="$emit('close')"
   >
     <div
-      class="bg-white rounded-2xl shadow-2xl w-full max-w-[520px] animate-fade-in flex flex-col max-h-[90vh]"
+      class="surface-overlay w-full max-w-[520px] animate-fade-in flex flex-col max-h-[90vh]"
       @click.stop
     >
       <!-- Header -->
-      <div class="flex justify-between items-center px-6 py-5 border-b border-gray-100">
-        <div class="text-xl font-semibold text-gray-900 leading-tight pr-4">
+      <div class="flex justify-between items-center px-6 py-4 border-b">
+        <div class="text-lg font-semibold text-fg leading-tight pr-4">
           <!--
             Two slot names accepted:
               * ``#header`` — used by CoursesView, CourseDetailView.
@@ -29,7 +29,7 @@ defineEmits(['close'])
         </div>
         <button
           @click="$emit('close')"
-          class="p-2 -mr-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
+          class="btn-ghost p-2 -mr-1 rounded-control transition-colors flex-shrink-0"
           aria-label="Close"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +48,7 @@ defineEmits(['close'])
       <!-- Footer -->
       <div
         v-if="$slots.footer"
-        class="px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl"
+        class="modal-footer px-6 py-4 border-t"
       >
         <slot name="footer"></slot>
       </div>
@@ -70,5 +70,10 @@ defineEmits(['close'])
 
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
+}
+
+.modal-footer {
+  background: var(--surface-sunken-bg);
+  border-radius: 0 0 8px 8px;
 }
 </style>

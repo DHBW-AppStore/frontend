@@ -46,8 +46,8 @@ defineProps<{
   <!-- Loading: spinner + optional one-line label. ``py-12`` matches
        the empty-state vertical air so the page doesn't jump between
        states. -->
-  <div v-if="isLoading" class="flex flex-col items-center justify-center py-12 gap-3 text-gray-500">
-    <Loader2 :size="32" class="animate-spin text-primary" />
+  <div v-if="isLoading" class="flex flex-col items-center justify-center py-12 gap-3 text-fg-muted">
+    <Loader2 :size="32" class="animate-spin text-icon" />
     <p v-if="loadingMessage" class="text-sm">{{ loadingMessage }}</p>
   </div>
 
@@ -58,10 +58,11 @@ defineProps<{
       v-if="icon"
       :is="icon"
       :size="64"
-      class="text-gray-300 mb-4"
+      :stroke-width="1.5"
+      class="text-icon/60 mb-4"
       aria-hidden="true"
     />
-    <p v-if="emptyMessage" class="text-gray-500 mb-4">{{ emptyMessage }}</p>
+    <p v-if="emptyMessage" class="text-fg-muted mb-4">{{ emptyMessage }}</p>
     <!--
       Action slot — callers commonly drop a ``<BaseButton>`` here that
       mirrors the page-header create button (so an empty page has a

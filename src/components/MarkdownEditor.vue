@@ -168,101 +168,101 @@ const onItalic = () =>
 const onInlineCode = () =>
   applyWrap({ prefix: '`', suffix: '`', placeholder: t('markdownEditor.codePlaceholder') })
 const onH1 = () =>
-  applyLinePrefix({ linePrefix: '# ', placeholder: t('markdownEditor.headingPlaceholder') })
+ applyLinePrefix({ linePrefix: '# ', placeholder: t('markdownEditor.headingPlaceholder') })
 const onH2 = () =>
-  applyLinePrefix({ linePrefix: '## ', placeholder: t('markdownEditor.headingPlaceholder') })
+ applyLinePrefix({ linePrefix: '## ', placeholder: t('markdownEditor.headingPlaceholder') })
 const onList = () =>
-  applyLinePrefix({ linePrefix: '- ', placeholder: t('markdownEditor.listPlaceholder') })
+ applyLinePrefix({ linePrefix: '- ', placeholder: t('markdownEditor.listPlaceholder') })
 </script>
 
 <template>
-  <div class="w-full rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
-    <!-- Tab bar -->
-    <div class="flex items-center gap-0.5 border-b border-gray-200 bg-gray-50 px-2">
-      <button
-        type="button"
-        @click="mode = 'edit'"
-        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors -mb-px"
-        :class="mode === 'edit'
-          ? 'border-primary text-primary'
-          : 'border-transparent text-gray-500 hover:text-gray-800'"
-      >
-        <Pencil :size="12" />
-        {{ t('markdownEditor.tabEdit') }}
-      </button>
-      <button
-        type="button"
-        @click="mode = 'preview'"
-        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors -mb-px"
-        :class="mode === 'preview'
-          ? 'border-primary text-primary'
-          : 'border-transparent text-gray-500 hover:text-gray-800'"
-      >
-        <Eye :size="12" />
-        {{ t('markdownEditor.tabPreview') }}
-      </button>
+ <div class="w-full rounded-lg border border-subtle bg-panel shadow-sm overflow-hidden">
+ <!-- Tab bar -->
+ <div class="flex items-center gap-0.5 border-b border-subtle bg-line/[.04] px-2">
+ <button
+ type="button"
+ @click="mode = 'edit'"
+ class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors -mb-px"
+ :class="mode === 'edit'
+ ? 'border-accent text-fg'
+ : 'border-transparent text-fg-muted hover:text-fg'"
+ >
+ <Pencil :size="12" />
+ {{ t('markdownEditor.tabEdit') }}
+ </button>
+ <button
+ type="button"
+ @click="mode = 'preview'"
+ class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 transition-colors -mb-px"
+ :class="mode === 'preview'
+ ? 'border-accent text-fg'
+ : 'border-transparent text-fg-muted hover:text-fg'"
+ >
+ <Eye :size="12" />
+ {{ t('markdownEditor.tabPreview') }}
+ </button>
 
-      <!-- Toolbar (edit mode only) -->
-      <div
-        v-if="mode === 'edit'"
-        class="ml-auto flex items-center gap-0.5 py-1"
-      >
-        <button type="button" @click="onBold" :title="t('markdownEditor.toolbar.bold')"
-                class="p-1 rounded hover:bg-gray-200 text-gray-600">
-          <Bold :size="14" />
-        </button>
-        <button type="button" @click="onItalic" :title="t('markdownEditor.toolbar.italic')"
-                class="p-1 rounded hover:bg-gray-200 text-gray-600">
-          <Italic :size="14" />
-        </button>
-        <span class="mx-1 h-4 w-px bg-gray-300"></span>
-        <button type="button" @click="onH1" :title="t('markdownEditor.toolbar.h1')"
-                class="p-1 rounded hover:bg-gray-200 text-gray-600">
-          <Heading1 :size="14" />
-        </button>
-        <button type="button" @click="onH2" :title="t('markdownEditor.toolbar.h2')"
-                class="p-1 rounded hover:bg-gray-200 text-gray-600">
-          <Heading2 :size="14" />
-        </button>
-        <span class="mx-1 h-4 w-px bg-gray-300"></span>
-        <button type="button" @click="onList" :title="t('markdownEditor.toolbar.list')"
-                class="p-1 rounded hover:bg-gray-200 text-gray-600">
-          <List :size="14" />
-        </button>
-        <button type="button" @click="applyLink" :title="t('markdownEditor.toolbar.link')"
-                class="p-1 rounded hover:bg-gray-200 text-gray-600">
-          <LinkIcon :size="14" />
-        </button>
-        <button type="button" @click="onInlineCode" :title="t('markdownEditor.toolbar.code')"
-                class="p-1 rounded hover:bg-gray-200 text-gray-600">
-          <CodeIcon :size="14" />
-        </button>
-        <button type="button" @click="applyCodeBlock" :title="t('markdownEditor.toolbar.codeblock')"
-                class="p-1 rounded hover:bg-gray-200 text-gray-600">
-          <Code2 :size="14" />
-        </button>
-      </div>
-    </div>
+ <!-- Toolbar (edit mode only) -->
+ <div
+ v-if="mode === 'edit'"
+ class="ml-auto flex items-center gap-0.5 py-1"
+ >
+ <button type="button" @click="onBold" :title="t('markdownEditor.toolbar.bold')"
+ class="p-1 rounded hover:bg-line/[.12] text-fg-muted">
+ <Bold :size="14" />
+ </button>
+ <button type="button" @click="onItalic" :title="t('markdownEditor.toolbar.italic')"
+ class="p-1 rounded hover:bg-line/[.12] text-fg-muted">
+ <Italic :size="14" />
+ </button>
+ <span class="mx-1 h-4 w-px bg-line/[.18]"></span>
+ <button type="button" @click="onH1" :title="t('markdownEditor.toolbar.h1')"
+ class="p-1 rounded hover:bg-line/[.12] text-fg-muted">
+ <Heading1 :size="14" />
+ </button>
+ <button type="button" @click="onH2" :title="t('markdownEditor.toolbar.h2')"
+ class="p-1 rounded hover:bg-line/[.12] text-fg-muted">
+ <Heading2 :size="14" />
+ </button>
+ <span class="mx-1 h-4 w-px bg-line/[.18]"></span>
+ <button type="button" @click="onList" :title="t('markdownEditor.toolbar.list')"
+ class="p-1 rounded hover:bg-line/[.12] text-fg-muted">
+ <List :size="14" />
+ </button>
+ <button type="button" @click="applyLink" :title="t('markdownEditor.toolbar.link')"
+ class="p-1 rounded hover:bg-line/[.12] text-fg-muted">
+ <LinkIcon :size="14" />
+ </button>
+ <button type="button" @click="onInlineCode" :title="t('markdownEditor.toolbar.code')"
+ class="p-1 rounded hover:bg-line/[.12] text-fg-muted">
+ <CodeIcon :size="14" />
+ </button>
+ <button type="button" @click="applyCodeBlock" :title="t('markdownEditor.toolbar.codeblock')"
+ class="p-1 rounded hover:bg-line/[.12] text-fg-muted">
+ <Code2 :size="14" />
+ </button>
+ </div>
+ </div>
 
-    <!-- Edit / Preview body -->
-    <div class="p-2">
-      <textarea
-        v-show="mode === 'edit'"
-        ref="textareaRef"
-        v-model="local"
-        :placeholder="placeholder"
-        @input="autoResize"
-        @keydown="onKeydown"
-        :style="{ minHeight: `${minHeightPx}px`, maxHeight: `${maxHeightPx}px` }"
-        class="block w-full resize-none rounded-md border border-transparent bg-white px-2 py-1.5 text-sm text-gray-700 focus:ring-2 focus:ring-primary focus:border-primary outline-none font-mono overflow-y-auto"
-      />
-      <div
-        v-show="mode === 'preview'"
-        class="px-2 py-1.5 text-sm"
-        :style="{ minHeight: `${minHeightPx}px` }"
+ <!-- Edit / Preview body -->
+ <div class="p-2">
+ <textarea
+ v-show="mode === 'edit'"
+ ref="textareaRef"
+ v-model="local"
+ :placeholder="placeholder"
+ @input="autoResize"
+ @keydown="onKeydown"
+ :style="{ minHeight: `${minHeightPx}px`, maxHeight: `${maxHeightPx}px` }"
+ class="block w-full resize-none bg-transparent border-0 px-2 py-1.5 text-sm text-fg font-mono overflow-y-auto"
+ />
+ <div
+ v-show="mode === 'preview'"
+ class="px-2 py-1.5 text-sm"
+ :style="{ minHeight: `${minHeightPx}px` }"
       >
         <MarkdownRenderer v-if="local.trim()" :source="local" variant="full" />
-        <p v-else class="text-gray-400 italic">{{ t('markdownEditor.emptyPreview') }}</p>
+        <p v-else class="text-fg-muted italic">{{ t('markdownEditor.emptyPreview') }}</p>
       </div>
     </div>
   </div>

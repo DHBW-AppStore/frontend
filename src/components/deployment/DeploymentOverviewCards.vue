@@ -22,33 +22,33 @@ const deploymentTimestamp = computed(() => {
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
     <!-- Deployment info card -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <Package :size="20" class="text-primary" />
+    <div class="bg-panel rounded-xl border border-subtle p-6 shadow-sm">
+      <h2 class="text-lg font-semibold text-fg mb-4 flex items-center gap-2">
+        <Package :size="20" class="text-icon" />
         Deployment Info
       </h2>
       <div class="space-y-4">
         <div>
-          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">
+          <div class="text-xs text-fg-muted uppercase tracking-wide mb-1">
             {{ $t('DeploymentsView.deploymentName') }}
           </div>
-          <div class="text-sm font-medium text-gray-900">{{ deployment.name }}</div>
+          <div class="text-sm font-medium text-fg">{{ deployment.name }}</div>
         </div>
         <div>
-          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{ $t('DeploymentDetailView.releaseTag') }}</div>
+          <div class="text-xs text-fg-muted uppercase tracking-wide mb-1">{{ $t('DeploymentDetailView.releaseTag') }}</div>
           <div class="text-sm">
             <span
-              class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-300">
+              class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-line/[.07] text-fg border border-strong">
               <GitBranch :size="12" class="mr-1" />
               {{ deployment.releaseTag }}
             </span>
           </div>
         </div>
         <div>
-          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">
+          <div class="text-xs text-fg-muted uppercase tracking-wide mb-1">
             {{ $t('DeploymentDetailView.deploymentCreated') }}
           </div>
-          <div class="text-sm font-medium text-gray-700 flex items-center gap-1">
+          <div class="text-sm font-medium text-fg flex items-center gap-1">
             <Calendar :size="14" />
             {{ deploymentTimestamp }}
           </div>
@@ -57,18 +57,18 @@ const deploymentTimestamp = computed(() => {
     </div>
 
     <!-- App info card -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <Package :size="20" class="text-emerald-600" />
+    <div class="bg-panel rounded-xl border border-subtle p-6 shadow-sm">
+      <h2 class="text-lg font-semibold text-fg mb-4 flex items-center gap-2">
+        <Package :size="20" class="text-icon" />
         {{ $t('DeploymentsView.deploymentApp') }}
       </h2>
       <div class="space-y-4" v-if="deployment.app">
         <div>
-          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{ $t('DeploymentDetailView.appName') }}</div>
-          <div class="text-sm font-medium text-gray-900">{{ deployment.app.name }}</div>
+          <div class="text-xs text-fg-muted uppercase tracking-wide mb-1">{{ $t('DeploymentDetailView.appName') }}</div>
+          <div class="text-sm font-medium text-fg">{{ deployment.app.name }}</div>
         </div>
         <div>
-          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{
+          <div class="text-xs text-fg-muted uppercase tracking-wide mb-1">{{
             $t('DeploymentDetailView.deploymentDescription') }}</div>
           <MarkdownRenderer
             v-if="deployment.app.description && deployment.app.description.trim()"
@@ -78,53 +78,53 @@ const deploymentTimestamp = computed(() => {
             :expandable="true"
             class="text-sm"
           />
-          <div v-else class="text-sm text-gray-500 italic">{{ $t('DeploymentDetailView.noDescription') }}</div>
+          <div v-else class="text-sm text-fg-muted italic">{{ $t('DeploymentDetailView.noDescription') }}</div>
         </div>
         <div>
-          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{ $t('DeploymentDetailView.gitRepository') }}</div>
+          <div class="text-xs text-fg-muted uppercase tracking-wide mb-1">{{ $t('DeploymentDetailView.gitRepository') }}</div>
           <a :href="deployment.app.git_link ?? undefined" target="_blank"
-            class="text-sm text-blue-600 hover:text-blue-800 underline break-all">
+            class="text-sm text-accent-fg hover:text-accent-fg underline break-all">
             {{ deployment.app.git_link }}
           </a>
         </div>
       </div>
-      <div v-else class="text-sm text-gray-500">{{ $t('DeploymentDetailView.noAppInfo') }}</div>
+      <div v-else class="text-sm text-fg-muted">{{ $t('DeploymentDetailView.noAppInfo') }}</div>
     </div>
 
     <!-- User info card -->
-    <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <User :size="20" class="text-blue-600" />
+    <div class="bg-panel rounded-xl border border-subtle p-6 shadow-sm">
+      <h2 class="text-lg font-semibold text-fg mb-4 flex items-center gap-2">
+        <User :size="20" class="text-icon" />
         {{ $t('DeploymentDetailView.deploymentOwner') }}
       </h2>
       <div class="space-y-4" v-if="deployment.user">
         <div>
-          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{
+          <div class="text-xs text-fg-muted uppercase tracking-wide mb-1">{{
             $t('DeploymentDetailView.deploymentUserName') }}</div>
-          <div class="text-sm font-medium text-gray-900 flex items-center gap-2">
+          <div class="text-sm font-medium text-fg flex items-center gap-2">
             <div
-              class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] text-primary font-bold">
+              class="avatar w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold">
               {{ deployment.user.username.substring(0, 2).toUpperCase() }}
             </div>
             {{ deployment.user.username }}
           </div>
         </div>
         <div>
-          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{ $t('DeploymentDetailView.email') }}</div>
-          <div class="text-sm text-gray-700">{{ deployment.user.email }}</div>
+          <div class="text-xs text-fg-muted uppercase tracking-wide mb-1">{{ $t('DeploymentDetailView.email') }}</div>
+          <div class="text-sm text-fg">{{ deployment.user.email }}</div>
         </div>
         <div>
-          <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{
+          <div class="text-xs text-fg-muted uppercase tracking-wide mb-1">{{
             $t('DeploymentDetailView.deploymentUserRole') }}</div>
           <div class="text-sm">
             <span
-              class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-300 capitalize">
+              class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-line/[.07] text-fg border border-strong capitalize">
               {{ deployment.user.role }}
             </span>
           </div>
         </div>
       </div>
-      <div v-else class="text-sm text-gray-500">{{ $t('DeploymentDetailView.noUserInfo') }}</div>
+      <div v-else class="text-sm text-fg-muted">{{ $t('DeploymentDetailView.noUserInfo') }}</div>
     </div>
   </div>
 </template>

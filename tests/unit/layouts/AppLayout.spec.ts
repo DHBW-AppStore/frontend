@@ -102,3 +102,30 @@ describe('AppLayout routing-derived UI', () => {
     },
   )
 })
+
+describe('AppLayout theme toggle', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+  })
+
+  it('sits in the header between the language switch and the user menu', async () => {
+    auth.user = { userId: 'u-1', username: 'kim', role: 'student' }
+    const router = createRouter({ history: createMemoryHistory(), routes })
+    await router.push('/')
+    await router.isReady()
+    const wrapper = mount(AppLayout, {
+      global: { plugins: [router, createI18n({ legacy: false, locale: 'de', messages: { de } })] },
+      slots: { default: '<div />' },
+    })
+
+    const buttons = wrapper.findAll('header button').map((b) => b.attributes('aria-label') ?? b.text())
+    const de_ = buttons.indexOf('DE')
+    const en_ = buttons.indexOf('EN')
+    const theme = buttons.indexOf(de.theme.dark)
+    const user = buttons.findIndex((label) => label.includes('kim'))
+
+    expect(theme).toBeGreaterThan(Math.max(de_, en_))
+    expect(theme).toBeLessThan(user)
+    wrapper.unmount()
+  })
+})

@@ -302,10 +302,10 @@ describe('CourseDetailView.vue', () => {
     })
 
     it.each([
-        ['admin', ['bg-purple-100', 'text-purple-700']],
-        ['teacher', ['bg-blue-100', 'text-blue-700']],
-        ['student', ['bg-green-100', 'text-green-700']],
-        ['irgendwas', ['bg-gray-100', 'text-gray-700']],
+        ['admin', ['status-emphasis']],
+        ['teacher', ['status-info']],
+        ['student', ['status-neutral']],
+        ['irgendwas', ['status-neutral']],
     ])('färbt die Rolle %s wie die zentrale Rollenzuordnung', async (role, expectedClasses) => {
         mockCurrentMembers = [{ userId: 'u-1', username: 'TestUser', role }]
 

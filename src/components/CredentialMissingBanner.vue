@@ -20,30 +20,30 @@ const styles = computed(() => {
   switch (props.variant) {
     case 'error':
       return {
-        wrapper: 'bg-red-50 border-red-200 text-red-900',
-        iconBox: 'bg-red-100 text-red-600',
-        title: 'text-red-900',
-        message: 'text-red-800',
-        cta: 'bg-red-600 hover:bg-red-700 text-white',
+        wrapper: 'bg-danger-dot/[.06] border-danger-dot/30',
+        iconBox: 'bg-danger-dot/10 text-danger',
+        title: 'text-danger',
+        message: 'text-fg',
+        cta: 'btn-primary',
         icon: AlertCircle,
       }
     case 'lock':
       return {
-        wrapper: 'bg-blue-50 border-blue-200 text-blue-900',
-        iconBox: 'bg-blue-100 text-blue-600',
-        title: 'text-blue-900',
-        message: 'text-blue-800',
-        cta: 'bg-blue-600 hover:bg-blue-700 text-white',
+        wrapper: 'bg-line/[.04] border-subtle',
+        iconBox: 'bg-line/[.07] text-icon',
+        title: 'text-fg',
+        message: 'text-fg-muted',
+        cta: 'btn-secondary',
         icon: Lock,
       }
     case 'warning':
     default:
       return {
-        wrapper: 'bg-amber-50 border-amber-200 text-amber-900',
-        iconBox: 'bg-amber-100 text-amber-600',
-        title: 'text-amber-900',
-        message: 'text-amber-800',
-        cta: 'bg-amber-600 hover:bg-amber-700 text-white',
+        wrapper: 'bg-warning-dot/[.08] border-warning-dot/40',
+        iconBox: 'bg-warning-dot/15 text-warning',
+        title: 'text-warning',
+        message: 'text-fg',
+        cta: 'btn-primary',
         icon: AlertTriangle,
       }
   }
@@ -66,11 +66,11 @@ const ctaLocation = computed(() => {
 
 <template>
   <div
-    class="rounded-xl border p-4 flex items-start gap-4"
+    class="rounded-panel border p-4 flex items-start gap-4"
     :class="styles.wrapper"
   >
     <div
-      class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+      class="w-10 h-10 rounded-control flex items-center justify-center shrink-0"
       :class="styles.iconBox"
     >
       <component :is="styles.icon" :size="20" />
@@ -82,7 +82,7 @@ const ctaLocation = computed(() => {
     <router-link
       v-if="cta && ctaLocation"
       :to="ctaLocation"
-      class="shrink-0 px-4 py-2 rounded-md text-sm font-semibold transition-colors"
+      class="shrink-0 px-4 py-2 rounded-control text-sm font-semibold transition"
       :class="styles.cta"
     >
       {{ cta }}

@@ -313,7 +313,7 @@ const toasts = () => useToastStore(pinia).toasts.map(({ type, message }) => ({ t
 const memberRow = (wrapper: VueWrapper, username: string) =>
   wrapper
     .findAll('div.flex.flex-col.lg\\:flex-row')
-    .find((row) => row.find('.font-medium.text-gray-900.truncate').text() === username)!
+    .find((row) => row.find('.font-medium.text-fg.truncate').text() === username)!
 
 enableAutoUnmount(afterEach)
 
@@ -484,7 +484,7 @@ describe('DeploymentDetailView — Owner-Ansicht', () => {
 
   it('zeigt bereinigte Deployment-Variablen', async () => {
     const wrapper = await mountLoaded()
-    const cards = wrapper.findAll('div.bg-gray-50.rounded-lg.p-4.border.border-gray-200')
+    const cards = wrapper.findAll('div.rounded-lg.p-4.border.border-subtle')
       .filter((c) => c.find('.font-mono').exists())
       .map((c) => c.text())
 
@@ -625,14 +625,14 @@ describe('DeploymentDetailView — Owner-Ansicht', () => {
     h.deploymentApi.listResources.mockRejectedValue(err)
     const wrapper = await mountLoaded()
 
-    expect(wrapper.find('.bg-red-50.text-red-800 p').text()).toBe(expected)
+    expect(wrapper.find('.text-danger.border-danger-dot\\/30 p').text()).toBe(expected)
   })
 
   it('leert die Ressourcen bei 404 ohne Fehlermeldung', async () => {
     h.deploymentApi.listResources.mockRejectedValue(httpError(404, 'gone'))
     const wrapper = await mountLoaded()
 
-    expect(wrapper.find('.bg-red-50.text-red-800').exists()).toBe(false)
+    expect(wrapper.find('.text-danger.border-danger-dot\\/30').exists()).toBe(false)
     expect(wrapper.text()).toContain('Keine VMs im aktuellen Terraform-State.')
   })
 
@@ -710,7 +710,7 @@ describe('DeploymentDetailView — Tasks & Logs', () => {
 
     await taskRows(wrapper)[1]!.trigger('click')
     await settle()
-    expect(wrapper.find('.text-red-700 .font-medium').text()).toBe('Task failed: terraform exploded')
+    expect(wrapper.find('.text-danger .font-medium').text()).toBe('Task failed: terraform exploded')
     expect(wrapper.text()).not.toContain('Traceback')
     // The selected task drives the task detail: it has no tf_state, so the
     // state block disappears. The Teams card keeps the credentials of the
@@ -741,7 +741,7 @@ describe('DeploymentDetailView — Tasks & Logs', () => {
 
     await taskRows(wrapper)[0]!.trigger('click')
     await settle()
-    expect(wrapper.find('.text-red-700 .font-medium').text()).toBe('Worker nicht erreichbar.')
+    expect(wrapper.find('.text-danger .font-medium').text()).toBe('Worker nicht erreichbar.')
     // State without a ``resources`` array → generic subtitle.
     expect(wrapper.text()).toContain('Erweiterte Details')
     await buttonWithText(wrapper, t('DeploymentDetailView.showTechnicalDetails'))!.trigger('click')
@@ -1190,7 +1190,7 @@ describe('DeploymentDetailView — Live-Stream', () => {
     expect(text).toContain(`250 ${t('DeploymentDetailView.logLines')}`)
     expect(text).toContain(`· ${t('DeploymentDetailView.lastShown', { count: 2 })}`)
     expect(text).toContain('13:01:02[packer]building image')
-    expect(wrapper.find('.text-red-400').text()).toContain('retrying')
+    expect(wrapper.find('.font-mono .text-danger').text()).toContain('retrying')
   })
 
   it.each([

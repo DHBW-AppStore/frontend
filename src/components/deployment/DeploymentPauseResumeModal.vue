@@ -35,7 +35,7 @@ defineEmits<{
           ? 'DeploymentDetailView.confirmPauseMessage'
           : 'DeploymentDetailView.confirmResumeMessage'"
         tag="p"
-        class="text-gray-700"
+        class="text-fg"
       >
         <template #name><strong>{{ deploymentName }}</strong></template>
       </i18n-t>

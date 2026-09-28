@@ -4,28 +4,25 @@ import { ROUTE_NAMES } from '@/router/route-names'
 </script>
 
 <template>
-  <div class="min-h-screen bg-bgSoft flex flex-col">
+  <div class="min-h-screen flex flex-col">
 
     <!-- Header -->
-    <header
-      class="h-16 bg-primary text-white flex items-center justify-between px-8
-             border-b-2 border-accentYellow"
-    >
+    <header class="surface-topbar h-16 text-fg flex items-center justify-between px-8">
       <div class="flex items-center gap-4">
         <RouterLink
           :to="{ name: ROUTE_NAMES.dashboard }"
-          class="hover:text-accentYellow transition flex items-center gap-2"
+          class="btn-ghost rounded-control px-2 py-1 transition flex items-center gap-2 text-sm"
         >
-          <ArrowLeft :size="20" />
+          <ArrowLeft :size="18" :stroke-width="1.75" />
           {{ $t('action.back') }}
         </RouterLink>
 
-        <span class="font-semibold tracking-wide">
+        <span class="text-[15px] font-semibold">
           {{ $t('user.title') }}
         </span>
       </div>
 
-      <User :size="20" class="opacity-80" />
+      <User :size="18" :stroke-width="1.75" class="text-icon" />
     </header>
 
     <!-- Content -->

@@ -70,17 +70,17 @@ export const useQuotas = () => {
   }
 
   const getColorClass = (percentage: number): string => {
-    if (percentage >= QUOTA_THRESHOLDS.critical) return 'bg-red-500'
-    if (percentage >= QUOTA_THRESHOLDS.high) return 'bg-orange-500'
-    if (percentage >= QUOTA_THRESHOLDS.notable) return 'bg-yellow-500'
-    return 'bg-green-500'
+    if (percentage >= QUOTA_THRESHOLDS.critical) return 'meter-fill-high'
+    if (percentage >= QUOTA_THRESHOLDS.high) return 'meter-fill-mid'
+    if (percentage >= QUOTA_THRESHOLDS.notable) return 'meter-fill-mid'
+    return 'meter-fill-low'
   }
 
   /** Colour of the used/limit number, on the same scale as the bar. */
   const getTextColorClass = (percentage: number): string => {
-    if (percentage >= QUOTA_THRESHOLDS.critical) return 'text-red-500'
-    if (percentage >= QUOTA_THRESHOLDS.high) return 'text-amber-500'
-    return 'text-gray-600'
+    if (percentage >= QUOTA_THRESHOLDS.critical) return 'text-danger'
+    if (percentage >= QUOTA_THRESHOLDS.high) return 'text-warning'
+    return 'text-fg-muted'
   }
 
   /** True when the usage deserves the warning icon. */
