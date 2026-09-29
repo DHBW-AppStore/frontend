@@ -15,6 +15,8 @@ import {
   Box,
   Layers,
   AlertTriangle,
+  ChevronDown,
+  Sparkles,
   // Plus - removed
 } from 'lucide-vue-next'
 import type { AppVariable, DeploymentFile } from '@/types'
@@ -293,6 +295,117 @@ const normalizeValue = (val: any, type: string) => {
   return String(val).trim()
 }
 
+// ----------------------------------------------------------------
+// STANDARD / ADVANCED SPLIT
+// ----------------------------------------------------------------
+/**
+ * The wizard hides variables the app author already answered. A variable is
+ * "advanced" when it carries an HCL default (backend: ``required`` is exactly
+ * ``default is None``) and the user has not moved its value away from that
+ * default. What is left in the standard view is the set of fields that really
+ * must be filled in before the deployment can start.
+ *
+ * The assignment is a SNAPSHOT taken once per load, not a live computed:
+ * re-evaluating it on every keystroke would make a field jump out of the
+ * advanced block the moment it is edited, right under the user's cursor.
+ * Returning via "Back" recomputes it, which is where an override that was made
+ * earlier correctly promotes the variable into the standard view.
+ */
+const advancedKeys = ref<Set<string>>(new Set())
+
+/** The key under which a variable's value lives in ``formValues``. */
+const formKeyFor = (v: AppVariable): string =>
+  v.source === 'packer' ? packerFormKey(v) : v.name
+
+/** True when the current value differs from the author's default. */
+const isOverridden = (v: AppVariable): boolean => {
+  const def = normalizeValue(v.default ?? null, v.type)
+  const current = formValues.value[formKeyFor(v)]
+  if (isScoped(v)) {
+    const map = (current ?? {}) as Record<string, unknown>
+    return slotKeysFor(v).some((slot) => normalizeValue(map[slot] ?? null, v.type) !== def)
+  }
+  return normalizeValue(current ?? null, v.type) !== def
+}
+
+const recomputeAdvancedKeys = (): void => {
+  const keys = new Set<string>()
+  for (const v of variables.value) {
+    if (v.required) continue
+    if (v.default === undefined || v.default === null) continue
+    // File variables carry no default and live in their own draft channel.
+    if (isFileVar(v)) continue
+    if (isOverridden(v)) continue
+    keys.add(formKeyFor(v))
+  }
+  advancedKeys.value = keys
+}
+
+const isAdvancedVar = (v: AppVariable): boolean => advancedKeys.value.has(formKeyFor(v))
+
+// Each section keeps its own disclosure state — the two columns are filled by
+// different tools and are usually of very different size.
+const showAdvancedPacker = ref(false)
+const showAdvancedTerraform = ref(false)
+
+const visiblePackerFor = (tkey: string): AppVariable[] =>
+  (packerByTemplate.value[tkey] || []).filter(
+    (v) => showAdvancedPacker.value || !isAdvancedVar(v),
+  )
+
+// Both sections lay their cards out with flex ``order`` rather than plain
+// document order: the disclosure toggle has to sit BETWEEN the standard and
+// the advanced cards, but all cards come out of one ``v-for`` (the card markup
+// is far too large to duplicate). Buckets: 1 = standard, 2 = the toggle,
+// 3 = advanced. Flexbox keeps document order inside a bucket, so the
+// multi-image group headers stay attached to their own group.
+const standardPackerFor = (tkey: string): AppVariable[] =>
+  (packerByTemplate.value[tkey] || []).filter((v) => !isAdvancedVar(v))
+
+const advancedPackerFor = (tkey: string): AppVariable[] =>
+  (packerByTemplate.value[tkey] || []).filter((v) => isAdvancedVar(v))
+
+const hiddenPackerCount = computed(
+  () => packerVariables.value.filter((v) => isAdvancedVar(v)).length,
+)
+
+const visibleTerraformVariables = computed(() =>
+  terraformVariables.value.filter((v) => showAdvancedTerraform.value || !isAdvancedVar(v)),
+)
+
+const hiddenTerraformCount = computed(
+  () => terraformVariables.value.filter((v) => isAdvancedVar(v)).length,
+)
+
+// "Everything is preconfigured": the section has variables, but every single
+// one of them is an untouched default. Without this hint the collapsed column
+// would just look broken. It deliberately stays visible while the advanced
+// block is open — it is the section's status ("nothing is required of you
+// here"), not a prompt to click, so hiding it on expand would make that
+// reassurance disappear exactly when the user starts changing things.
+const packerAllPreconfigured = computed(
+  () =>
+    packerVariables.value.length > 0 &&
+    hiddenPackerCount.value === packerVariables.value.length,
+)
+
+const terraformAllPreconfigured = computed(
+  () =>
+    terraformVariables.value.length > 0 &&
+    hiddenTerraformCount.value === terraformVariables.value.length,
+)
+
+/**
+ * True when the value currently shown is still the author's default, i.e. the
+ * "Recommended" badge applies. Scoped variables count as recommended only when
+ * every slot still holds the default.
+ */
+const isAtDefault = (v: AppVariable): boolean => {
+  if (v.default === undefined || v.default === null) return false
+  if (isFileVar(v)) return false
+  return !isOverridden(v)
+}
+
 // --- Data Loading ---
 onMounted(async () => {
   if (!deploymentStore.draft.appId) {
@@ -349,6 +462,7 @@ onMounted(async () => {
       }
     }
     formValues.value = restored
+    recomputeAdvancedKeys()
     return
   }
 
@@ -431,6 +545,8 @@ onMounted(async () => {
 
       formValues.value[storageKey] = valToSet
     })
+
+    recomputeAdvancedKeys()
 
   } catch (error: any) {
     console.error(error)
@@ -647,20 +763,28 @@ watch(
             </div>
           </div>
           
-          <div class="p-6 space-y-6 max-h-[600px] overflow-y-auto">
-            <div v-if="packerVariables.length === 0" class="text-center py-8 text-blue-600 italic">
+          <div class="p-6 flex flex-col gap-6 max-h-[600px] overflow-y-auto">
+            <div v-if="packerVariables.length === 0" class="order-1 text-center py-8 text-blue-600 italic">
               {{ t('deployment.summary.noPackerVars') }}
             </div>
 
             <template v-for="tkey in templateKeys" :key="tkey">
+              <!-- One group header per flex bucket, so an expanded advanced
+                   block keeps its own "Image: …" heading. -->
               <div
-                v-if="templateKeys.length > 1"
-                class="-mx-6 px-6 py-2 bg-blue-50/70 border-y border-blue-200 text-sm font-semibold text-blue-900"
+                v-if="templateKeys.length > 1 && standardPackerFor(tkey).length > 0"
+                class="order-1 -mx-6 px-6 py-2 bg-blue-50/70 border-y border-blue-200 text-sm font-semibold text-blue-900"
+              >
+                Image: <code class="font-mono">{{ tkey }}</code>
+              </div>
+              <div
+                v-if="templateKeys.length > 1 && showAdvancedPacker && advancedPackerFor(tkey).length > 0"
+                class="order-3 -mx-6 px-6 py-2 bg-blue-50/70 border-y border-blue-200 text-sm font-semibold text-blue-900"
               >
                 Image: <code class="font-mono">{{ tkey }}</code>
               </div>
 
-              <div v-for="variable in packerByTemplate[tkey]" :key="`${tkey}.${variable.name}`" class="bg-white rounded-lg p-4 border border-blue-200 shadow-sm">
+              <div v-for="variable in visiblePackerFor(tkey)" :key="`${tkey}.${variable.name}`" class="bg-white rounded-lg p-4 border border-blue-200 shadow-sm" :class="isAdvancedVar(variable) ? 'order-3' : 'order-1'">
               <div class="flex items-start justify-between gap-2 mb-3">
                 <label
                   :for="packerFormKey(variable)"
@@ -709,6 +833,17 @@ watch(
                 </span>
                 <span v-if="variable.required" class="text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-200">
                   {{ t('deployment.variables.required') }}
+                </span>
+                <!-- The HCL default is the app author's recommendation. The
+                     badge disappears as soon as the value is changed. -->
+                <span
+                  v-if="isAtDefault(variable)"
+                  data-testid="recommended-badge"
+                  :title="t('deployment.variables.recommendedHint')"
+                  class="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1"
+                >
+                  <Sparkles :size="10" aria-hidden="true" />
+                  {{ t('deployment.variables.recommended') }}
                 </span>
                 <ScopeBadge :scope="effectiveScope(variable)" />
               </div>
@@ -851,6 +986,37 @@ watch(
               </template>
             </div>
             </template>
+
+            <!-- Advanced disclosure. Everything the app author already
+                 answered lives behind this toggle, so the collapsed column
+                 asks only for what is genuinely missing. -->
+            <div
+              v-if="packerAllPreconfigured"
+              data-testid="packer-all-preconfigured"
+              class="order-2 text-center py-6 px-4 text-sm text-blue-700 bg-blue-50/70 rounded-lg border border-dashed border-blue-300"
+            >
+              {{ t('deployment.variables.allPreconfigured') }}
+            </div>
+
+            <button
+              v-if="hiddenPackerCount > 0"
+              type="button"
+              data-testid="packer-advanced-toggle"
+              :aria-expanded="showAdvancedPacker"
+              @click="showAdvancedPacker = !showAdvancedPacker"
+              class="order-2 w-full flex items-center gap-2 text-sm font-semibold text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
+            >
+              <ChevronDown
+                :size="16"
+                aria-hidden="true"
+                class="shrink-0 transition-transform"
+                :class="showAdvancedPacker ? '' : '-rotate-90'"
+              />
+              <span>{{ t('deployment.variables.advancedSettings') }}</span>
+              <span class="ml-auto text-xs font-bold bg-blue-200 text-blue-900 px-2 py-0.5 rounded-full">
+                {{ hiddenPackerCount }}
+              </span>
+            </button>
           </div>
         </div>
 
@@ -863,12 +1029,12 @@ watch(
             </div>
           </div>
           
-          <div class="p-6 space-y-6 max-h-[600px] overflow-y-auto">
-            <div v-if="terraformVariables.length === 0" class="text-center py-8 text-purple-600 italic">
+          <div class="p-6 flex flex-col gap-6 max-h-[600px] overflow-y-auto">
+            <div v-if="terraformVariables.length === 0" class="order-1 text-center py-8 text-purple-600 italic">
               {{ t('deployment.summary.noTerraformVars') }}
             </div>
-            
-            <div v-for="variable in terraformVariables" :key="variable.name" class="bg-white rounded-lg p-4 border border-purple-200 shadow-sm">
+
+            <div v-for="variable in visibleTerraformVariables" :key="variable.name" class="bg-white rounded-lg p-4 border border-purple-200 shadow-sm" :class="isAdvancedVar(variable) ? 'order-3' : 'order-1'">
               <div class="flex items-start justify-between gap-2 mb-3">
                 <label
                   :for="variable.name"
@@ -917,6 +1083,16 @@ watch(
                 </span>
                 <span v-if="variable.required" class="text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-700 px-2 py-0.5 rounded border border-red-200">
                   {{ t('deployment.variables.required') }}
+                </span>
+                <!-- See the Packer column for why the default counts as a recommendation. -->
+                <span
+                  v-if="isAtDefault(variable)"
+                  data-testid="recommended-badge"
+                  :title="t('deployment.variables.recommendedHint')"
+                  class="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1"
+                >
+                  <Sparkles :size="10" aria-hidden="true" />
+                  {{ t('deployment.variables.recommended') }}
                 </span>
                 <ScopeBadge :scope="effectiveScope(variable)" />
               </div>
@@ -1058,6 +1234,35 @@ watch(
                 </div>
               </template>
             </div>
+
+            <!-- Advanced disclosure — see the Packer column for the rationale. -->
+            <div
+              v-if="terraformAllPreconfigured"
+              data-testid="terraform-all-preconfigured"
+              class="order-2 text-center py-6 px-4 text-sm text-purple-700 bg-purple-50/70 rounded-lg border border-dashed border-purple-300"
+            >
+              {{ t('deployment.variables.allPreconfigured') }}
+            </div>
+
+            <button
+              v-if="hiddenTerraformCount > 0"
+              type="button"
+              data-testid="terraform-advanced-toggle"
+              :aria-expanded="showAdvancedTerraform"
+              @click="showAdvancedTerraform = !showAdvancedTerraform"
+              class="order-2 w-full flex items-center gap-2 text-sm font-semibold text-purple-800 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg px-4 py-2.5 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-300"
+            >
+              <ChevronDown
+                :size="16"
+                aria-hidden="true"
+                class="shrink-0 transition-transform"
+                :class="showAdvancedTerraform ? '' : '-rotate-90'"
+              />
+              <span>{{ t('deployment.variables.advancedSettings') }}</span>
+              <span class="ml-auto text-xs font-bold bg-purple-200 text-purple-900 px-2 py-0.5 rounded-full">
+                {{ hiddenTerraformCount }}
+              </span>
+            </button>
           </div>
         </div>
 

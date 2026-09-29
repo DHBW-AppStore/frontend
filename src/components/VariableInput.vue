@@ -17,6 +17,7 @@
  * purple) stay visually distinct without duplicating five separate
  * input variants per color.
  */
+import { computed } from 'vue'
 import OpenStackResourcePicker from '@/components/OpenStackResourcePicker.vue'
 import { useI18n } from 'vue-i18n'
 import type { AppVariable } from '@/types'
@@ -69,6 +70,19 @@ const pickerOsType = (v: AppVariable): OsResourceType => v.osType as OsResourceT
 
 const update = (value: any) => emit('update:modelValue', value)
 
+/**
+ * The author's HCL default, handed to the picker so it can mark the matching
+ * entry in its option list as recommended. Map/object defaults are dropped:
+ * there is no single option they could point at.
+ */
+const recommendedValue = computed<string | number | boolean | unknown[] | null>(() => {
+  const def = props.variable.default
+  if (def === undefined || def === null) return null
+  if (Array.isArray(def)) return def
+  if (typeof def === 'object') return null
+  return def
+})
+
 // Explicit class maps — Tailwind's JIT can't read class names assembled
 // from template-literal segments. Listing both palettes here keeps
 // every utility visible to the content scanner.
@@ -100,6 +114,7 @@ const toggleFocus = (() => {
     :filter-network-id="variable.osType === 'subnet' ? (filterNetworkId ?? null) : null"
     :allow-free-text="true"
     :model-value="modelValue"
+    :recommended-value="recommendedValue"
     @update:modelValue="update"
   />
 
