@@ -790,6 +790,16 @@ export default {
       openstackTitle: 'OpenStack-Credentials',
       openstackHint: 'Eigene Zugangsdaten für Deployments hinterlegen',
     },
+    appearance: {
+      title: 'Erscheinungsbild',
+      hint: 'Legt fest, ob die App hell, dunkel oder automatisch entsprechend den Systemeinstellungen dargestellt wird.',
+      auto: 'Automatisch',
+      autoHint: 'Folgt den Systemeinstellungen',
+      light: 'Hell',
+      lightHint: 'Immer helles Design',
+      dark: 'Dunkel',
+      darkHint: 'Immer dunkles Design',
+    },
   },
 
   banners: {

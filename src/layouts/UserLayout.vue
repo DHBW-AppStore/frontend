@@ -3,17 +3,17 @@ import { ArrowLeft, User } from 'lucide-vue-next'
 </script>
 
 <template>
-  <div class="min-h-screen bg-bgSoft flex flex-col">
+  <div class="min-h-screen bg-surface-page flex flex-col">
 
     <!-- Header -->
     <header
       class="h-16 bg-primary text-white flex items-center justify-between px-8
-             border-b-2 border-accentYellow"
+             border-b-2 border-highlight/40"
     >
       <div class="flex items-center gap-4">
         <RouterLink
           to="/dashboard"
-          class="hover:text-accentYellow transition flex items-center gap-2"
+          class="hover:text-highlight transition flex items-center gap-2"
         >
           <ArrowLeft :size="20" />
           {{ $t('action.back') }}

@@ -107,14 +107,14 @@ const cardBorderClass = computed(() => {
   if (props.resource.drift === 'stale') return 'border-amber-300'
   // Subtle accent when the detail panel underneath is open, so the
   // user instantly knows which card the panel belongs to.
-  if (props.isExpanded) return 'border-gray-800 ring-1 ring-gray-200'
-  return 'border-gray-200'
+  if (props.isExpanded) return 'border-content-primary ring-1 ring-card-border'
+  return 'border-card-border'
 })
 </script>
 
 <template>
   <div
-    class="bg-white rounded-lg p-4 border-2 shadow-sm flex flex-col gap-3 transition-colors"
+    class="bg-surface-card rounded-lg p-4 border-2 shadow-sm flex flex-col gap-3 transition-colors"
     :class="cardBorderClass"
   >
     <!-- Header: Team-Badge + VM-Name + Lifecycle-Pill -->
@@ -125,12 +125,12 @@ const cardBorderClass = computed(() => {
             class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border"
             :class="resource.team
               ? 'bg-blue-100 text-blue-700 border-blue-200'
-              : 'bg-gray-100 text-gray-600 border-gray-200'"
+              : 'bg-surface-input text-content-secondary border-card-border'"
           >
             {{ resource.team || t('vm.sharedTeam') }}
           </span>
         </div>
-        <h3 class="text-base font-bold text-gray-900 truncate" :title="resource.display_name">
+        <h3 class="text-base font-bold text-content-primary truncate" :title="resource.display_name">
           {{ resource.display_name }}
         </h3>
       </div>
@@ -167,35 +167,35 @@ const cardBorderClass = computed(() => {
     </div>
 
     <!-- Hardware row -->
-    <div v-if="flavorBrief || resource.hardware?.image_name" class="flex items-start gap-2 text-xs text-gray-700">
-      <Cpu :size="14" class="mt-0.5 shrink-0 text-gray-400" />
+    <div v-if="flavorBrief || resource.hardware?.image_name" class="flex items-start gap-2 text-xs text-content-secondary">
+      <Cpu :size="14" class="mt-0.5 shrink-0 text-content-disabled" />
       <div class="space-y-0.5">
         <p v-if="flavorBrief">{{ flavorBrief }}</p>
-        <p v-if="resource.hardware?.image_name" class="text-gray-500">
+        <p v-if="resource.hardware?.image_name" class="text-content-disabled">
           Image: {{ resource.hardware.image_name }}
         </p>
-        <p v-else-if="resource.hardware?.image_id" class="text-gray-500 font-mono">
+        <p v-else-if="resource.hardware?.image_id" class="text-content-disabled font-mono">
           Image-ID: {{ resource.hardware.image_id.slice(0, 8) }}…
         </p>
-        <p v-if="resource.hardware?.availability_zone" class="text-gray-500">
+        <p v-if="resource.hardware?.availability_zone" class="text-content-disabled">
           AZ: {{ resource.hardware.availability_zone }}
         </p>
-        <p v-if="uptime" class="text-gray-500">{{ t('vm.uptimePrefix') }} {{ uptime }}</p>
+        <p v-if="uptime" class="text-content-disabled">{{ t('vm.uptimePrefix') }} {{ uptime }}</p>
       </div>
     </div>
 
     <!-- Addresses -->
-    <div v-if="resource.addresses.length > 0" class="flex items-start gap-2 text-xs text-gray-700">
-      <Network :size="14" class="mt-0.5 shrink-0 text-gray-400" />
+    <div v-if="resource.addresses.length > 0" class="flex items-start gap-2 text-xs text-content-secondary">
+      <Network :size="14" class="mt-0.5 shrink-0 text-content-disabled" />
       <div class="space-y-1 flex-1 min-w-0">
         <div
           v-for="addr in resource.addresses"
           :key="`${resource.address}::${addr.network}`"
           class="flex flex-wrap items-baseline gap-1"
         >
-          <span class="text-gray-500">{{ addr.network }}:</span>
+          <span class="text-content-disabled">{{ addr.network }}:</span>
           <span v-if="addr.fixed_ip" class="font-mono">{{ addr.fixed_ip }}</span>
-          <span v-if="addr.floating_ip" class="font-mono text-emerald-700">
+          <span v-if="addr.floating_ip" class="font-mono text-status-success">
             → {{ addr.floating_ip }}
           </span>
         </div>
@@ -203,13 +203,13 @@ const cardBorderClass = computed(() => {
     </div>
 
     <!-- Footer: actions -->
-    <div class="flex gap-2 mt-1 pt-2 border-t border-gray-100">
+    <div class="flex gap-2 mt-1 pt-2 border-t border-card-border">
       <button
         @click="emit('open-details', resource.address)"
         class="flex-1 text-xs font-semibold py-1.5 px-3 rounded border transition-colors"
         :class="isExpanded
-          ? 'bg-gray-800 text-white border-gray-800 hover:bg-gray-700'
-          : 'border-gray-200 hover:bg-gray-50'"
+          ? 'bg-content-primary text-content-inverse border-content-primary hover:opacity-90'
+          : 'border-card-border hover:bg-surface-hover'"
       >
         {{ isExpanded ? t('vm.actions.hideDetails') : t('vm.actions.showDetails') }}
       </button>
@@ -219,7 +219,7 @@ const cardBorderClass = computed(() => {
         class="flex-1 text-xs font-semibold py-1.5 px-3 rounded border transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
         :class="resource.drift === 'missing'
           ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-          : 'bg-white text-red-700 border-red-200 hover:bg-red-50'"
+          : 'bg-surface-card text-red-700 border-red-200 hover:bg-red-50'"
       >
         <RefreshCcw :size="12" :class="redeploying ? 'animate-spin' : ''" />
         {{ redeploying ? t('vm.actions.redeploying') : t('vm.actions.redeploy') }}

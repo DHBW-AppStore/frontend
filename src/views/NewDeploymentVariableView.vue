@@ -729,13 +729,13 @@ watch(
 </script>
 
 <template>
-  <div class="bg-white rounded-2xl p-10 border shadow-sm max-w-5xl mx-auto min-h-[600px] flex flex-col">
+  <div class="bg-surface-card rounded-2xl p-10 border border-card-border shadow-sm max-w-5xl mx-auto min-h-[600px] flex flex-col">
 
     <div class="mb-6">
       <DeploymentProgressBar :current-step="3" class="mb-8" />
       <div class="text-center">
-        <h1 class="text-3xl font-bold text-gray-900">{{ t('deployment.summary.variablesConfigTitle') }}</h1>
-        <p class="text-emerald-600 font-medium mt-2 text-lg">
+        <h1 class="text-3xl font-bold text-content-primary">{{ t('deployment.summary.variablesConfigTitle') }}</h1>
+        <p class="text-primary font-medium mt-2 text-lg">
           {{ t('deployment.summary.appLabel') }}: {{ deploymentStore.draft.name || t('deployment.variables.unnamed') }}
         </p>
       </div>
@@ -744,17 +744,17 @@ watch(
     <div class="flex-grow w-full max-w-7xl mx-auto mt-6">
       
       <div v-if="isLoading" class="flex flex-col items-center justify-center py-20">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mb-3"></div>
-        <span class="text-gray-400">{{ t('deployment.variables.loading') }}</span>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3"></div>
+        <span class="text-content-disabled">{{ t('deployment.variables.loading') }}</span>
       </div>
 
-      <div v-else-if="variables.length === 0" class="text-center py-12 text-gray-500 italic bg-gray-50 rounded-xl border border-dashed">
+      <div v-else-if="variables.length === 0" class="text-center py-12 text-content-secondary italic bg-surface-input rounded-xl border border-dashed">
         {{ t('deployment.variables.noVariables') }}
       </div>
 
       <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border-2 border-blue-200 overflow-hidden">
+        <div class="bg-surface-input rounded-xl border-2 border-card-border overflow-hidden">
           <div class="bg-blue-600 text-white px-6 py-4 flex items-center gap-3">
             <Box :size="24" />
             <div>
@@ -784,12 +784,12 @@ watch(
                 Image: <code class="font-mono">{{ tkey }}</code>
               </div>
 
-              <div v-for="variable in visiblePackerFor(tkey)" :key="`${tkey}.${variable.name}`" class="bg-white rounded-lg p-4 border border-blue-200 shadow-sm" :class="isAdvancedVar(variable) ? 'order-3' : 'order-1'">
+              <div v-for="variable in visiblePackerFor(tkey)" :key="`${tkey}.${variable.name}`" class="bg-surface-card rounded-lg p-4 border border-card-border shadow-sm" :class="isAdvancedVar(variable) ? 'order-3' : 'order-1'">
               <div class="flex items-start justify-between gap-2 mb-3">
                 <label
                   :for="packerFormKey(variable)"
                   @click.prevent="focusInput(packerFormKey(variable))"
-                  class="text-base font-bold text-gray-900 cursor-pointer hover:text-blue-700 transition-colors flex-1"
+                  class="text-base font-bold text-content-primary cursor-pointer hover:text-blue-700 transition-colors flex-1"
                 >
                   {{ variable.name }}
                 </label>
@@ -797,7 +797,7 @@ watch(
                 <button
                   v-if="variable.description || isList(variable.type)"
                   @click.stop="toggleTooltip(packerFormKey(variable))"
-                  class="text-gray-400 hover:text-blue-600 transition-colors focus:outline-none"
+                  class="text-content-disabled hover:text-blue-600 transition-colors focus:outline-none"
                   :class="activeTooltip === packerFormKey(variable) ? 'text-blue-600' : ''"
                   :title="t('deployment.variables.showInfo')"
                 >
@@ -819,7 +819,7 @@ watch(
                 </p>
               </div>
 
-              <div v-if="activeTooltip === packerFormKey(variable)" class="mb-3 bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm text-gray-700">
+              <div v-if="activeTooltip === packerFormKey(variable)" class="mb-3 bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm text-content-secondary">
                 <p v-if="variable.description" class="mb-2">{{ variable.description }}</p>
                 <div v-if="isList(variable.type)" class="flex gap-2 items-start text-xs text-blue-700">
                   <Info :size="12" class="mt-0.5 shrink-0" />
@@ -840,7 +840,7 @@ watch(
                   v-if="isAtDefault(variable)"
                   data-testid="recommended-badge"
                   :title="t('deployment.variables.recommendedHint')"
-                  class="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1"
+                  class="text-[10px] font-bold uppercase tracking-wider bg-status-successLight text-status-success px-2 py-0.5 rounded border border-status-success/30 flex items-center gap-1"
                 >
                   <Sparkles :size="10" aria-hidden="true" />
                   {{ t('deployment.variables.recommended') }}
@@ -883,9 +883,9 @@ watch(
                   <div
                     v-for="team in wizardTeams"
                     :key="`${variable.name}::${team.name}`"
-                    class="border-l-2 border-gray-200 pl-3 space-y-2"
+                    class="border-l-2 border-card-border pl-3 space-y-2"
                   >
-                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    <div class="text-xs font-semibold text-content-secondary uppercase tracking-wide">
                       {{ team.name }}
                     </div>
                     <FileDropZone
@@ -896,7 +896,7 @@ watch(
                       :label="member.username"
                       :accept="fileAcceptFor(variable)"
                     />
-                    <div v-if="team.members.length === 0" class="text-xs text-gray-500 italic">
+                    <div v-if="team.members.length === 0" class="text-xs text-content-disabled italic">
                       {{ t('deployment.variables.noMembers') }}
                     </div>
                   </div>
@@ -930,9 +930,9 @@ watch(
                     <div
                       v-for="team in wizardTeams"
                       :key="`${variable.name}::team::${team.name}`"
-                      class="border-l-2 border-gray-200 pl-3 space-y-2"
+                      class="border-l-2 border-card-border pl-3 space-y-2"
                     >
-                      <div class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      <div class="text-xs font-semibold text-content-secondary uppercase tracking-wide">
                         {{ team.name }}
                       </div>
                       <div
@@ -942,7 +942,7 @@ watch(
                       >
                         <label
                           :for="`${packerFormKey(variable)}__${userSlotKey(team.name, member.username)}`"
-                          class="text-xs font-semibold text-gray-600"
+                          class="text-xs font-semibold text-content-secondary"
                         >
                           {{ member.username }}
                         </label>
@@ -955,7 +955,7 @@ watch(
                           :input-id="`${packerFormKey(variable)}__${userSlotKey(team.name, member.username)}`"
                         />
                       </div>
-                      <div v-if="team.members.length === 0" class="text-xs text-gray-500 italic">
+                      <div v-if="team.members.length === 0" class="text-xs text-content-disabled italic">
                         {{ t('deployment.variables.noMembers') }}
                       </div>
                     </div>
@@ -968,7 +968,7 @@ watch(
                     >
                       <label
                         :for="`${packerFormKey(variable)}__${slotKey}`"
-                        class="text-xs font-semibold text-gray-600"
+                        class="text-xs font-semibold text-content-secondary"
                       >
                         {{ formatSlotLabel(variable, slotKey) }}
                       </label>
@@ -1020,7 +1020,7 @@ watch(
           </div>
         </div>
 
-        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border-2 border-purple-200 overflow-hidden">
+        <div class="bg-surface-input rounded-xl border-2 border-card-border overflow-hidden">
           <div class="bg-purple-600 text-white px-6 py-4 flex items-center gap-3">
             <Layers :size="24" />
             <div>
@@ -1034,12 +1034,12 @@ watch(
               {{ t('deployment.summary.noTerraformVars') }}
             </div>
 
-            <div v-for="variable in visibleTerraformVariables" :key="variable.name" class="bg-white rounded-lg p-4 border border-purple-200 shadow-sm" :class="isAdvancedVar(variable) ? 'order-3' : 'order-1'">
+            <div v-for="variable in visibleTerraformVariables" :key="variable.name" class="bg-surface-card rounded-lg p-4 border border-card-border shadow-sm" :class="isAdvancedVar(variable) ? 'order-3' : 'order-1'">
               <div class="flex items-start justify-between gap-2 mb-3">
                 <label
                   :for="variable.name"
                   @click.prevent="focusInput(variable.name)"
-                  class="text-base font-bold text-gray-900 cursor-pointer hover:text-purple-700 transition-colors flex-1"
+                  class="text-base font-bold text-content-primary cursor-pointer hover:text-purple-700 transition-colors flex-1"
                 >
                   {{ variable.name }}
                 </label>
@@ -1047,7 +1047,7 @@ watch(
                 <button
                   v-if="variable.description || isList(variable.type)"
                   @click.stop="toggleTooltip(variable.name)"
-                  class="text-gray-400 hover:text-purple-600 transition-colors focus:outline-none"
+                  class="text-content-disabled hover:text-purple-600 transition-colors focus:outline-none"
                   :class="activeTooltip === variable.name ? 'text-purple-600' : ''"
                   :title="t('deployment.variables.showInfo')"
                 >
@@ -1069,7 +1069,7 @@ watch(
                 </p>
               </div>
 
-              <div v-if="activeTooltip === variable.name" class="mb-3 bg-purple-50 p-3 rounded-lg border border-purple-100 text-sm text-gray-700">
+              <div v-if="activeTooltip === variable.name" class="mb-3 bg-purple-50 p-3 rounded-lg border border-purple-100 text-sm text-content-secondary">
                 <p v-if="variable.description" class="mb-2">{{ variable.description }}</p>
                 <div v-if="isList(variable.type)" class="flex gap-2 items-start text-xs text-purple-700">
                   <Info :size="12" class="mt-0.5 shrink-0" />
@@ -1089,7 +1089,7 @@ watch(
                   v-if="isAtDefault(variable)"
                   data-testid="recommended-badge"
                   :title="t('deployment.variables.recommendedHint')"
-                  class="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1"
+                  class="text-[10px] font-bold uppercase tracking-wider bg-status-successLight text-status-success px-2 py-0.5 rounded border border-status-success/30 flex items-center gap-1"
                 >
                   <Sparkles :size="10" aria-hidden="true" />
                   {{ t('deployment.variables.recommended') }}
@@ -1132,9 +1132,9 @@ watch(
                   <div
                     v-for="team in wizardTeams"
                     :key="`${variable.name}::${team.name}`"
-                    class="border-l-2 border-gray-200 pl-3 space-y-2"
+                    class="border-l-2 border-card-border pl-3 space-y-2"
                   >
-                    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    <div class="text-xs font-semibold text-content-secondary uppercase tracking-wide">
                       {{ team.name }}
                     </div>
                     <FileDropZone
@@ -1145,7 +1145,7 @@ watch(
                       :label="member.username"
                       :accept="fileAcceptFor(variable)"
                     />
-                    <div v-if="team.members.length === 0" class="text-xs text-gray-500 italic">
+                    <div v-if="team.members.length === 0" class="text-xs text-content-disabled italic">
                       {{ t('deployment.variables.noMembers') }}
                     </div>
                   </div>
@@ -1179,9 +1179,9 @@ watch(
                     <div
                       v-for="team in wizardTeams"
                       :key="`${variable.name}::team::${team.name}`"
-                      class="border-l-2 border-gray-200 pl-3 space-y-2"
+                      class="border-l-2 border-card-border pl-3 space-y-2"
                     >
-                      <div class="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      <div class="text-xs font-semibold text-content-secondary uppercase tracking-wide">
                         {{ team.name }}
                       </div>
                       <div
@@ -1191,7 +1191,7 @@ watch(
                       >
                         <label
                           :for="`${variable.name}__${userSlotKey(team.name, member.username)}`"
-                          class="text-xs font-semibold text-gray-600"
+                          class="text-xs font-semibold text-content-secondary"
                         >
                           {{ member.username }}
                         </label>
@@ -1204,7 +1204,7 @@ watch(
                           :input-id="`${variable.name}__${userSlotKey(team.name, member.username)}`"
                         />
                       </div>
-                      <div v-if="team.members.length === 0" class="text-xs text-gray-500 italic">
+                      <div v-if="team.members.length === 0" class="text-xs text-content-disabled italic">
                         {{ t('deployment.variables.noMembers') }}
                       </div>
                     </div>
@@ -1217,7 +1217,7 @@ watch(
                     >
                       <label
                         :for="`${variable.name}__${slotKey}`"
-                        class="text-xs font-semibold text-gray-600"
+                        class="text-xs font-semibold text-content-secondary"
                       >
                         {{ formatSlotLabel(variable, slotKey) }}
                       </label>
@@ -1269,10 +1269,10 @@ watch(
       </div>
     </div>
 
-    <div class="flex justify-between items-center mt-12 pt-6 border-t border-gray-100">
+    <div class="flex justify-between items-center mt-12 pt-6 border-t border-card-border">
       <button
         @click="handleBack"
-        class="flex items-center gap-2 px-6 py-2.5 rounded-full text-gray-500 font-semibold hover:text-gray-900 hover:bg-gray-100 transition-colors"
+        class="flex items-center gap-2 px-6 py-2.5 rounded-full text-content-secondary font-semibold hover:text-content-primary hover:bg-surface-hover transition-colors"
       >
         <ArrowLeft :size="18" />
         {{ t('deployment.actions.back') }}
@@ -1291,8 +1291,8 @@ watch(
         :class="[
           'flex items-center gap-2 px-8 py-2.5 rounded-full font-bold transition-colors shadow-lg',
           canSubmit
-            ? 'bg-emerald-700 text-white hover:bg-emerald-800 shadow-emerald-700/20'
-            : 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none',
+            ? 'bg-btn-primary text-btn-primary-text hover:bg-btn-primaryHover shadow-btn-primary/20'
+            : 'bg-surface-input text-content-disabled cursor-not-allowed shadow-none',
         ]"
       >
         {{ t('deployment.actions.next') }}

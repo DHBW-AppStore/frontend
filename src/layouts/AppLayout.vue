@@ -73,7 +73,7 @@ const navItems = computed(() => [
 </script>
 
 <template>
-  <div class="h-screen flex bg-bgSoft overflow-x-visible">
+  <div class="h-screen flex bg-surface-page overflow-x-visible">
 
     <!-- Sidebar -->
     <aside
@@ -183,17 +183,17 @@ const navItems = computed(() => [
             <Transition name="dropdown">
               <div
                 v-if="userMenuOpen"
-                class="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50"
+                class="absolute right-0 top-full mt-1.5 w-44 bg-surface-card rounded-xl shadow-lg border border-card-border py-1 z-50"
               >
                 <RouterLink
                   to="/user"
                   @click="userMenuOpen = false"
-                  class="flex items-center gap-2.5 px-3.5 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  class="flex items-center gap-2.5 px-3.5 py-2 text-sm text-content-primary hover:bg-surface-hover transition-colors"
                 >
-                  <User :size="15" class="text-slate-400" />
+                  <User :size="15" class="text-content-disabled" />
                   Profil
                 </RouterLink>
-                <div class="my-1 border-t border-slate-100" />
+                <div class="my-1 border-t border-card-border" />
                 <button
                   @click="logout(); userMenuOpen = false"
                   class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -211,7 +211,7 @@ const navItems = computed(() => [
       <!-- Main content -->
       <main
         class="flex-1 overflow-y-auto px-8 pt-6 pb-8"
-        :class="isMeshBgActive ? 'mesh-gradient-bg' : 'bg-bgSoft'"
+        :class="isMeshBgActive ? 'mesh-gradient-bg' : 'bg-surface-page'"
       >
         <slot />
       </main>
@@ -222,11 +222,11 @@ const navItems = computed(() => [
 
 <style scoped>
 .sidebar-bg {
-  background: linear-gradient(180deg, #317153 0%, #1e4a32 100%);
+  background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-secondary) 100%);
 }
 
 .header-bg {
-  background: #317153;
+  background: var(--color-primary);
 }
 
 /* Nav link base */
@@ -251,7 +251,7 @@ const navItems = computed(() => [
 
 .nav-link-active {
   background-color: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  color: var(--color-content-inverse);
 }
 
 /* Collapsed: center icons */
@@ -268,7 +268,7 @@ const navItems = computed(() => [
   transform: translateY(-50%) scaleY(0);
   width: 3px;
   height: 60%;
-  background: #E48C2A;
+  background: var(--color-highlight);
   border-radius: 0 2px 2px 0;
   transition: transform 150ms ease;
 }
@@ -283,8 +283,8 @@ const navItems = computed(() => [
   left: calc(100% + 10px);
   top: 50%;
   transform: translateY(-50%);
-  background: #1e2d26;
-  color: #fff;
+  background: var(--color-surface-sidebar);
+  color: var(--color-content-inverse);
   font-size: 0.75rem;
   font-weight: 500;
   white-space: nowrap;
@@ -302,12 +302,12 @@ const navItems = computed(() => [
 
 /* Mesh background */
 .mesh-gradient-bg {
-  background-color: #f8faf9;
+  background-color: var(--color-surface-page);
   background-image:
-    radial-gradient(at top left, rgba(49, 113, 83, 0.18) 0px, transparent 50%),
-    radial-gradient(at bottom right, rgba(49, 113, 83, 0.22) 0px, transparent 55%),
+    radial-gradient(at top left, rgba(217, 43, 58, 0.12) 0px, transparent 50%),
+    radial-gradient(at bottom right, rgba(217, 43, 58, 0.15) 0px, transparent 55%),
     radial-gradient(at top right, rgba(255, 255, 255, 0.6) 0px, transparent 45%),
-    radial-gradient(at bottom left, rgba(16, 185, 129, 0.10) 0px, transparent 50%);
+    radial-gradient(at bottom left, rgba(255, 77, 94, 0.08) 0px, transparent 50%);
 }
 
 /* Logo text fade */

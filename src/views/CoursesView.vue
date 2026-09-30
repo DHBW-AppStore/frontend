@@ -142,7 +142,7 @@ const goToDetail = (courseId: string) => {
         <Card
             v-for="course in courseStore.courses"
             :key="course.courseId"
-            class="flex flex-col group h-full relative cursor-pointer hover:border-emerald-200"
+            class="flex flex-col group h-full relative cursor-pointer hover:border-primary/30"
             @click="goToDetail(course.courseId)"
         >
           <!-- Delete action (top-right) -->
@@ -156,23 +156,23 @@ const goToDetail = (courseId: string) => {
           </button>
 
           <div class="flex items-center gap-4 mb-4">
-            <div class="bg-gray-50 p-3 rounded-lg text-blue-600 group-hover:text-primary transition-colors flex items-center justify-center w-[56px] h-[56px] flex-shrink-0 border border-gray-100">
+            <div class="bg-surface-input p-3 rounded-lg text-blue-600 group-hover:text-primary transition-colors flex items-center justify-center w-[56px] h-[56px] flex-shrink-0 border border-card-border">
               <GraduationCap :size="32" />
             </div>
-            <h3 class="font-bold text-xl text-gray-900 leading-tight pr-10">
+            <h3 class="font-bold text-xl text-content-primary leading-tight pr-10">
               {{ course.name }}
             </h3>
           </div>
 
-          <p class="text-gray-600 text-sm mb-6 flex-grow leading-relaxed text-left flex items-center gap-2">
+          <p class="text-content-secondary text-sm mb-6 flex-grow leading-relaxed text-left flex items-center gap-2">
             <template v-if="isStaff">
-              <Users :size="14" class="text-gray-400" />
+              <Users :size="14" class="text-content-disabled" />
               <span>
                 {{ memberCounts[course.courseId] ?? 0 }}
                 {{ (memberCounts[course.courseId] ?? 0) === 1 ? $t('CoursesView.memberSingular') : $t('CoursesView.memberPlural') }}
               </span>
             </template>
-            <span v-else class="text-gray-400 italic">
+            <span v-else class="text-content-disabled italic">
               {{ $t('CoursesView.openToView') }}
             </span>
           </p>
@@ -197,11 +197,11 @@ const goToDetail = (courseId: string) => {
 
       <template #body>
         <div class="space-y-5">
-          <p class="text-sm text-gray-500">
+          <p class="text-sm text-content-secondary">
             {{ $t('CoursesView.createModal.intro') }}
           </p>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1.5">
+            <label class="block text-sm font-medium text-content-primary mb-1.5">
               {{ $t('CoursesView.createModal.nameLabel') }}
             </label>
             <BaseInput v-model="formData.name" :placeholder="$t('CoursesView.createModal.namePlaceholder')" required @keyup.enter="saveCourse" />
@@ -228,8 +228,8 @@ const goToDetail = (courseId: string) => {
 
       <template #body>
         <div class="space-y-3">
-          <p class="text-gray-700" v-html="$t('CoursesView.deleteModal.confirmPrompt', { name: courseToDelete?.name })"></p>
-          <p class="text-sm text-gray-500">
+          <p class="text-content-primary" v-html="$t('CoursesView.deleteModal.confirmPrompt', { name: courseToDelete?.name })"></p>
+          <p class="text-sm text-content-secondary">
             {{ $t('CoursesView.deleteModal.warning') }}
           </p>
         </div>

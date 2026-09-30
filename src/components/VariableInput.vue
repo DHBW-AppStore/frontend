@@ -124,14 +124,14 @@ const toggleFocus = (() => {
       :disabled="disabled"
       @click="update(!modelValue)"
       class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      :class="[modelValue ? toggleOn : 'bg-gray-300', toggleFocus]"
+      :class="[modelValue ? toggleOn : 'bg-border-strong', toggleFocus]"
     >
       <span
-        class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm"
+        class="inline-block h-4 w-4 transform rounded-full bg-surface-card transition-transform shadow-sm"
         :class="modelValue ? 'translate-x-6' : 'translate-x-1'"
       />
     </button>
-    <span class="text-sm font-medium text-gray-700">
+    <span class="text-sm font-medium text-content-secondary">
       {{ modelValue ? t('variableInput.on') : t('variableInput.off') }}
     </span>
   </div>
@@ -143,7 +143,7 @@ const toggleFocus = (() => {
     type="number"
     :id="inputId || variable.name"
     :disabled="disabled"
-    class="w-full px-3 py-2 rounded-lg border-2 outline-none transition-all font-medium text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
+    class="w-full px-3 py-2 rounded-lg border-2 outline-none transition-all font-medium text-content-primary disabled:bg-surface-input disabled:text-content-disabled"
     :class="borderClass"
     placeholder="0"
   />
@@ -155,7 +155,7 @@ const toggleFocus = (() => {
     :id="inputId || variable.name"
     :disabled="disabled"
     rows="3"
-    class="w-full px-3 py-2 rounded-lg border-2 outline-none transition-all font-mono text-sm text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
+    class="w-full px-3 py-2 rounded-lg border-2 outline-none transition-all font-mono text-sm text-content-primary disabled:bg-surface-input disabled:text-content-disabled"
     :class="borderClass"
     :placeholder="t('variableInput.listPlaceholder')"
   />
@@ -167,7 +167,7 @@ const toggleFocus = (() => {
     type="text"
     :id="inputId || variable.name"
     :disabled="disabled"
-    class="w-full px-3 py-2 rounded-lg border-2 outline-none transition-all font-medium text-gray-800 disabled:bg-gray-50 disabled:text-gray-500"
+    class="w-full px-3 py-2 rounded-lg border-2 outline-none transition-all font-medium text-content-primary disabled:bg-surface-input disabled:text-content-disabled"
     :class="borderClass"
     :placeholder="variable.default ? t('variableInput.defaultPlaceholder', { value: variable.default }) : t('variableInput.enterValue')"
   />

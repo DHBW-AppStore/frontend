@@ -23,7 +23,7 @@ const styles = computed(() => {
         iconBox: 'bg-red-100 text-red-600',
         title: 'text-red-900',
         message: 'text-red-800',
-        cta: 'bg-red-600 hover:bg-red-700 text-white',
+        cta: 'bg-red-600 hover:bg-red-700 text-content-inverse',
         icon: AlertCircle,
       }
     case 'lock':
@@ -32,7 +32,7 @@ const styles = computed(() => {
         iconBox: 'bg-blue-100 text-blue-600',
         title: 'text-blue-900',
         message: 'text-blue-800',
-        cta: 'bg-blue-600 hover:bg-blue-700 text-white',
+        cta: 'bg-blue-600 hover:bg-blue-700 text-content-inverse',
         icon: Lock,
       }
     case 'warning':
@@ -42,7 +42,7 @@ const styles = computed(() => {
         iconBox: 'bg-amber-100 text-amber-600',
         title: 'text-amber-900',
         message: 'text-amber-800',
-        cta: 'bg-amber-600 hover:bg-amber-700 text-white',
+        cta: 'bg-amber-600 hover:bg-amber-700 text-content-inverse',
         icon: AlertTriangle,
       }
   }

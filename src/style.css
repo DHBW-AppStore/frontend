@@ -1,3 +1,145 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  /* ================================================================
+   * Design Tokens — Light Mode
+   * ================================================================ */
+  :root {
+    /* ── Brand colors ──────────────────────────────────────────── */
+    --color-primary:          #D92B3A;   /* Main red */
+    --color-primary-light:    #F2606C;   /* Hover, icons */
+    --color-primary-dark:     #A81E2A;   /* Active, pressed */
+
+    --color-secondary:        #8B1A23;   /* Bordeaux — sidebar accent */
+    --color-secondary-light:  #B02530;
+    --color-secondary-dark:   #5C0F16;
+
+    --color-highlight:        #FF4D5E;   /* CTA gradient, hero banner */
+    --color-highlight-light:  #FF8090;
+    --color-highlight-dark:   #C4001A;
+
+    /* ── Surfaces ──────────────────────────────────────────────── */
+    --color-surface-page:     #F7F7F8;   /* Page background */
+    --color-surface-card:     #FFFFFF;   /* Tiles, cards */
+    --color-surface-sidebar:  #FFFFFF;   /* Sidebar */
+    --color-surface-input:    #F2F2F4;   /* Form fields */
+    --color-surface-overlay:  #FFFFFF;   /* Modals, drawers */
+    --color-surface-hover:    #FFF0F1;   /* Row hover, list items */
+
+    /* ── Text ──────────────────────────────────────────────────── */
+    --color-content-primary:   #111318;  /* Body text */
+    --color-content-secondary: #6B7280;  /* Labels, subtext */
+    --color-content-disabled:  #B0B5BF;  /* Disabled state */
+    --color-content-inverse:   #FFFFFF;  /* Text on colored backgrounds */
+    --color-content-link:      #D92B3A;  /* Links, interactive */
+
+    /* ── Buttons ───────────────────────────────────────────────── */
+    --color-btn-primary:       #D92B3A;
+    --color-btn-primary-hover: #A81E2A;
+    --color-btn-primary-text:  #FFFFFF;
+    --color-btn-secondary:     #F2E8E9;
+    --color-btn-secondary-hover: #E8CDD0;
+    --color-btn-secondary-text:  #A81E2A;
+    --color-btn-ghost:         transparent;
+    --color-btn-ghost-hover:   #FFF0F1;
+    --color-btn-ghost-text:    #D92B3A;
+
+    /* ── Cards / Tiles ─────────────────────────────────────────── */
+    --color-card-bg:           #FFFFFF;
+    --color-card-bg-tinted:    #FFF5F5;  /* Slightly red-tinted — hero cards */
+    --color-card-border:       #E8E8EC;
+    --color-card-shadow:       rgba(0, 0, 0, 0.06);
+
+    /* ── Status / Feedback ─────────────────────────────────────── */
+    --color-status-success:       #16A34A;
+    --color-status-success-light: #DCFCE7;
+    --color-status-error:         #DC2626;
+    --color-status-error-light:   #FEE2E2;
+    --color-status-warning:       #D97706;
+    --color-status-warning-light: #FEF3C7;
+    --color-status-info:          #2563EB;
+    --color-status-info-light:    #DBEAFE;
+
+    /* ── Resource progress bars ────────────────────────────────── */
+    --color-resource-low:     #16A34A;   /* < 50% */
+    --color-resource-medium:  #D97706;   /* 50–80% */
+    --color-resource-high:    #D92B3A;   /* > 80% */
+
+    /* ── Borders ───────────────────────────────────────────────── */
+    --color-border:           #E2E4E9;
+    --color-border-strong:    #C4C7CF;
+    --color-border-focus:     #D92B3A;
+  }
+
+  /* ================================================================
+   * Design Tokens — Dark Mode
+   * ================================================================ */
+  .dark {
+    /* ── Brand colors — same brand, slightly brighter for contrast ─ */
+    --color-primary:          #FF3D4D;
+    --color-primary-light:    #FF6B78;
+    --color-primary-dark:     #CC1F2E;
+
+    --color-secondary:        #CC2936;
+    --color-secondary-light:  #E8404F;
+    --color-secondary-dark:   #8B1A23;
+
+    --color-highlight:        #FF4D5E;
+    --color-highlight-light:  #FF7A87;
+    --color-highlight-dark:   #CC1F2E;
+
+    /* ── Surfaces ──────────────────────────────────────────────── */
+    --color-surface-page:     #0D0D0F;   /* Near black */
+    --color-surface-card:     #1A1A1F;   /* Dark grey tiles */
+    --color-surface-sidebar:  #111116;   /* Darker than cards */
+    --color-surface-input:    #26262D;   /* Form fields */
+    --color-surface-overlay:  #1A1A1F;   /* Modals */
+    --color-surface-hover:    #2A1215;   /* Red-tinted row hover */
+
+    /* ── Text ──────────────────────────────────────────────────── */
+    --color-content-primary:   #F1F1F3;
+    --color-content-secondary: #9CA3AF;
+    --color-content-disabled:  #4B5563;
+    --color-content-inverse:   #111318;
+    --color-content-link:      #FF3D4D;
+
+    /* ── Buttons ───────────────────────────────────────────────── */
+    --color-btn-primary:       #FF3D4D;
+    --color-btn-primary-hover: #CC1F2E;
+    --color-btn-primary-text:  #FFFFFF;
+    --color-btn-secondary:     #38383F;
+    --color-btn-secondary-hover: #4A4A54;
+    --color-btn-secondary-text:  #F1F1F3;
+    --color-btn-ghost:         transparent;
+    --color-btn-ghost-hover:   #2A1215;
+    --color-btn-ghost-text:    #FF3D4D;
+
+    /* ── Cards / Tiles ─────────────────────────────────────────── */
+    --color-card-bg:           #1A1A1F;
+    --color-card-bg-tinted:    #21151A;  /* Red-tinted */
+    --color-card-border:       #2E2E35;
+    --color-card-shadow:       rgba(0, 0, 0, 0.4);
+
+    /* ── Status / Feedback ─────────────────────────────────────── */
+    --color-status-success:       #4ADE80;
+    --color-status-success-light: #14532D;
+    --color-status-error:         #F87171;
+    --color-status-error-light:   #450A0A;
+    --color-status-warning:       #FBBF24;
+    --color-status-warning-light: #451A03;
+    --color-status-info:          #60A5FA;
+    --color-status-info-light:    #1E3A5F;
+
+    /* ── Resource progress bars ────────────────────────────────── */
+    --color-resource-low:     #4ADE80;
+    --color-resource-medium:  #FBBF24;
+    --color-resource-high:    #FF3D4D;
+
+    /* ── Borders ───────────────────────────────────────────────── */
+    --color-border:           #2E2E35;
+    --color-border-strong:    #4A4A54;
+    --color-border-focus:     #FF3D4D;
+  }
+}
