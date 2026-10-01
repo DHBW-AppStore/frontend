@@ -33,7 +33,7 @@ withDefaults(defineProps<{
       (variant === 'primary' || variant === 'yellow')
         ? 'bg-btn-primary text-btn-primary-text hover:bg-btn-primaryHover focus:ring-primary/60'
         : variant === 'green'
-        ? 'bg-btn-secondary text-btn-secondary-text hover:bg-btn-secondaryHover focus:ring-primary/60 border border-border-strong'
+        ? 'bg-btn-secondary text-btn-secondary-text dark:text-white hover:bg-btn-secondaryHover focus:ring-primary/60 border border-border-strong'
         : variant === 'red'
         ? 'bg-status-errorLight text-status-error hover:bg-status-error hover:text-content-inverse focus:ring-status-error/60'
         : variant === 'ghost'

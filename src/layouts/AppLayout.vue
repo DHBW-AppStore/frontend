@@ -19,6 +19,7 @@ import { useAuth } from '@/composables/useAuth'
 import { useRole } from '@/composables/useRole'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
+import { useColorScheme } from '@/composables/useColorScheme'
 
 import logo from '@/assets/Six7-white-withoutBackground.png'
 
@@ -27,11 +28,51 @@ const authStore = useAuthStore()
 const { logout } = useAuth()
 const { isAdmin, isStaff } = useRole()
 const route = useRoute()
+const { scheme } = useColorScheme()
 
 const userName = computed(() => authStore.user?.username || 'User')
 const userInitial = computed(() => (authStore.user?.username ?? 'U').charAt(0).toUpperCase())
 
 const isMeshBgActive = computed(() => route.name === 'dashboard' || route.path === '/')
+
+const isDark = computed(() => {
+  void scheme.value
+  return document.documentElement.classList.contains('dark')
+})
+
+const sidebarStyle = computed(() => isDark.value
+  ? { background: 'linear-gradient(180deg, #0D1520 0%, #0A1018 60%, #080E16 100%)' }
+  : { background: 'linear-gradient(180deg, var(--color-primary) 0%, var(--color-secondary-dark) 100%)' }
+)
+
+const headerStyle = computed(() => isDark.value
+  ? { background: 'linear-gradient(90deg, #0D1520 0%, #0A1018 60%, #080E16 100%)' }
+  : { background: 'var(--color-primary)' }
+)
+
+const meshStyle = computed(() => {
+  if (!isMeshBgActive.value) return {}
+  if (isDark.value) {
+    return {
+      backgroundColor: 'var(--color-surface-page)',
+      backgroundImage: [
+        'radial-gradient(at top left, rgba(232, 25, 44, 0.35) 0px, transparent 50%)',
+        'radial-gradient(at top center, rgba(200, 16, 32, 0.20) 0px, transparent 45%)',
+        'radial-gradient(at bottom right, rgba(30, 18, 20, 0) 0px, transparent 50%)',
+        'radial-gradient(at center, rgba(232, 25, 44, 0.08) 0px, transparent 65%)',
+      ].join(', '),
+    }
+  }
+  return {
+    backgroundColor: 'var(--color-surface-page)',
+    backgroundImage: [
+      'radial-gradient(at top left, rgba(217, 43, 58, 0.10) 0px, transparent 50%)',
+      'radial-gradient(at bottom right, rgba(217, 43, 58, 0.12) 0px, transparent 55%)',
+      'radial-gradient(at top right, rgba(255, 240, 240, 0.8) 0px, transparent 45%)',
+      'radial-gradient(at bottom left, rgba(255, 77, 94, 0.06) 0px, transparent 50%)',
+    ].join(', '),
+  }
+})
 
 const sidebarCollapsed = ref(false)
 const userMenuOpen = ref(false)
@@ -77,8 +118,9 @@ const navItems = computed(() => [
 
     <!-- Sidebar -->
     <aside
-      class="sidebar-bg flex flex-col h-full flex-shrink-0 transition-colors duration-200"
+      class="flex flex-col h-full flex-shrink-0 transition-colors duration-200"
       :class="sidebarCollapsed ? 'w-16' : 'w-60'"
+      :style="sidebarStyle"
     >
 
       <!-- Logo area -->
@@ -110,7 +152,7 @@ const navItems = computed(() => [
           active-class="nav-link-active"
         >
           <span class="nav-indicator" />
-          <component :is="item.icon" :size="21" class="flex-shrink-0 opacity-70 group-[.nav-link-active]:opacity-100" />
+          <component :is="item.icon" :size="21" class="flex-shrink-0 opacity-80 group-[.nav-link-active]:opacity-100" />
           <span
             v-if="!sidebarCollapsed"
             class="transition-opacity duration-150 whitespace-nowrap"
@@ -126,7 +168,7 @@ const navItems = computed(() => [
     <div class="flex-1 flex flex-col h-full min-w-0">
 
       <!-- Header -->
-      <header class="h-16 header-bg flex items-center justify-between px-6 flex-shrink-0 border-b border-white/10 relative">
+      <header class="h-16 flex items-center justify-between px-6 flex-shrink-0 border-b border-white/10 relative" :style="headerStyle">
 
         <!-- Left: toggle (title centered separately) -->
         <div class="flex items-center gap-3">
@@ -211,7 +253,8 @@ const navItems = computed(() => [
       <!-- Main content -->
       <main
         class="flex-1 overflow-y-auto px-8 pt-6 pb-8"
-        :class="isMeshBgActive ? 'mesh-gradient-bg' : 'bg-surface-page'"
+        :class="isMeshBgActive ? '' : 'bg-surface-page'"
+        :style="isMeshBgActive ? meshStyle : {}"
       >
         <slot />
       </main>
@@ -221,14 +264,6 @@ const navItems = computed(() => [
 </template>
 
 <style scoped>
-.sidebar-bg {
-  background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-}
-
-.header-bg {
-  background: var(--color-primary);
-}
-
 /* Nav link base */
 .nav-link {
   position: relative;
@@ -239,19 +274,19 @@ const navItems = computed(() => [
   border-radius: 10px;
   font-size: 1rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(255, 255, 255, 0.82);
   transition: background-color 150ms, color 150ms;
   text-decoration: none;
 }
 
 .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 1);
 }
 
 .nav-link-active {
-  background-color: rgba(255, 255, 255, 0.12);
-  color: var(--color-content-inverse);
+  background-color: rgba(232, 25, 44, 0.25);
+  color: #FFFFFF;
 }
 
 /* Collapsed: center icons */
@@ -298,16 +333,6 @@ const navItems = computed(() => [
 
 .nav-link:hover .nav-tooltip {
   opacity: 1;
-}
-
-/* Mesh background */
-.mesh-gradient-bg {
-  background-color: var(--color-surface-page);
-  background-image:
-    radial-gradient(at top left, rgba(217, 43, 58, 0.12) 0px, transparent 50%),
-    radial-gradient(at bottom right, rgba(217, 43, 58, 0.15) 0px, transparent 55%),
-    radial-gradient(at top right, rgba(255, 255, 255, 0.6) 0px, transparent 45%),
-    radial-gradient(at bottom left, rgba(255, 77, 94, 0.08) 0px, transparent 50%);
 }
 
 /* Logo text fade */
