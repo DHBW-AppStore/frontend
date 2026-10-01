@@ -453,7 +453,7 @@ onMounted(async () => {
                   </span>
                   <button 
                     @click="toggleStudent(student.keycloak_id)" 
-                    class="text-red-500 hover:text-red-700 font-bold text-lg leading-none"
+                    class="text-status-error hover:text-status-error/70 font-bold text-lg leading-none"
                     :title="t('CourseDetailView.removeModal.remove')"
                     :data-testid="`remove-${student.keycloak_id}`"
                   >
@@ -463,8 +463,8 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p class="text-sm text-blue-800">
+            <div class="mt-4 p-4 bg-tag-infoLight border border-tag-infoBorder rounded-lg">
+              <p class="text-sm text-tag-info">
                 <strong>{{ t('deployment.config.infoTitle') }}</strong> {{ t('deployment.config.infoText') }}
               </p>
             </div>

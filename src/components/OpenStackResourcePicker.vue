@@ -656,7 +656,7 @@ onBeforeUnmount(() => {
     <!-- ============================================================ -->
     <div v-else-if="errorReason === 'credentials_missing'">
       <div
-        class="flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-amber-200 bg-amber-50 text-amber-800 text-sm"
+        class="flex items-center gap-2 px-3 py-2 rounded-lg border-2 border-status-warning/40 bg-status-warningLight text-status-warning text-sm"
       >
         <AlertTriangle :size="14" class="flex-shrink-0" />
         <span>{{ t('openstackPicker.credentialsRequired') }}</span>
@@ -723,7 +723,7 @@ onBeforeUnmount(() => {
                   v-for="(entry, i) in selectedDisplay"
                   :key="i"
                   class="inline-flex items-center gap-1 bg-status-successLight text-status-success px-2 py-0.5 rounded text-xs font-medium border border-status-success/30"
-                  :class="entry.known ? '' : 'border-amber-200 bg-amber-50 text-amber-700'"
+                  :class="entry.known ? '' : 'border-status-warning/40 bg-status-warningLight text-status-warning'"
                   :title="entry.value"
                   @click.stop
                 >
@@ -783,11 +783,11 @@ onBeforeUnmount(() => {
 
         <!-- Error: OpenStack down -->
         <div v-else-if="errorReason === 'unavailable'" class="p-4">
-          <div class="flex items-start gap-2 text-amber-700 mb-2">
+          <div class="flex items-start gap-2 text-status-warning mb-2">
             <AlertTriangle :size="16" class="flex-shrink-0 mt-0.5" />
             <div class="text-sm">
               <p class="font-medium">{{ t('openstackPicker.unreachable') }}</p>
-              <p class="text-xs text-amber-600 mt-1">{{ errorMessage }}</p>
+              <p class="text-xs text-status-warning/80 mt-1">{{ errorMessage }}</p>
             </div>
           </div>
           <div class="flex gap-2 mt-2">

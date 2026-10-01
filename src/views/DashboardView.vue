@@ -108,7 +108,7 @@ onMounted(() => {
 
       <RouterLink to="/courses" class="kpi-item group">
         <div class="kpi-icon-wrap" style="background:rgba(59,130,246,0.08)">
-          <GraduationCap :size="16" class="text-blue-500" />
+          <GraduationCap :size="16" class="text-tag-info" />
         </div>
         <div>
           <p class="kpi-num">{{ stats.courses }}</p>
@@ -149,7 +149,7 @@ onMounted(() => {
             </div>
             <span
               class="text-xs font-semibold tabular-nums"
-              :class="quota.percentage >= 80 ? 'text-red-500' : quota.percentage >= 60 ? 'text-amber-500' : 'text-content-secondary'"
+              :class="quota.percentage >= 80 ? 'text-status-error' : quota.percentage >= 60 ? 'text-status-warning' : 'text-content-secondary'"
             >
               {{ quota.used }}/{{ quota.limit }}{{ quota.unit }}
             </span>
@@ -163,7 +163,7 @@ onMounted(() => {
           </div>
           <div class="flex items-center justify-between mt-1.5">
             <p class="text-xs text-content-disabled">{{ t('DashboardView.quotaUsed', { percentage: quota.percentage }) }}</p>
-            <AlertCircle v-if="quota.percentage >= 80" :size="11" class="text-red-400" />
+            <AlertCircle v-if="quota.percentage >= 80" :size="11" class="text-status-error" />
           </div>
         </div>
       </div>

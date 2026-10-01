@@ -13,7 +13,7 @@ import { ArrowLeft, User } from 'lucide-vue-next'
       <div class="flex items-center gap-4">
         <RouterLink
           to="/dashboard"
-          class="hover:text-highlight transition flex items-center gap-2"
+          class="hover:color-status-success transition flex items-center gap-2"
         >
           <ArrowLeft :size="20" />
           {{ $t('action.back') }}

@@ -226,9 +226,9 @@ const roleLabel = (role: string | undefined) => {
 
 const roleClass = (role: string | undefined) => {
   switch (role) {
-    case 'admin': return 'bg-red-50 text-red-700'
-    case 'teacher': return 'bg-purple-50 text-purple-700'
-    default: return 'bg-blue-50 text-blue-700'
+    case 'admin': return 'bg-status-errorLight text-status-error'
+    case 'teacher': return 'bg-tag-accentLight text-tag-accent'
+    default: return 'bg-tag-infoLight text-tag-info'
   }
 }
 </script>
@@ -249,8 +249,8 @@ const roleClass = (role: string | undefined) => {
 
     <div v-else-if="courseStore.currentCourse" class="space-y-6">
       <div class="flex items-start gap-5 border-b border-card-border pb-6">
-        <div class="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-          <GraduationCap :size="28" class="text-blue-600" />
+        <div class="w-14 h-14 bg-tag-infoLight rounded-xl flex items-center justify-center flex-shrink-0">
+          <GraduationCap :size="28" class="text-tag-info" />
         </div>
         <div class="flex-grow">
           <div v-if="!isEditingName" class="flex items-center gap-3">
@@ -258,7 +258,7 @@ const roleClass = (role: string | undefined) => {
             <button
                 v-if="isStaff"
                 @click="startEditName"
-                class="p-1 hover:bg-surface-hover rounded text-content-disabled hover:text-blue-600 transition"
+                class="p-1 hover:bg-surface-hover rounded text-content-disabled hover:text-tag-info transition"
                 :title="$t('CourseDetailView.editNameTitle')"
             >
               <Edit2 :size="20" />
@@ -327,11 +327,10 @@ const roleClass = (role: string | undefined) => {
                   v-if="isStaff"
                   @click="requestRemoveMember(user)"
                   :disabled="removingId === user.userId"
-                  class="p-2 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
                   :title="$t('CourseDetailView.removeMemberTitle')"
-              >
-                <Loader2 v-if="removingId === user.userId" :size="16" class="animate-spin text-red-500" />
-                <UserMinus v-else :size="16" class="text-red-600" />
+                  class="p-2 hover:bg-status-errorLight rounded-lg transition disabled:opacity-50">
+                <Loader2 v-if="removingId === user.userId" :size="16" class="animate-spin text-status-error" />
+                <UserMinus v-else :size="16" class="text-status-error" />
               </button>
             </div>
           </li>
@@ -347,8 +346,8 @@ const roleClass = (role: string | undefined) => {
       <template #body>
         <div class="space-y-5">
 
-          <div class="bg-blue-50 text-blue-800 p-3.5 rounded-lg text-sm flex gap-3 items-start border border-blue-100">
-            <Info :size="18" class="mt-0.5 flex-shrink-0 text-blue-600" />
+          <div class="bg-tag-infoLight text-content-primary p-3.5 rounded-lg text-sm flex gap-3 items-start border border-tag-infoBorder">
+            <Info :size="18" class="mt-0.5 flex-shrink-0 text-tag-info" />
             <p v-html="$t('CourseDetailView.addModal.info')"></p>
           </div>
 
@@ -409,7 +408,7 @@ const roleClass = (role: string | undefined) => {
                   <template v-else>
                     <span
                         v-if="getOtherCourseName(user.courseId)"
-                        class="text-xs font-medium text-orange-700 bg-orange-100 px-2 py-1 rounded"
+                        class="text-xs font-medium text-tag-destroy bg-tag-destroyLight px-2 py-1 rounded"
                     >
                       {{ $t('CourseDetailView.addModal.inOtherCourse', { courseName: getOtherCourseName(user.courseId) }) }}
                     </span>
@@ -444,7 +443,7 @@ const roleClass = (role: string | undefined) => {
 
     <Modal :show="showRemoveModal" @close="closeRemoveModal">
       <template #header>
-        <h2 class="text-xl font-semibold text-red-700">{{ $t('CourseDetailView.removeModal.title') }}</h2>
+        <h2 class="text-xl font-semibold text-status-error">{{ $t('CourseDetailView.removeModal.title') }}</h2>
       </template>
 
       <template #body>

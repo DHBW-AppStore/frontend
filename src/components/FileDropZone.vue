@@ -195,6 +195,6 @@ const clearFile = () => {
     </div>
 
     <!-- Inline error if validation rejected the pick. -->
-    <div v-if="localError" class="text-xs text-red-600">{{ localError }}</div>
+    <div v-if="localError" class="text-xs text-status-error">{{ localError }}</div>
   </div>
 </template>

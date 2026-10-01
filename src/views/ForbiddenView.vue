@@ -20,8 +20,8 @@ const goHome = () => {
 <template>
   <div class="min-h-[60vh] flex items-center justify-center p-6">
     <div class="text-center max-w-md">
-      <div class="mx-auto w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mb-4">
-        <ShieldAlert :size="32" class="text-red-600" />
+      <div class="mx-auto w-16 h-16 rounded-full bg-status-errorLight flex items-center justify-center mb-4">
+        <ShieldAlert :size="32" class="text-status-error" />
       </div>
       <h1 class="text-2xl font-bold text-content-primary mb-2">
         {{ t('ForbiddenView.title') }}

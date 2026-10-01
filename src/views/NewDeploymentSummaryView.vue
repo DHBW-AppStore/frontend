@@ -613,13 +613,13 @@ const handleBack = () => {
 
       <div class="bg-surface-input rounded-xl p-6 border-2 border-card-border">
         <div class="flex items-center gap-3 mb-4">
-          <div class="w-8 h-8 rounded-full bg-blue-600 text-content-inverse flex items-center justify-center font-bold text-sm">2</div>
+          <div class="w-8 h-8 rounded-full bg-tag-info text-content-inverse flex items-center justify-center font-bold text-sm">2</div>
           <h3 class="text-xl font-bold text-content-primary">{{ t('deployment.summary.teamAssignmentTitle') }}</h3>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div class="bg-surface-card rounded-lg p-4 border border-card-border">
             <p class="text-xs text-content-disabled mb-1 uppercase tracking-wider font-semibold">{{ t('deployment.summary.teamCountLabel') }}</p>
-            <p class="text-2xl font-bold text-blue-700">{{ deploymentStore.draft.groupCount }}</p>
+            <p class="text-2xl font-bold text-tag-info">{{ deploymentStore.draft.groupCount }}</p>
           </div>
           <div class="bg-surface-card rounded-lg p-4 border border-card-border">
             <p class="text-xs text-content-disabled mb-1 uppercase tracking-wider font-semibold">{{ t('deployment.summary.modeLabel') }}</p>
@@ -631,7 +631,7 @@ const handleBack = () => {
             class="bg-surface-card rounded-lg p-4 border-2 border-card-border hover:border-border transition-colors">
             <div class="flex items-center justify-between mb-3">
               <p class="font-bold text-content-primary">{{ deploymentStore.draft.groupNames[index] || t('deployment.assignment.vmDefaultName', { index: index + 1 }) }}</p>
-              <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+              <span class="px-2 py-1 bg-tag-infoLight text-tag-info rounded-full text-xs font-bold">
                 {{ t('deployment.assignment.userCount', { count: assignments?.length || 0 }) }}
               </span>
             </div>
@@ -653,11 +653,11 @@ const handleBack = () => {
       <div class="bg-surface-input rounded-xl p-6 border-2 border-card-border">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-full bg-purple-600 text-content-inverse flex items-center justify-center font-bold text-sm">3</div>
+            <div class="w-8 h-8 rounded-full bg-tag-accent text-content-inverse flex items-center justify-center font-bold text-sm">3</div>
             <h3 class="text-xl font-bold text-content-primary">{{ t('deployment.summary.variablesConfigTitle') }}</h3>
           </div>
           <button @click="handleCustomize"
-            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition-colors border border-purple-300 text-sm">
+            class="flex items-center gap-2 px-4 py-2 rounded-lg bg-tag-accentLight text-tag-accent font-semibold hover:bg-tag-accentBorder/30 transition-colors border border-tag-accentBorder text-sm">
             <ArrowRight :size="16" />
             {{ t('deployment.summary.editBtn') }}
           </button>
@@ -666,9 +666,9 @@ const handleBack = () => {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div class="bg-surface-card rounded-lg border-2 border-card-border overflow-hidden">
             <div class="bg-surface-input px-4 py-2 border-b border-card-border flex items-center gap-2">
-              <Box :size="18" class="text-blue-700" />
+              <Box :size="18" class="text-tag-info" />
               <h4 class="font-bold text-content-primary text-sm">{{ t('deployment.summary.packerVars') }}</h4>
-              <span class="ml-auto text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">
+              <span class="ml-auto text-xs bg-tag-infoLight text-tag-info px-2 py-0.5 rounded-full font-bold">
                 {{ packerVars.length }}
               </span>
             </div>
@@ -691,9 +691,9 @@ const handleBack = () => {
 
           <div class="bg-surface-card rounded-lg border-2 border-card-border overflow-hidden">
             <div class="bg-surface-input px-4 py-2 border-b border-card-border flex items-center gap-2">
-              <Layers :size="18" class="text-purple-700" />
+              <Layers :size="18" class="text-tag-accent" />
               <h4 class="font-bold text-content-primary text-sm">{{ t('deployment.summary.terraformVars') }}</h4>
-              <span class="ml-auto text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full font-bold">
+              <span class="ml-auto text-xs bg-tag-accentLight text-tag-accent px-2 py-0.5 rounded-full font-bold">
                 {{ terraformVars.length }}
               </span>
             </div>
@@ -719,9 +719,9 @@ const handleBack = () => {
             class="bg-surface-card rounded-lg border-2 border-card-border overflow-hidden col-span-1 md:col-span-2"
           >
             <div class="bg-surface-input px-4 py-2 border-b border-card-border flex items-center gap-2">
-              <Layers :size="18" class="text-amber-700" />
+              <Layers :size="18" class="text-status-warning" />
               <h4 class="font-bold text-content-primary text-sm">Hochgeladene Dateien</h4>
-              <span class="ml-auto text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-bold">
+              <span class="ml-auto text-xs bg-status-warningLight text-status-warning px-2 py-0.5 rounded-full font-bold">
                 {{ fileVarSummaries.reduce((acc, v) => acc + v.chips.length, 0) }}
               </span>
             </div>
@@ -740,13 +740,13 @@ const handleBack = () => {
                   <span
                     v-for="chip in entry.chips"
                     :key="`${entry.name}::${chip.slot}`"
-                    class="inline-flex items-center gap-1 text-xs bg-amber-50 border border-amber-200 text-amber-900 px-2 py-1 rounded"
+                    class="inline-flex items-center gap-1 text-xs bg-status-warningLight border border-status-warning/30 text-status-warning px-2 py-1 rounded"
                   >
                     <span class="font-medium">{{ chip.filename }}</span>
-                    <span class="text-amber-700">·</span>
+                    <span class="text-status-warning/60">·</span>
                     <span>{{ chip.size }}</span>
-                    <span v-if="entry.scope !== 'all'" class="text-amber-700">·</span>
-                    <span v-if="entry.scope !== 'all'" class="text-[10px] text-amber-700">
+                    <span v-if="entry.scope !== 'all'" class="text-status-warning/60">·</span>
+                    <span v-if="entry.scope !== 'all'" class="text-[10px] text-status-warning/80">
                       {{ chip.slot }}
                     </span>
                   </span>

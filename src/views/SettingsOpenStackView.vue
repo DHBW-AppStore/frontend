@@ -277,14 +277,14 @@ const maybeReturnToWizard = () => {
       <div v-else class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-3">
           <CheckCircle2 v-if="credStore.isValidated && !credStore.lastError" class="text-status-success" :size="22" />
-          <XCircle v-else class="text-red-500" :size="22" />
+          <XCircle v-else class="text-status-error" :size="22" />
           <div>
             <div class="font-medium text-content-primary">
               {{ credStore.isValidated && !credStore.lastError ? t('SettingsOpenStackView.status.valid') : t('SettingsOpenStackView.status.invalid') }}
             </div>
             <div class="text-sm text-content-secondary">
               <span v-if="lastValidated">{{ t('SettingsOpenStackView.status.lastChecked', { time: lastValidated }) }}</span>
-              <span v-if="credStore.lastError" class="block text-red-600">{{ credStore.lastError }}</span>
+              <span v-if="credStore.lastError" class="block text-status-error">{{ credStore.lastError }}</span>
             </div>
           </div>
         </div>
@@ -297,7 +297,7 @@ const maybeReturnToWizard = () => {
             <RefreshCw :size="16" /> {{ t('SettingsOpenStackView.status.retest') }}
           </button>
           <button
-            class="px-3 py-2 text-sm border rounded-md text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+            class="px-3 py-2 text-sm border rounded-md text-status-error border-status-error/30 hover:bg-status-errorLight flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
             @click="handleDelete"
             :disabled="credStore.loading || credStore.isLocked"
             :title="credStore.isLocked ? t('SettingsOpenStackView.tooltips.lockedActiveDeployments') : ''"

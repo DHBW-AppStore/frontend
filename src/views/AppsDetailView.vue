@@ -438,7 +438,7 @@ onMounted(async () => {
                 <span class="flex items-center gap-1 bg-surface-input px-2 py-1 rounded">
                   <GitBranch :size="14" /> {{ app.versions?.length || 0 }} {{ $t('AppsDetailView.versionsAvailable') }}
                 </span>
-                <a v-if="app.git_link" :href="app.git_link" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline cursor-pointer truncate max-w-xs block">
+                <a v-if="app.git_link" :href="app.git_link" target="_blank" rel="noopener noreferrer" class="text-tag-info hover:underline cursor-pointer truncate max-w-xs block">
                   {{ app.git_link }}
                 </a>
               </div>
@@ -482,7 +482,7 @@ onMounted(async () => {
           <!-- dot if action needed -->
           <span
             v-if="appBannerStatus === 'no_submission' || appBannerStatus === 'pending'"
-            class="w-2 h-2 rounded-full bg-orange-400"
+            class="w-2 h-2 rounded-full bg-tag-destroy"
           />
         </button>
       </div>
@@ -555,7 +555,7 @@ onMounted(async () => {
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-content-secondary">{{ $t('AppsDetailView.versionLink') }}</span>
-                <a v-if="versionInfo.html_url" :href="versionInfo.html_url" target="_blank" rel="noopener" class="font-medium text-blue-600 hover:underline break-all">{{ versionInfo.html_url }}</a>
+                <a v-if="versionInfo.html_url" :href="versionInfo.html_url" target="_blank" rel="noopener" class="font-medium text-tag-info hover:underline break-all">{{ versionInfo.html_url }}</a>
                 <span v-else class="font-medium text-right">-</span>
               </div>
             </div>
@@ -593,7 +593,7 @@ onMounted(async () => {
             <Layers :size="18" />
             {{ $t('AppsDetailView.deployButton') }}
           </button>
-          <p v-if="credStore.isResolved && !credStore.hasCredential" class="mt-2 text-sm text-amber-700">
+          <p v-if="credStore.isResolved && !credStore.hasCredential" class="mt-2 text-sm text-status-warning">
             <router-link to="/user/openstack" class="underline font-medium">{{ $t('AppsDetailView.missingCredsLink') }}</router-link>
             {{ $t('AppsDetailView.missingCredsText') }}
           </p>
@@ -607,11 +607,11 @@ onMounted(async () => {
       <div v-else-if="activeTab === 'store'" class="space-y-6">
 
         <!-- Status banners -->
-        <div v-if="appBannerStatus === 'no_submission'" class="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-yellow-800">
+        <div v-if="appBannerStatus === 'no_submission'" class="flex items-start gap-3 bg-tag-warningLight border border-tag-warningBorder rounded-xl p-4 text-tag-warning">
           <AlertCircle :size="20" class="flex-shrink-0 mt-0.5" />
           <p class="text-sm">{{ $t('AppsDetailView.bannerNoSubmission') }}</p>
         </div>
-        <div v-else-if="appBannerStatus === 'pending'" class="flex items-start gap-3 bg-orange-50 border border-orange-200 rounded-xl p-4 text-orange-800">
+        <div v-else-if="appBannerStatus === 'pending'" class="flex items-start gap-3 bg-tag-destroyLight border border-tag-destroyBorder rounded-xl p-4 text-tag-destroy">
           <Clock :size="20" class="flex-shrink-0 mt-0.5" />
           <p class="text-sm">{{ $t('AppsDetailView.bannerPending') }}</p>
         </div>
@@ -621,7 +621,7 @@ onMounted(async () => {
           <h3 class="text-sm font-semibold text-content-primary uppercase tracking-wide mb-4">{{ $t('AppsDetailView.storeVisibilityTitle') }}</h3>
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="p-2 rounded-lg" :class="app.is_private ? 'bg-purple-100 text-purple-600' : 'bg-status-successLight text-status-success'">
+              <div class="p-2 rounded-lg" :class="app.is_private ? 'bg-tag-accentLight text-tag-accent' : 'bg-status-successLight text-status-success'">
                 <Lock v-if="app.is_private" :size="20" />
                 <Globe v-else :size="20" />
               </div>
@@ -638,7 +638,7 @@ onMounted(async () => {
               @click="togglePrivacy"
               :disabled="isTogglingPrivacy"
               class="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50"
-              :class="app.is_private ? 'bg-purple-500' : 'bg-status-success'"
+              :class="app.is_private ? 'bg-tag-accent' : 'bg-status-success'"
             >
               <span
                 class="inline-block h-5 w-5 transform rounded-full bg-surface-card shadow transition duration-200"
@@ -678,14 +678,14 @@ onMounted(async () => {
                   </td>
                   <td class="py-2.5">
                     <div v-if="approvalByVersion[ver]?.status === 'rejected'" class="space-y-1">
-                      <p class="text-xs text-red-600 italic">
+                      <p class="text-xs text-status-error italic">
                         {{ $t('AppsDetailView.rejectionReasonLabel') }} {{ approvalByVersion[ver].rejection_reason || '–' }}
                       </p>
                       <button
                         v-if="isOwner"
                         @click="openSubmitModal(ver)"
                         :disabled="submittingVersion === ver"
-                        class="text-xs text-blue-600 hover:underline flex items-center gap-1 disabled:opacity-50"
+                        class="text-xs text-tag-info hover:underline flex items-center gap-1 disabled:opacity-50"
                       >
                         <Send :size="12" />
                         {{ submittingVersion === ver ? $t('AppsDetailView.submittingButton') : $t('AppsDetailView.resubmitButton') }}
@@ -696,7 +696,7 @@ onMounted(async () => {
                       <button
                         @click="withdrawVersion(ver)"
                         :disabled="withdrawingVersion === ver"
-                        class="text-xs text-content-secondary hover:text-red-600 hover:underline flex items-center gap-1 disabled:opacity-50"
+                        class="text-xs text-content-secondary hover:text-status-error hover:underline flex items-center gap-1 disabled:opacity-50"
                       >
                         <Undo2 :size="12" />
                         {{ withdrawingVersion === ver ? '...' : $t('AppsDetailView.withdrawButton') }}
@@ -719,7 +719,7 @@ onMounted(async () => {
         </div>
 
         <!-- Private app hint -->
-        <div v-else class="bg-purple-50 border border-purple-200 rounded-xl p-5 text-sm text-purple-700">
+        <div v-else class="bg-tag-accentLight border border-tag-accentBorder rounded-xl p-5 text-sm text-tag-accent">
           {{ $t('AppsDetailView.privateAppStoreHint') }}
         </div>
 
@@ -810,7 +810,7 @@ onMounted(async () => {
                 </div>
                 <button
                   type="button"
-                  class="text-xs text-content-disabled hover:text-red-500"
+                  class="text-xs text-content-disabled hover:text-status-error"
                   @click.stop="removeEditImage"
                 >
                   {{ $t('AppsDetailView.editModal.imageRemove') }}
@@ -858,14 +858,14 @@ onMounted(async () => {
           </div>
 
           <!-- Marker-Fehler -->
-          <div v-if="submitMarkerErrors.length" class="rounded-lg border border-red-200 bg-red-50 p-3">
-            <p class="text-xs font-semibold text-red-700 mb-2">{{ $t('AppsDetailView.submitModal.markerErrorTitle') }}</p>
+          <div v-if="submitMarkerErrors.length" class="rounded-lg border border-status-error/30 bg-status-errorLight p-3">
+            <p class="text-xs font-semibold text-status-error mb-2">{{ $t('AppsDetailView.submitModal.markerErrorTitle') }}</p>
             <ul class="space-y-1.5">
-              <li v-for="e in submitMarkerErrors" :key="e.variable + e.code" class="text-xs text-red-600">
+              <li v-for="e in submitMarkerErrors" :key="e.variable + e.code" class="text-xs text-status-error">
                 <span class="font-mono font-medium">{{ e.variable }}</span>
-                <span class="text-red-400 mx-1">·</span>
+                <span class="text-status-error/50 mx-1">·</span>
                 <span>{{ e.message }}</span>
-                <span v-if="e.location" class="text-red-400 ml-1 text-[10px]">({{ e.location }})</span>
+                <span v-if="e.location" class="text-status-error/50 ml-1 text-[10px]">({{ e.location }})</span>
               </li>
             </ul>
           </div>

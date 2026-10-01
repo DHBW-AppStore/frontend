@@ -61,17 +61,17 @@ const sortedDeployments = computed(() =>
 const getStatusColor = (status: string) => {
   const colors = {
     'success': 'bg-status-successLight text-status-success border-status-success/30',
-    'failed': 'bg-red-100 text-red-800 border-red-300',
-    'running': 'bg-blue-100 text-blue-800 border-blue-300',
-    'pending': 'bg-yellow-100 text-yellow-800 border-yellow-300',
+    'failed': 'bg-status-errorLight text-status-error border-status-error/30',
+    'running': 'bg-tag-infoLight text-tag-info border-tag-infoBorder',
+    'pending': 'bg-tag-warningLight text-tag-warning border-tag-warningBorder',
     'cancelled': 'bg-surface-input text-content-secondary border-border',
-    'destroyed': 'bg-orange-100 text-orange-800 border-orange-300',
-    'destroying': 'bg-orange-100 text-orange-700 border-orange-300',
-    'pausing': 'bg-amber-100 text-amber-800 border-amber-300',
+    'destroyed': 'bg-tag-destroyLight text-tag-destroy border-tag-destroyBorder',
+    'destroying': 'bg-tag-destroyLight text-tag-destroy border-tag-destroyBorder',
+    'pausing': 'bg-tag-warningLight text-tag-warning border-tag-warningBorder',
     'paused': 'bg-surface-input text-content-secondary border-border',
     'resuming': 'bg-status-successLight text-status-success border-status-success/30',
-    'pause_failed': 'bg-amber-100 text-amber-900 border-amber-300',
-    'resume_failed': 'bg-amber-100 text-amber-900 border-amber-300',
+    'pause_failed': 'bg-tag-warningLight text-tag-warning border-tag-warningBorder',
+    'resume_failed': 'bg-tag-warningLight text-tag-warning border-tag-warningBorder',
   }
   return colors[status as keyof typeof colors] || 'bg-surface-input text-content-secondary border-border'
 }
@@ -140,7 +140,7 @@ const getStatusColor = (status: string) => {
             </div>
 
             <div class="mt-auto pt-3 border-t border-card-border flex items-center justify-between text-xs text-content-disabled">
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100 font-mono">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-tag-neutralLight text-tag-neutral border border-tag-neutralBorder font-mono">
                 <GitBranch :size="11" />
                 {{ deployment.releaseTag }}
               </span>

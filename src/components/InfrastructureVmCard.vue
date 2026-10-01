@@ -103,8 +103,8 @@ const flavorBrief = computed(() => {
 })
 
 const cardBorderClass = computed(() => {
-  if (props.resource.drift === 'missing') return 'border-red-300 ring-1 ring-red-100'
-  if (props.resource.drift === 'stale') return 'border-amber-300'
+  if (props.resource.drift === 'missing') return 'border-status-error/50 ring-1 ring-status-errorLight'
+  if (props.resource.drift === 'stale') return 'border-status-warning/50'
   // Subtle accent when the detail panel underneath is open, so the
   // user instantly knows which card the panel belongs to.
   if (props.isExpanded) return 'border-content-primary ring-1 ring-card-border'
@@ -124,7 +124,7 @@ const cardBorderClass = computed(() => {
           <span
             class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border"
             :class="resource.team
-              ? 'bg-blue-100 text-blue-700 border-blue-200'
+              ? 'bg-tag-infoLight text-tag-info border-tag-infoBorder'
               : 'bg-surface-input text-content-secondary border-card-border'"
           >
             {{ resource.team || t('vm.sharedTeam') }}
@@ -147,8 +147,8 @@ const cardBorderClass = computed(() => {
       v-if="driftBanner"
       class="text-xs p-2 rounded border flex items-start gap-2"
       :class="driftBanner.tone === 'red'
-        ? 'bg-red-50 text-red-800 border-red-200'
-        : 'bg-amber-50 text-amber-800 border-amber-200'"
+        ? 'bg-status-errorLight text-status-error border-status-error/30'
+        : 'bg-status-warningLight text-status-warning border-status-warning/30'"
     >
       <AlertTriangle :size="14" class="mt-0.5 shrink-0" />
       <div>
@@ -160,7 +160,7 @@ const cardBorderClass = computed(() => {
     <!-- Fault banner — only when status=ERROR -->
     <div
       v-if="resource.lifecycle?.fault_message"
-      class="text-xs p-2 rounded border bg-red-50 text-red-800 border-red-200"
+      class="text-xs p-2 rounded border bg-status-errorLight text-status-error border-status-error/30"
     >
       <p class="font-semibold mb-0.5">{{ t('vm.openstackFault') }}</p>
       <p class="font-mono break-all">{{ resource.lifecycle.fault_message }}</p>
@@ -218,8 +218,8 @@ const cardBorderClass = computed(() => {
         :disabled="redeploying"
         class="flex-1 text-xs font-semibold py-1.5 px-3 rounded border transition-colors flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
         :class="resource.drift === 'missing'
-          ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-          : 'bg-surface-card text-red-700 border-red-200 hover:bg-red-50'"
+          ? 'bg-status-errorLight text-status-error border-status-error/30 hover:bg-status-error/20'
+          : 'bg-surface-card text-status-error border-status-error/30 hover:bg-status-errorLight'"
       >
         <RefreshCcw :size="12" :class="redeploying ? 'animate-spin' : ''" />
         {{ redeploying ? t('vm.actions.redeploying') : t('vm.actions.redeploy') }}

@@ -89,16 +89,16 @@ const recommendedValue = computed<string | number | boolean | unknown[] | null>(
 const borderClass = (() => {
   const a = props.accent || 'blue'
   return a === 'purple'
-    ? 'border-purple-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100'
-    : 'border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+    ? 'border-tag-accentBorder focus:border-tag-accent focus:ring-2 focus:ring-tag-accentLight'
+    : 'border-tag-infoBorder focus:border-tag-info focus:ring-2 focus:ring-tag-infoLight'
 })()
 const toggleOn = (() => {
   const a = props.accent || 'blue'
-  return a === 'purple' ? 'bg-purple-500' : 'bg-blue-500'
+  return a === 'purple' ? 'bg-tag-accent' : 'bg-tag-info'
 })()
 const toggleFocus = (() => {
   const a = props.accent || 'blue'
-  return a === 'purple' ? 'focus:ring-2 focus:ring-purple-500' : 'focus:ring-2 focus:ring-blue-500'
+  return a === 'purple' ? 'focus:ring-2 focus:ring-tag-accent' : 'focus:ring-2 focus:ring-tag-info'
 })()
 </script>
 

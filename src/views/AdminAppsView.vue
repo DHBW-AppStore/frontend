@@ -314,13 +314,13 @@ onMounted(loadAll)
           <!-- Pending badge -->
           <span
             v-if="pendingCountMap[app.appId] && !app.is_private"
-            class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700"
+            class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-tag-destroyLight text-tag-destroy"
           >
             {{ pendingCountMap[app.appId] }} {{ $t('AdminAppsView.pendingLabel') }}
           </span>
           <span
             v-else-if="app.is_private"
-            class="text-xs text-purple-400"
+            class="text-xs text-tag-accent"
           >
             {{ $t('AdminAppsView.privateLabel') }}
           </span>
@@ -386,8 +386,8 @@ onMounted(loadAll)
                       <span class="text-xs text-content-secondary italic truncate" :title="approval.notes">{{ approval.notes }}</span>
                     </div>
                     <div v-if="approval.rejection_reason" class="flex items-start gap-1.5 max-w-xs">
-                      <span class="text-xs font-medium text-red-400 shrink-0 mt-px">{{ $t('AdminAppsView.rejectionLabel') }}</span>
-                      <span class="text-xs text-red-600 italic truncate" :title="approval.rejection_reason">{{ approval.rejection_reason }}</span>
+                      <span class="text-xs font-medium text-status-error/70 shrink-0 mt-px">{{ $t('AdminAppsView.rejectionLabel') }}</span>
+                      <span class="text-xs text-status-error italic truncate" :title="approval.rejection_reason">{{ approval.rejection_reason }}</span>
                     </div>
                   </div>
                 </td>
@@ -410,7 +410,7 @@ onMounted(loadAll)
                       <button
                         @click="openRejectModal(app.appId, approval.version_tag)"
                         :disabled="actingOn === `${app.appId}:${approval.version_tag}`"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 text-xs font-medium hover:bg-red-100 transition-colors disabled:opacity-50"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-status-errorLight text-status-error border border-status-error/30 text-xs font-medium hover:bg-status-error/20 transition-colors disabled:opacity-50"
                       >
                         <X :size="13" />
                         {{ $t('AdminAppsView.rejectBtn') }}
@@ -456,7 +456,7 @@ onMounted(loadAll)
     <!-- Reject Modal -->
     <Modal :show="showRejectModal" @close="showRejectModal = false">
       <template #title>
-        <span class="text-red-700">{{ $t('AdminAppsView.rejectModal.title') }}</span>
+        <span class="text-status-error">{{ $t('AdminAppsView.rejectModal.title') }}</span>
       </template>
       <template #body>
         <div class="space-y-5">
@@ -472,7 +472,7 @@ onMounted(loadAll)
               v-model="rejectionReason"
               :placeholder="$t('AdminAppsView.rejectModal.reasonPlaceholder')"
               rows="4"
-              class="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-red-400 focus:border-red-400 outline-none resize-none bg-surface-input text-content-primary"
+              class="w-full rounded-lg border border-border px-3 py-2 text-sm focus:ring-2 focus:ring-status-error/40 focus:border-status-error outline-none resize-none bg-surface-input text-content-primary"
             />
           </div>
         </div>

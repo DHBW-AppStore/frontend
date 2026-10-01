@@ -53,7 +53,7 @@ const previewIcon = computed(() => {
 
 const iconColorClass = computed(() => {
   const name = form.value.name.toLowerCase()
-  if (name.includes('kali')) return 'text-blue-500'
+  if (name.includes('kali')) return 'text-tag-info'
   return 'text-content-secondary'
 })
 
@@ -262,7 +262,7 @@ const handleSubmit = async () => {
                 type="button"
                 @click="form.isPrivate = true"
                 class="flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all"
-                :class="form.isPrivate ? 'border-purple-600 bg-purple-50 text-purple-800' : 'border-border bg-surface-card text-content-secondary hover:border-border-strong'"
+                :class="form.isPrivate ? 'border-tag-accentBorder bg-tag-accentLight text-tag-accent' : 'border-border bg-surface-card text-content-secondary hover:border-border-strong'"
               >
                 <Lock :size="16" />
                 {{ $t('AppsCreateView.form.visibilityPrivate') }}
@@ -362,12 +362,12 @@ const handleSubmit = async () => {
     <div class="mt-auto grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-16 items-end">
 
       <div>
-        <div class="bg-blue-50 text-blue-900 p-4 rounded-lg text-sm leading-relaxed border border-blue-200 flex gap-3 items-start shadow-sm">
-          <Info class="shrink-0 mt-0.5 text-blue-700" :size="20" />
+        <div class="bg-tag-infoLight text-content-primary p-4 rounded-lg text-sm leading-relaxed border border-tag-infoBorder flex gap-3 items-start shadow-sm">
+          <Info class="shrink-0 mt-0.5 text-tag-info" :size="20" />
           <div>
             <span class="font-semibold block mb-1">{{ $t('AppsCreateView.info.important') }}</span>
             <span v-html="$t('AppsCreateView.info.inviteText')"></span><br>
-            <a href="https://github.com/six7clickndeploy" target="_blank" class="text-blue-700 underline hover:text-blue-500 break-all">
+            <a href="https://github.com/six7clickndeploy" target="_blank" class="text-tag-info underline hover:opacity-70 break-all">
               https://github.com/six7clickndeploy
             </a>
           </div>

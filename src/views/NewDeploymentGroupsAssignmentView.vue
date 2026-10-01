@@ -405,7 +405,7 @@ const handleBack = () => router.push({ name: 'deployment.config' })
           <!-- Team Counter -->
           <div v-if="showControls" class="flex items-center gap-3 bg-surface-input px-4 py-2 rounded-xl border-2 border-card-border">
             <button @click="decrement"
-              class="w-9 h-9 rounded-lg bg-surface-card border border-border hover:border-red-400 hover:bg-red-50 flex items-center justify-center transition-all text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
+              class="w-9 h-9 rounded-lg bg-surface-card border border-border hover:border-status-error/50 hover:bg-status-errorLight flex items-center justify-center transition-all text-status-error disabled:opacity-40 disabled:cursor-not-allowed"
               :disabled="groupCount <= 1">
               <Minus :size="18" />
             </button>
@@ -423,13 +423,13 @@ const handleBack = () => router.push({ name: 'deployment.config' })
           <!-- Action Buttons -->
           <div class="flex gap-2">
             <button @click="shuffleStudents" 
-              class="px-4 py-2.5 rounded-xl bg-purple-100 text-purple-700 font-semibold hover:bg-purple-200 transition-all flex items-center gap-2 border-2 border-purple-200"
+              class="px-4 py-2.5 rounded-xl bg-tag-accentLight text-tag-accent font-semibold hover:bg-tag-accentBorder/30 transition-all flex items-center gap-2 border-2 border-tag-accentBorder"
               :title="t('deployment.assignment.shuffleTooltip')">
               <Shuffle :size="18" />
               {{ t('deployment.assignment.shuffle') }}
             </button>
             <button @click="clearAllAssignments" 
-              class="px-4 py-2.5 rounded-xl bg-red-100 text-red-700 font-semibold hover:bg-red-200 transition-all flex items-center gap-2 border-2 border-red-200"
+              class="px-4 py-2.5 rounded-xl bg-status-errorLight text-status-error font-semibold hover:bg-status-error/20 transition-all flex items-center gap-2 border-2 border-status-error/30"
               :title="t('deployment.assignment.resetTooltip')">
               <Trash2 :size="18" />
               {{ t('deployment.assignment.reset') }}
@@ -438,13 +438,13 @@ const handleBack = () => router.push({ name: 'deployment.config' })
         </div>
 
         <!-- Info Banner -->
-        <div class="mt-4 bg-blue-50 border-2 border-blue-200 rounded-xl p-4 flex items-start gap-3">
-          <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <div class="mt-4 bg-tag-infoLight border-2 border-tag-infoBorder rounded-xl p-4 flex items-start gap-3">
+          <div class="w-8 h-8 rounded-full bg-tag-info flex items-center justify-center flex-shrink-0 mt-0.5">
             <GripVertical :size="16" class="text-content-inverse" />
           </div>
           <div>
-            <p class="font-semibold text-blue-900 mb-1">{{ t('deployment.assignment.dragDropTitle') }}</p>
-            <p class="text-sm text-blue-700">{{ t('deployment.assignment.dragDropText') }}</p>
+            <p class="font-semibold text-content-primary mb-1">{{ t('deployment.assignment.dragDropTitle') }}</p>
+            <p class="text-sm text-tag-info">{{ t('deployment.assignment.dragDropText') }}</p>
           </div>
         </div>
       </div>
@@ -566,11 +566,11 @@ const handleBack = () => router.push({ name: 'deployment.config' })
                           })()
                         }}
                       </span>
-                      <button 
+                      <button
                         @click="removeFromGroup(studentId, index)"
-                        class="opacity-0 group-hover:opacity-100 transition-all p-1.5 hover:bg-red-100 rounded-lg"
+                        class="opacity-0 group-hover:opacity-100 transition-all p-1.5 hover:bg-status-errorLight rounded-lg"
                         :title="t('CourseDetailView.removeModal.remove')">
-                        <X :size="14" class="text-red-600" />
+                        <X :size="14" class="text-status-error" />
                       </button>
                     </div>
                   </div>

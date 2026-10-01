@@ -176,7 +176,7 @@ const portNetworkName = (port: { fixed_ip: string | null; mac: string | null }):
 
       <div
         v-else-if="errorMessage"
-        class="text-sm p-3 rounded-lg border bg-red-50 text-red-800 border-red-200 flex items-start gap-2"
+        class="text-sm p-3 rounded-lg border bg-status-errorLight text-status-error border-status-error/30 flex items-start gap-2"
       >
         <AlertTriangle :size="16" class="mt-0.5 shrink-0" />
         <p>{{ errorMessage }}</p>
@@ -190,7 +190,7 @@ const portNetworkName = (port: { fixed_ip: string | null; mac: string | null }):
             <h4 class="text-sm font-semibold text-content-secondary">{{ t('vm.drawer.sections.identity') }}</h4>
             <span
               v-if="detail.team"
-              class="ml-auto text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-200"
+              class="ml-auto text-[10px] font-bold uppercase tracking-wider bg-tag-infoLight text-tag-info px-2 py-0.5 rounded border border-tag-infoBorder"
             >
               {{ detail.team }}
             </span>
@@ -249,7 +249,7 @@ const portNetworkName = (port: { fixed_ip: string | null; mac: string | null }):
           </div>
           <div
             v-if="detail.lifecycle.fault_message"
-            class="text-xs p-2 rounded border bg-red-50 text-red-800 border-red-200"
+            class="text-xs p-2 rounded border bg-status-errorLight text-status-error border-status-error/30"
           >
             <p class="font-semibold mb-0.5">{{ t('vm.openstackFault') }}</p>
             <p class="font-mono break-all">{{ detail.lifecycle.fault_message }}</p>
@@ -373,7 +373,7 @@ const portNetworkName = (port: { fixed_ip: string | null; mac: string | null }):
                   </code>
                   <span
                     v-if="portNetworkName(port)"
-                    class="text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded"
+                    class="text-[10px] font-semibold bg-tag-infoLight text-tag-info border border-tag-infoBorder px-2 py-0.5 rounded"
                     :title="port.network_id || ''"
                   >
                     {{ portNetworkName(port) }}
@@ -432,10 +432,10 @@ const portNetworkName = (port: { fixed_ip: string | null; mac: string | null }):
               <p class="font-semibold text-content-primary">{{ sg.name }}</p>
               <p v-if="sg.description" class="text-content-disabled">{{ sg.description }}</p>
               <div class="flex items-center gap-2 pt-1">
-                <span class="text-[10px] font-semibold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded">
+                <span class="text-[10px] font-semibold uppercase tracking-wider bg-tag-infoLight text-tag-info border border-tag-infoBorder px-2 py-0.5 rounded">
                   {{ sg.ingress_rules }} {{ t('vm.drawer.network.ingress') }}
                 </span>
-                <span class="text-[10px] font-semibold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded">
+                <span class="text-[10px] font-semibold uppercase tracking-wider bg-tag-accentLight text-tag-accent border border-tag-accentBorder px-2 py-0.5 rounded">
                   {{ sg.egress_rules }} {{ t('vm.drawer.network.egress') }}
                 </span>
               </div>

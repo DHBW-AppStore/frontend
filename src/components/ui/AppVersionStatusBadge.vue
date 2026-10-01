@@ -19,7 +19,7 @@ const config = computed(() => {
     case 'rejected':
       return { icon: XCircle, label: t('AppVersionStatusBadge.rejected'), classes: 'bg-status-errorLight text-status-error border-status-error/30' }
     case 'private':
-      return { icon: Lock, label: t('AppVersionStatusBadge.private'), classes: 'bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800' }
+      return { icon: Lock, label: t('AppVersionStatusBadge.private'), classes: 'bg-tag-accentLight text-tag-accent border-tag-accentBorder' }
     default:
       return { icon: MinusCircle, label: '-', classes: 'bg-surface-input text-content-disabled border-border' }
   }

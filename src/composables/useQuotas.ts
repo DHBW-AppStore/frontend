@@ -51,7 +51,7 @@ export const useQuotas = () => {
   const getColorClass = (percentage: number): string => {
     if (percentage >= 90) return 'bg-resource-high'
     if (percentage >= 75) return 'bg-resource-medium'
-    if (percentage >= 50) return 'bg-yellow-500'
+    if (percentage >= 50) return 'bg-status-warning'
     return 'bg-resource-low'
   }
 

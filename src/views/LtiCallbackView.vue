@@ -39,7 +39,7 @@ onMounted(async () => {
       </div>
 
       <div v-else class="flex flex-col items-center gap-4">
-        <div class="text-red-500">
+        <div class="text-status-error">
           <p class="font-semibold">Authentication Error</p>
           <p class="text-sm mt-2">{{ error }}</p>
         </div>

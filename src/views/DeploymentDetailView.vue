@@ -295,16 +295,16 @@ const highlightJson = (jsonString: string): string => {
     return safeStr.replace(
         /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
         (match) => {
-            let cls = 'text-amber-400'
+            let cls = 'text-status-warning'
 
             if (/^"/.test(match)) {
                 if (/:$/.test(match)) {
-                    cls = 'text-blue-500 font-medium' // keys
+                    cls = 'text-tag-info font-medium' // keys
                 } else {
                     cls = 'text-status-success' // string values
                 }
             } else if (/true|false/.test(match)) {
-                cls = 'text-purple-500 font-bold' // booleans
+                cls = 'text-tag-accent font-bold' // booleans
             } else if (/null/.test(match)) {
                 cls = 'text-content-disabled italic' // null
             } else {
@@ -1116,33 +1116,33 @@ const getStatusStyles = (status?: string) => {
         case 'running':
             return {
                 label: 'DeploymentsView.deploymentRunning',
-                dotClass: 'bg-blue-500 animate-pulse shadow-[0_0_12px_rgba(59,130,246,0.6)]',
+                dotClass: 'bg-tag-info animate-pulse shadow-[0_0_12px_rgba(59,130,246,0.6)]',
                 textClass: 'text-content-primary',
-                badgeClass: 'bg-blue-100 text-blue-800 border-blue-300',
+                badgeClass: 'bg-tag-infoLight text-tag-info border-tag-infoBorder',
                 icon: Loader2
             }
         case 'pending':
             return {
                 label: 'DeploymentsView.deploymentPending',
-                dotClass: 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]',
+                dotClass: 'bg-status-warning shadow-[0_0_10px_rgba(234,179,8,0.4)]',
                 textClass: 'text-content-primary',
-                badgeClass: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                badgeClass: 'bg-status-warningLight text-status-warning border-status-warning/30',
                 icon: Clock
             }
         case 'failed':
             return {
                 label: 'DeploymentsView.deploymentFailed',
-                dotClass: 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.4)]',
+                dotClass: 'bg-status-error shadow-[0_0_10px_rgba(239,68,68,0.4)]',
                 textClass: 'text-content-primary',
-                badgeClass: 'bg-red-100 text-red-800 border-red-300',
+                badgeClass: 'bg-status-errorLight text-status-error border-status-error/30',
                 icon: XCircle
             }
         case 'destroying':
             return {
                 label: 'DeploymentsView.deploymentDestroying',
-                dotClass: 'bg-orange-500 animate-pulse shadow-[0_0_12px_rgba(249,115,22,0.6)]',
+                dotClass: 'bg-tag-destroy animate-pulse shadow-[0_0_12px_rgba(249,115,22,0.6)]',
                 textClass: 'text-content-primary',
-                badgeClass: 'bg-orange-100 text-orange-700 border-orange-300',
+                badgeClass: 'bg-tag-destroyLight text-tag-destroy border-tag-destroyBorder',
                 icon: Loader2
             }
         case 'cancelled':
@@ -1156,9 +1156,9 @@ const getStatusStyles = (status?: string) => {
         case 'destroyed':
             return {
                 label: 'DeploymentsView.deploymentDestroyed',
-                dotClass: 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]',
+                dotClass: 'bg-tag-destroy shadow-[0_0_10px_rgba(249,115,22,0.4)]',
                 textClass: 'text-content-primary',
-                badgeClass: 'bg-orange-100 text-orange-800 border-orange-300',
+                badgeClass: 'bg-tag-destroyLight text-tag-destroy border-tag-destroyBorder',
                 icon: Flame
             }
         case 'pausing':
@@ -1168,9 +1168,9 @@ const getStatusStyles = (status?: string) => {
                 // active is happening" at a glance, distinct from the
                 // calm green of success.
                 label: 'DeploymentsView.deploymentPausing',
-                dotClass: 'bg-amber-500 animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.6)]',
+                dotClass: 'bg-status-warning animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.6)]',
                 textClass: 'text-content-primary',
-                badgeClass: 'bg-amber-100 text-amber-800 border-amber-300',
+                badgeClass: 'bg-status-warningLight text-status-warning border-status-warning/30',
                 icon: Loader2
             }
         case 'paused':
@@ -1196,17 +1196,17 @@ const getStatusStyles = (status?: string) => {
             // red of a deploy-failed.
             return {
                 label: 'DeploymentsView.deploymentPauseFailed',
-                dotClass: 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]',
+                dotClass: 'bg-status-warning shadow-[0_0_10px_rgba(245,158,11,0.4)]',
                 textClass: 'text-content-primary',
-                badgeClass: 'bg-amber-100 text-amber-900 border-amber-300',
+                badgeClass: 'bg-status-warningLight text-status-warning border-status-warning/30',
                 icon: AlertCircle
             }
         case 'resume_failed':
             return {
                 label: 'DeploymentsView.deploymentResumeFailed',
-                dotClass: 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]',
+                dotClass: 'bg-status-warning shadow-[0_0_10px_rgba(245,158,11,0.4)]',
                 textClass: 'text-content-primary',
-                badgeClass: 'bg-amber-100 text-amber-900 border-amber-300',
+                badgeClass: 'bg-status-warningLight text-status-warning border-status-warning/30',
                 icon: AlertCircle
             }
         default:
@@ -1535,8 +1535,8 @@ const deselectTask = () => {
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-3">
                     <component :is="getStatusStyles(deployment.status).icon" :size="20" :class="deployment.status === 'success' ? 'text-status-success' :
-                        deployment.status === 'failed' ? 'text-red-600' :
-                            deployment.status === 'running' ? 'text-blue-600' : 'text-yellow-600'" />
+                        deployment.status === 'failed' ? 'text-status-error' :
+                            deployment.status === 'running' ? 'text-tag-info' : 'text-status-warning'" />
                     <span
                         class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold border capitalize"
                         :class="getStatusStyles(deployment.status).badgeClass">
@@ -1595,7 +1595,7 @@ const deselectTask = () => {
                         <div class="text-xs text-content-disabled uppercase tracking-wide mb-1">Release Tag</div>
                         <div class="text-sm">
                             <span
-                                class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-300">
+                                class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-tag-neutralLight text-tag-neutral border border-tag-neutralBorder">
                                 <GitBranch :size="12" class="mr-1" />
                                 {{ deployment.releaseTag }}
                             </span>
@@ -1640,7 +1640,7 @@ const deselectTask = () => {
                     <div>
                         <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">Git Repository</div>
                         <a :href="deployment.app.git_link ?? undefined" target="_blank"
-                            class="text-sm text-blue-600 hover:text-blue-800 underline break-all">
+                            class="text-sm text-tag-info hover:opacity-80 underline break-all">
                             {{ deployment.app.git_link }}
                         </a>
                     </div>
@@ -1651,7 +1651,7 @@ const deselectTask = () => {
             <!-- User info card -->
             <div class="bg-surface-card rounded-xl border border-card-border p-6 shadow-sm">
                 <h2 class="text-lg font-semibold text-content-primary mb-4 flex items-center gap-2">
-                    <User :size="20" class="text-blue-600" />
+                    <User :size="20" class="text-tag-info" />
                     {{ $t('DeploymentDetailView.deploymentOwner') }}
                 </h2>
                 <div class="space-y-4" v-if="deployment.user">
@@ -1675,7 +1675,7 @@ const deselectTask = () => {
                             $t('DeploymentDetailView.deploymentUserRole') }}</div>
                         <div class="text-sm">
                             <span
-                                class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-300 capitalize">
+                                class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-tag-accentLight text-tag-accent border border-tag-accentBorder capitalize">
                                 {{ deployment.user.role }}
                             </span>
                         </div>
@@ -1751,7 +1751,7 @@ const deselectTask = () => {
         <div class="bg-surface-card rounded-xl border border-card-border p-6 shadow-sm"
             v-if="Object.keys(deploymentVariables).length > 0">
             <h2 class="text-lg font-semibold text-content-primary mb-4 flex items-center gap-2">
-                <Settings :size="20" class="text-orange-600" />
+                <Settings :size="20" class="text-tag-destroy" />
                 {{ $t('DeploymentDetailView.deploymentConfig') }}
             </h2>
 
@@ -1775,9 +1775,9 @@ const deselectTask = () => {
              running task. Replaces the previous mix of "Latest Task"
              info card + duplicate entry in the Tasks & Logs list. -->
         <div v-if="isStreamRelevant && activeTask"
-            class="bg-surface-card rounded-xl border border-blue-300 shadow-sm overflow-hidden">
+            class="bg-surface-card rounded-xl border border-tag-infoBorder shadow-sm overflow-hidden">
             <!-- Header strip: gradient + live indicator + task type/status -->
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-200">
+            <div class="bg-gradient-to-r from-tag-infoLight to-tag-neutralLight px-6 py-4 border-b border-tag-infoBorder">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="relative">
@@ -1798,7 +1798,7 @@ const deselectTask = () => {
                     <span class="text-xs px-2 py-1 rounded-md font-medium" :class="streamConnectionState === 'live'
                         ? 'bg-status-successLight text-status-success border border-status-success/30'
                         : streamConnectionState === 'reconnecting'
-                            ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                            ? 'bg-status-warningLight text-status-warning border border-status-warning/30'
                             : 'bg-surface-input text-content-secondary border border-card-border'">
                         {{ streamConnectionState === 'live' ? 'Stream live' : streamConnectionState }}
                     </span>
@@ -1833,7 +1833,7 @@ const deselectTask = () => {
                             </span>
                         </div>
                         <div class="w-full bg-surface-input rounded-full h-2 overflow-hidden">
-                            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500 ease-out"
+                            <div class="bg-gradient-to-r from-tag-info to-tag-neutral h-2 rounded-full transition-all duration-500 ease-out"
                                 :style="{ width: (streamProgress ?? 0) + '%' }"></div>
                         </div>
                     </div>
@@ -1848,18 +1848,18 @@ const deselectTask = () => {
                         <template v-for="idx in phaseStepCount" :key="idx - 1">
                             <div class="flex-shrink-0 flex flex-col items-center gap-2 min-w-[60px]">
                                 <div class="w-2.5 h-2.5 rounded-full transition-all" :class="(idx - 1) < currentPhaseIndex
-                                    ? 'bg-blue-500'
+                                    ? 'bg-tag-info'
                                     : (idx - 1) === currentPhaseIndex
-                                        ? 'bg-blue-500 ring-4 ring-blue-200 scale-125'
+                                        ? 'bg-tag-info ring-4 ring-tag-infoLight scale-125'
                                         : 'bg-surface-hover'"></div>
                                 <span
                                     class="text-[10px] uppercase tracking-wide font-medium whitespace-nowrap text-center"
-                                    :class="(idx - 1) <= currentPhaseIndex ? 'text-blue-700' : 'text-content-disabled'">
+                                    :class="(idx - 1) <= currentPhaseIndex ? 'text-tag-info' : 'text-content-disabled'">
                                     {{ phaseStepLabel(idx - 1) }}
                                 </span>
                             </div>
                             <div v-if="(idx - 1) < phaseStepCount - 1" class="flex-1 h-px min-w-[8px] mt-[5px]"
-                                :class="(idx - 1) < currentPhaseIndex ? 'bg-blue-300' : 'bg-surface-hover'"></div>
+                                :class="(idx - 1) < currentPhaseIndex ? 'bg-tag-info/50' : 'bg-surface-hover'"></div>
                         </template>
                     </div>
                 </template>
@@ -1882,14 +1882,14 @@ const deselectTask = () => {
                     </div>
                     <div class="bg-gray-900 rounded-md p-3 max-h-72 overflow-y-auto font-mono text-xs">
                         <div v-for="(log, idx) in streamLiveLogs" :key="`${log.timestamp}-${idx}`"
-                            class="text-gray-100 whitespace-pre-wrap break-words" :class="{
-                                'text-red-400': log.level === 'ERROR',
-                                'text-yellow-300': log.level === 'WARNING',
-                                'text-green-400': log.level === 'SUCCESS',
+                            class="text-content-inverse whitespace-pre-wrap break-words" :class="{
+                                'text-status-error': log.level === 'ERROR',
+                                'text-status-warning': log.level === 'WARNING',
+                                'text-status-success': log.level === 'SUCCESS',
                                 'text-content-disabled': log.streaming,
                             }">
                             <span class="text-content-secondary mr-2">{{ log.timestamp.split('T')[1]?.slice(0, 8) || '' }}</span>
-                            <span v-if="log.tool" class="text-blue-400 mr-1">[{{ log.tool }}]</span>{{ log.message }}
+                            <span v-if="log.tool" class="text-tag-info mr-1">[{{ log.tool }}]</span>{{ log.message }}
                         </div>
                     </div>
                 </div>
@@ -1961,7 +1961,7 @@ const deselectTask = () => {
                                     <span>{{ member.account.data.username }}</span>
                                     <button
                                         @click="copyToClipboard(member.account.data.username, 'user-' + member.account.key)"
-                                        class="text-content-disabled hover:text-amber-600 p-0.5 rounded hover:bg-surface-input transition-colors flex-shrink-0"
+                                        class="text-content-disabled hover:text-status-warning p-0.5 rounded hover:bg-surface-input transition-colors flex-shrink-0"
                                         :title="copiedKey === 'user-' + member.account.key ? 'Kopiert!' : 'Username kopieren'">
                                         <component :is="copiedKey === 'user-' + member.account.key ? Check : Copy" :size="12" />
                                     </button>
@@ -1971,10 +1971,10 @@ const deselectTask = () => {
                                     class="flex items-center gap-1.5 bg-surface-input px-2 py-1 rounded border border-card-border max-w-[280px]">
                                     <span class="text-content-disabled font-sans text-[10px] uppercase tracking-wider flex-shrink-0">URL:</span>
                                     <a :href="userUrlFor(member.account.data, team.vm?.url) ?? ''" target="_blank" rel="noopener noreferrer"
-                                        class="text-blue-600 hover:underline truncate">{{ userUrlFor(member.account.data, team.vm?.url)?.replace(/^https?:\/\//, '') }}</a>
+                                        class="text-tag-info hover:underline truncate">{{ userUrlFor(member.account.data, team.vm?.url)?.replace(/^https?:\/\//, '') }}</a>
                                     <button
                                         @click="copyToClipboard(userUrlFor(member.account.data, team.vm?.url) ?? '', 'vmurl-' + member.account.key)"
-                                        class="text-content-disabled hover:text-amber-600 p-0.5 rounded hover:bg-surface-input transition-colors flex-shrink-0"
+                                        class="text-content-disabled hover:text-status-warning p-0.5 rounded hover:bg-surface-input transition-colors flex-shrink-0"
                                         :title="copiedKey === 'vmurl-' + member.account.key ? 'Kopiert!' : 'URL kopieren'">
                                         <component :is="copiedKey === 'vmurl-' + member.account.key ? Check : Copy" :size="12" />
                                     </button>
@@ -1983,10 +1983,10 @@ const deselectTask = () => {
                                     class="flex items-center gap-1.5 bg-surface-input px-2 py-1 rounded border border-card-border max-w-[280px]">
                                     <span class="text-content-disabled font-sans text-[10px] uppercase tracking-wider flex-shrink-0">URL:</span>
                                     <a :href="team.vm.url" target="_blank" rel="noopener noreferrer"
-                                        class="text-blue-600 hover:underline truncate">{{ team.vm.url.replace(/^https?:\/\//, '') }}</a>
+                                        class="text-tag-info hover:underline truncate">{{ team.vm.url.replace(/^https?:\/\//, '') }}</a>
                                     <button
                                         @click="copyToClipboard(team.vm.url, 'vmurl-' + member.account.key)"
-                                        class="text-content-disabled hover:text-amber-600 p-0.5 rounded hover:bg-surface-input transition-colors flex-shrink-0"
+                                        class="text-content-disabled hover:text-status-warning p-0.5 rounded hover:bg-surface-input transition-colors flex-shrink-0"
                                         :title="copiedKey === 'vmurl-' + member.account.key ? 'Kopiert!' : 'URL kopieren'">
                                         <component :is="copiedKey === 'vmurl-' + member.account.key ? Check : Copy" :size="12" />
                                     </button>
@@ -2000,7 +2000,7 @@ const deselectTask = () => {
                                     <span class="truncate">{{ sshCommandFor(member.account.data) }}</span>
                                     <button
                                         @click="copyToClipboard(sshCommandFor(member.account.data), 'ssh-' + member.account.key)"
-                                        class="text-content-disabled hover:text-amber-600 p-0.5 rounded hover:bg-surface-input transition-colors flex-shrink-0"
+                                        class="text-content-disabled hover:text-status-warning p-0.5 rounded hover:bg-surface-input transition-colors flex-shrink-0"
                                         :title="copiedKey === 'ssh-' + member.account.key ? 'Kopiert!' : 'SSH-Befehl kopieren'">
                                         <component :is="copiedKey === 'ssh-' + member.account.key ? Check : Copy" :size="12" />
                                     </button>
@@ -2024,7 +2024,7 @@ const deselectTask = () => {
                                         </button>
                                         <button
                                             @click="copyToClipboard(member.account.data.auth, 'auth-' + member.account.key)"
-                                            class="text-content-disabled hover:text-amber-600 p-0.5 rounded hover:bg-surface-input transition-colors"
+                                            class="text-content-disabled hover:text-status-warning p-0.5 rounded hover:bg-surface-input transition-colors"
                                             :title="copiedKey === 'auth-' + member.account.key ? 'Kopiert!' : 'Passwort kopieren'">
                                             <component :is="copiedKey === 'auth-' + member.account.key ? Check : Copy"
                                                 :size="12" />
@@ -2045,7 +2045,7 @@ const deselectTask = () => {
                                     :class="resendState[member.userId] === 'sent'
                                         ? 'bg-status-success text-white border-status-success'
                                         : resendState[member.userId] === 'error'
-                                            ? 'bg-red-50 text-red-700 border-red-300'
+                                            ? 'bg-status-errorLight text-status-error border-status-error/30'
                                             : 'bg-surface-card text-content-secondary border-border hover:bg-surface-input disabled:opacity-50'">
                                     <Loader2 v-if="resendState[member.userId] === 'sending'" :size="14"
                                         class="animate-spin" />
@@ -2099,7 +2099,7 @@ const deselectTask = () => {
 
             <div
                 v-if="resourcesError"
-                class="text-sm p-3 rounded-lg border bg-red-50 text-red-800 border-red-200 mb-4 flex items-start gap-2"
+                class="text-sm p-3 rounded-lg border bg-status-errorLight text-status-error border-status-error/30 mb-4 flex items-start gap-2"
             >
                 <AlertCircle :size="16" class="mt-0.5 shrink-0" />
                 <p>{{ resourcesError }}</p>
@@ -2255,8 +2255,8 @@ const deselectTask = () => {
                         class="flex items-center justify-between p-4 bg-surface-input rounded-lg hover:bg-surface-input transition-colors cursor-pointer border border-card-border hover:border-primary/30">
                         <div class="flex items-center gap-4 flex-1">
                             <component :is="getStatusStyles(task.status).icon" :size="18" :class="task.status === 'success' ? 'text-status-success' :
-                                task.status === 'failed' ? 'text-red-600' :
-                                    task.status === 'running' ? 'text-blue-600' : 'text-yellow-600'" />
+                                task.status === 'failed' ? 'text-status-error' :
+                                    task.status === 'running' ? 'text-tag-info' : 'text-status-warning'" />
                             <div class="flex-1">
                                 <div class="flex items-center gap-3 mb-1">
                                     <span class="font-medium text-content-primary capitalize">{{ task.type }}</span>
@@ -2364,7 +2364,7 @@ const deselectTask = () => {
                                          friendly headline (shown in red) from the
                                          technical trace, which hides behind a toggle. -->
                                     <template v-if="taskLogsSplit.isFailure">
-                                        <div class="flex items-start gap-2 text-sm text-red-700 mb-3">
+                                        <div class="flex items-start gap-2 text-sm text-status-error mb-3">
                                             <AlertCircle :size="18" class="mt-0.5 flex-shrink-0" />
                                             <div class="font-medium leading-relaxed whitespace-pre-wrap">{{ taskLogsSplit.headline }}</div>
                                         </div>
@@ -2405,10 +2405,10 @@ const deselectTask = () => {
                         <div class="bg-surface-card rounded-lg border border-card-border overflow-hidden shadow-sm">
 
                             <div
-                                class="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-card-border flex items-center justify-between select-none">
+                                class="bg-gradient-to-r from-tag-infoLight to-tag-neutralLight px-4 py-3 border-b border-card-border flex items-center justify-between select-none">
                                 <div class="flex items-center gap-2">
-                                    <div class="p-1.5 bg-surface-card rounded-md border border-blue-200">
-                                        <Settings :size="16" class="text-blue-600" />
+                                    <div class="p-1.5 bg-surface-card rounded-md border border-tag-infoBorder">
+                                        <Settings :size="16" class="text-tag-info" />
                                     </div>
                                     <div class="flex flex-col text-left">
                                         <span class="font-semibold text-content-primary">{{
@@ -2425,7 +2425,7 @@ const deselectTask = () => {
                                     :title="copiedKey === 'tf_state' ? 'Kopiert!' : 'In die Zwischenablage kopieren'"
                                     class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors flex-shrink-0"
                                     :class="copiedKey === 'tf_state'
-                                        ? 'bg-blue-600 text-white border-blue-600'
+                                        ? 'bg-tag-info text-white border-tag-info'
                                         : 'bg-surface-card text-content-secondary border-border hover:bg-surface-input'">
                                     <component :is="copiedKey === 'tf_state' ? Check : Copy" :size="13" />
                                     {{ copiedKey === 'tf_state' ? 'Copied' : 'Copy' }}

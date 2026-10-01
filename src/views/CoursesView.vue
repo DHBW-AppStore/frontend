@@ -149,14 +149,14 @@ const goToDetail = (courseId: string) => {
           <button
               v-if="isStaff"
               @click.stop="requestDelete(course)"
-              class="absolute top-3 right-3 p-2 hover:bg-red-50 rounded-lg transition z-10"
+              class="absolute top-3 right-3 p-2 hover:bg-status-errorLight rounded-lg transition z-10"
               :title="$t('CoursesView.deleteTitle')"
           >
-            <Trash2 :size="16" class="text-red-600" />
+            <Trash2 :size="16" class="text-status-error" />
           </button>
 
           <div class="flex items-center gap-4 mb-4">
-            <div class="bg-surface-input p-3 rounded-lg text-blue-600 group-hover:text-primary transition-colors flex items-center justify-center w-[56px] h-[56px] flex-shrink-0 border border-card-border">
+            <div class="bg-surface-input p-3 rounded-lg text-tag-info group-hover:text-primary transition-colors flex items-center justify-center w-[56px] h-[56px] flex-shrink-0 border border-card-border">
               <GraduationCap :size="32" />
             </div>
             <h3 class="font-bold text-xl text-content-primary leading-tight pr-10">
@@ -223,7 +223,7 @@ const goToDetail = (courseId: string) => {
 
     <Modal :show="showDeleteModal" @close="closeDeleteModal">
       <template #header>
-        <h2 class="text-xl font-semibold text-red-700">{{ $t('CoursesView.deleteModal.title') }}</h2>
+        <h2 class="text-xl font-semibold text-status-error">{{ $t('CoursesView.deleteModal.title') }}</h2>
       </template>
 
       <template #body>

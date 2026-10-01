@@ -71,6 +71,27 @@
     --color-border:           #E2E4E9;
     --color-border-strong:    #C4C7CF;
     --color-border-focus:     #D92B3A;
+
+    /* ── Tag / badge palette (neutral semantic roles) ──────────── */
+    --color-tag-info:           #2563EB;   /* blue — info banners, lock, "running" */
+    --color-tag-info-light:     #DBEAFE;
+    --color-tag-info-border:    #BFDBFE;
+
+    --color-tag-warning:        #D97706;   /* amber — pending, pausing, stale */
+    --color-tag-warning-light:  #FEF3C7;
+    --color-tag-warning-border: #FDE68A;
+
+    --color-tag-destroy:        #EA580C;   /* orange — destroy, destroyed */
+    --color-tag-destroy-light:  #FFEDD5;
+    --color-tag-destroy-border: #FED7AA;
+
+    --color-tag-neutral:        #4F46E5;   /* indigo — git tags, version chips */
+    --color-tag-neutral-light:  #EEF2FF;
+    --color-tag-neutral-border: #C7D2FE;
+
+    --color-tag-accent:         #7C3AED;   /* purple — private, access roles */
+    --color-tag-accent-light:   #F5F3FF;
+    --color-tag-accent-border:  #DDD6FE;
   }
 
   /* ================================================================
@@ -141,5 +162,26 @@
     --color-border:           #2E2E35;
     --color-border-strong:    #4A4A54;
     --color-border-focus:     #FF3D4D;
+
+    /* ── Tag / badge palette — dark mode ──────────────────────── */
+    --color-tag-info:           #60A5FA;
+    --color-tag-info-light:     #1E3A5F;
+    --color-tag-info-border:    #1D4ED8;
+
+    --color-tag-warning:        #FBBF24;
+    --color-tag-warning-light:  #451A03;
+    --color-tag-warning-border: #92400E;
+
+    --color-tag-destroy:        #FB923C;
+    --color-tag-destroy-light:  #431407;
+    --color-tag-destroy-border: #9A3412;
+
+    --color-tag-neutral:        #818CF8;
+    --color-tag-neutral-light:  #1E1B4B;
+    --color-tag-neutral-border: #3730A3;
+
+    --color-tag-accent:         #A78BFA;
+    --color-tag-accent-light:   #2E1065;
+    --color-tag-accent-border:  #5B21B6;
   }
 }
