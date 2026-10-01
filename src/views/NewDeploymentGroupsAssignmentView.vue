@@ -586,6 +586,7 @@ const handleBack = () => router.push({ name: 'deployment.config' })
       <div class="flex justify-between items-center p-6 pt-4 bg-surface-card border-t-2 border-card-border">
         <button
           @click="handleBack"
+          data-testid="back-btn"
           class="flex items-center gap-2 px-8 py-3 rounded-xl bg-surface-input text-content-secondary font-bold hover:bg-surface-hover transition-all shadow-md">
           <ArrowLeft :size="20" />
           {{ t('deployment.actions.back') }}
@@ -598,8 +599,9 @@ const handleBack = () => router.push({ name: 'deployment.config' })
           </p>
         </div>
         
-        <button 
+        <button
           @click="handleNext"
+          data-testid="next-btn"
           :disabled="unassignedStudents.length > 0 || (store.draft.assignments as string[][]).slice(0, groupCount).some((g: string[]) => !g || g.length === 0) || groupNames.slice(0, groupCount).some((name: string) => !name || name.trim() === '')"
           class="flex items-center gap-2 px-8 py-3 rounded-xl bg-btn-primary text-btn-primary-text font-bold hover:bg-btn-primaryHover transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
           {{ t('deployment.actions.next') }}
