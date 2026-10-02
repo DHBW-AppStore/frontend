@@ -788,6 +788,16 @@ export default {
       openstackTitle: 'OpenStack credentials',
       openstackHint: 'Store your own credentials for deployments',
     },
+    appearance: {
+      title: 'Appearance',
+      hint: 'Controls whether the app is displayed in light, dark, or automatic mode based on your system settings.',
+      auto: 'Automatic',
+      autoHint: 'Follows system settings',
+      light: 'Light',
+      lightHint: 'Always light theme',
+      dark: 'Dark',
+      darkHint: 'Always dark theme',
+    },
   },
 
   banners: {
