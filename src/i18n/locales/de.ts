@@ -150,7 +150,7 @@ export default {
   },
 
   DashboardView: {
-    title: "Willkommen zurück zu Six7!",
+    title: "Willkommen zurück bei ScholarStack!",
     subtitle: "Willkommen zurück in deiner Deployment-Umgebung.",
     timeGreetings: {
       morning: "Guten Morgen",
@@ -179,6 +179,10 @@ export default {
     noCredentialsTitle: "Keine Credentials hinterlegt",
     noCredentialsHint: "Hinterlege deine OpenStack-Zugangsdaten.",
     setUpNow: "Jetzt einrichten",
+    recentDeployments: "Letzte Deployments",
+    allDeployments: "Alle Deployments",
+    noDeploymentsTitle: "Noch keine Deployments",
+    noDeploymentsHint: "Wähle eine App und starte deine erste Umgebung.",
   },
 
  HelpView: {
@@ -798,6 +802,16 @@ export default {
       title: 'Einstellungen',
       openstackTitle: 'OpenStack-Credentials',
       openstackHint: 'Eigene Zugangsdaten für Deployments hinterlegen',
+    },
+    appearance: {
+      title: 'Erscheinungsbild',
+      hint: 'Legt fest, ob die App hell, dunkel oder automatisch entsprechend den Systemeinstellungen dargestellt wird.',
+      auto: 'Automatisch',
+      autoHint: 'Folgt den Systemeinstellungen',
+      light: 'Hell',
+      lightHint: 'Immer helles Design',
+      dark: 'Dunkel',
+      darkHint: 'Immer dunkles Design',
     },
   },
 

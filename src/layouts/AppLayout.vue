@@ -19,19 +19,61 @@ import { useAuth } from '@/composables/useAuth'
 import { useRole } from '@/composables/useRole'
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
+import { useColorScheme } from '@/composables/useColorScheme'
 
-import logo from '@/assets/Six7-white-withoutBackground.png'
+import logo from '@/assets/ScholarStackLogo.png'
+import logoDark from '@/assets/ScholarStackLogo-Hell.png'
+import logoMark from '@/assets/ScholarStackLogo(S).png'
 
 const { locale, t } = useI18n()
 const authStore = useAuthStore()
 const { logout } = useAuth()
 const { isAdmin, isStaff } = useRole()
 const route = useRoute()
+const { scheme } = useColorScheme()
 
 const userName = computed(() => authStore.user?.username || 'User')
 const userInitial = computed(() => (authStore.user?.username ?? 'U').charAt(0).toUpperCase())
 
 const isMeshBgActive = computed(() => route.name === 'dashboard' || route.path === '/')
+
+const isDark = computed(() => {
+  void scheme.value
+  return document.documentElement.classList.contains('dark')
+})
+
+const sidebarStyle = computed(() => ({
+  background: 'var(--color-surface-sidebar-grad)',
+  borderRight: '1px solid var(--color-sidebar-border)',
+}))
+
+const headerStyle = computed(() => ({
+  background: 'var(--color-surface-header)',
+}))
+
+const meshStyle = computed(() => {
+  if (!isMeshBgActive.value) return {}
+  if (isDark.value) {
+    return {
+      backgroundColor: 'var(--color-surface-page)',
+      backgroundImage: [
+        'radial-gradient(at top left, var(--color-mesh-spot-1) 0px, transparent 50%)',
+        'radial-gradient(at top center, var(--color-mesh-spot-2) 0px, transparent 45%)',
+        'radial-gradient(at bottom right, var(--color-mesh-spot-3) 0px, transparent 50%)',
+        'radial-gradient(at center, var(--color-mesh-spot-4) 0px, transparent 65%)',
+      ].join(', '),
+    }
+  }
+  return {
+    backgroundColor: 'var(--color-surface-page)',
+    backgroundImage: [
+      'radial-gradient(at top left, var(--color-mesh-spot-1) 0px, transparent 50%)',
+      'radial-gradient(at bottom right, var(--color-mesh-spot-2) 0px, transparent 55%)',
+      'radial-gradient(at top right, var(--color-mesh-spot-3) 0px, transparent 45%)',
+      'radial-gradient(at bottom left, var(--color-mesh-spot-4) 0px, transparent 50%)',
+    ].join(', '),
+  }
+})
 
 const sidebarCollapsed = ref(false)
 const userMenuOpen = ref(false)
@@ -73,23 +115,38 @@ const navItems = computed(() => [
 </script>
 
 <template>
-  <div class="h-screen flex bg-bgSoft overflow-x-visible">
+  <div class="h-screen flex bg-surface-page overflow-x-visible">
 
     <!-- Sidebar -->
     <aside
-      class="sidebar-bg flex flex-col h-full flex-shrink-0 transition-colors duration-200"
+      class="flex flex-col h-full flex-shrink-0 transition-colors duration-200"
       :class="sidebarCollapsed ? 'w-16' : 'w-60'"
+      :style="sidebarStyle"
     >
 
-      <!-- Logo area -->
-      <div class="h-16 flex items-center border-b border-white/10 px-3" style="overflow: visible;">
-        <RouterLink to="/" class="block" style="height: 48px; width: 100%; overflow: visible;">
-          <img :src="logo" alt="SIX7 Click'n Deploy" style="position: relative; z-index: 30; height: 96px; margin-top: -24px; margin-left: -8px; max-width: none;" />
+      <!-- Logo area. Eingeklappt (64 px) passt der Schriftzug nicht — deshalb
+           wird auf die freigestellte "S"-Variante umgeschaltet. -->
+      <div class="flex items-center px-3" :class="sidebarCollapsed ? 'h-16' : 'h-24'" style="overflow: visible;">
+        <RouterLink
+          to="/"
+          class="flex items-center justify-center"
+          :style="{ height: sidebarCollapsed ? '40px' : '84px', width: '100%', overflow: 'visible' }"
+        >
+          <img
+            :src="sidebarCollapsed ? logoMark : (isDark ? logoDark : logo)"
+            alt="ScholarStack Click'n Deploy"
+            :style="{
+              position: 'relative',
+              zIndex: 30,
+              height: sidebarCollapsed ? '40px' : '84px',
+              maxWidth: 'none',
+            }"
+          />
         </RouterLink>
       </div>
 
       <!-- Sidebar toggle inside navigation zone (shown only when collapsed) -->
-      <div v-if="sidebarCollapsed" class="px-2 py-2 border-b border-white/5">
+      <div v-if="sidebarCollapsed" class="px-2 py-2 border-b" style="border-color: var(--color-sidebar-border)">
         <button
           @click="sidebarCollapsed = false"
           class="sidebar-toggle-btn"
@@ -110,7 +167,7 @@ const navItems = computed(() => [
           active-class="nav-link-active"
         >
           <span class="nav-indicator" />
-          <component :is="item.icon" :size="21" class="flex-shrink-0 opacity-70 group-[.nav-link-active]:opacity-100" />
+          <component :is="item.icon" :size="21" class="flex-shrink-0 opacity-80 group-[.nav-link-active]:opacity-100" />
           <span
             v-if="!sidebarCollapsed"
             class="transition-opacity duration-150 whitespace-nowrap"
@@ -126,14 +183,14 @@ const navItems = computed(() => [
     <div class="flex-1 flex flex-col h-full min-w-0">
 
       <!-- Header -->
-      <header class="h-16 header-bg flex items-center justify-between px-6 flex-shrink-0 border-b border-white/10 relative">
+      <header class="h-16 flex items-center justify-between px-6 flex-shrink-0 relative header-border" :style="headerStyle">
 
         <!-- Left: toggle (title centered separately) -->
         <div class="flex items-center gap-3">
           <button
             v-if="!sidebarCollapsed"
             @click="sidebarCollapsed = true"
-            class="text-white/60 hover:text-white transition-colors p-1 rounded-md hover:bg-white/10"
+            class="nav-toggle-btn"
             aria-label="Close sidebar"
           >
             <PanelLeftClose :size="20" />
@@ -142,23 +199,23 @@ const navItems = computed(() => [
 
         <!-- Centered title (always horizontally centered in viewport) -->
         <div class="header-title">
-          <span class="text-white/90 text-sm font-medium tracking-wide">{{ pageTitle }}</span>
+          <span class="header-title-text text-sm font-semibold tracking-wide">{{ pageTitle }}</span>
         </div>
 
         <!-- Right controls -->
         <div class="flex items-center gap-2">
 
           <!-- Language toggle -->
-          <div class="flex rounded-md overflow-hidden border border-white/20 text-xs">
+          <div class="flex rounded-md overflow-hidden border border-nav-border text-xs">
             <button
               @click="changeLocale('de')"
-              :class="locale === 'de' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80'"
+              :class="locale === 'de' ? 'lang-active' : 'lang-inactive'"
               class="px-2.5 py-1 transition-colors"
             >DE</button>
             <button
               @click="changeLocale('en')"
-              :class="locale === 'en' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80'"
-              class="px-2.5 py-1 transition-colors border-l border-white/20"
+              :class="locale === 'en' ? 'lang-active' : 'lang-inactive'"
+              class="px-2.5 py-1 transition-colors border-l border-nav-border"
             >EN</button>
           </div>
 
@@ -166,15 +223,15 @@ const navItems = computed(() => [
           <div class="relative user-menu-root">
             <button
               @click="userMenuOpen = !userMenuOpen"
-              class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 hover:bg-white/10 transition-colors text-white"
+              class="user-menu-btn flex items-center gap-2 rounded-lg px-2.5 py-1.5 transition-colors"
             >
-              <div class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs font-semibold">
+              <div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-xs font-semibold text-content-inverse">
                 {{ userInitial }}
               </div>
-              <span class="text-sm text-white/90 max-w-24 truncate">{{ userName }}</span>
+              <span class="text-sm max-w-24 truncate user-menu-name">{{ userName }}</span>
               <ChevronDown
                 :size="14"
-                class="text-white/50 transition-transform duration-150"
+                class="user-menu-chevron transition-transform duration-150"
                 :class="userMenuOpen ? 'rotate-180' : ''"
               />
             </button>
@@ -183,20 +240,20 @@ const navItems = computed(() => [
             <Transition name="dropdown">
               <div
                 v-if="userMenuOpen"
-                class="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50"
+                class="absolute right-0 top-full mt-1.5 w-44 bg-surface-card rounded-xl shadow-lg border border-card-border py-1 z-50"
               >
                 <RouterLink
                   to="/user"
                   @click="userMenuOpen = false"
-                  class="flex items-center gap-2.5 px-3.5 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  class="flex items-center gap-2.5 px-3.5 py-2 text-sm text-content-primary hover:bg-surface-hover transition-colors"
                 >
-                  <User :size="15" class="text-slate-400" />
+                  <User :size="15" class="text-content-disabled" />
                   Profil
                 </RouterLink>
-                <div class="my-1 border-t border-slate-100" />
+                <div class="my-1 border-t border-card-border" />
                 <button
                   @click="logout(); userMenuOpen = false"
-                  class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-status-error hover:bg-status-errorLight transition-colors"
                 >
                   <LogOut :size="15" />
                   Abmelden
@@ -211,7 +268,8 @@ const navItems = computed(() => [
       <!-- Main content -->
       <main
         class="flex-1 overflow-y-auto px-8 pt-6 pb-8"
-        :class="isMeshBgActive ? 'mesh-gradient-bg' : 'bg-bgSoft'"
+        :class="isMeshBgActive ? '' : 'bg-surface-page'"
+        :style="isMeshBgActive ? meshStyle : {}"
       >
         <slot />
       </main>
@@ -221,14 +279,6 @@ const navItems = computed(() => [
 </template>
 
 <style scoped>
-.sidebar-bg {
-  background: linear-gradient(180deg, #317153 0%, #1e4a32 100%);
-}
-
-.header-bg {
-  background: #317153;
-}
-
 /* Nav link base */
 .nav-link {
   position: relative;
@@ -239,19 +289,20 @@ const navItems = computed(() => [
   border-radius: 10px;
   font-size: 1rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--color-nav-text);
   transition: background-color 150ms, color 150ms;
   text-decoration: none;
 }
 
 .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.9);
+  background-color: var(--color-nav-bg-hover);
+  color: var(--color-nav-text-hover);
 }
 
 .nav-link-active {
-  background-color: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  background-color: var(--color-nav-bg-active);
+  color: var(--color-nav-text-active);
+  font-weight: 600;
 }
 
 /* Collapsed: center icons */
@@ -268,7 +319,7 @@ const navItems = computed(() => [
   transform: translateY(-50%) scaleY(0);
   width: 3px;
   height: 60%;
-  background: #E48C2A;
+  background: var(--color-nav-indicator);
   border-radius: 0 2px 2px 0;
   transition: transform 150ms ease;
 }
@@ -283,8 +334,8 @@ const navItems = computed(() => [
   left: calc(100% + 10px);
   top: 50%;
   transform: translateY(-50%);
-  background: #1e2d26;
-  color: #fff;
+  background: var(--color-surface-sidebar);
+  color: var(--color-content-inverse);
   font-size: 0.75rem;
   font-weight: 500;
   white-space: nowrap;
@@ -300,32 +351,6 @@ const navItems = computed(() => [
   opacity: 1;
 }
 
-/* Mesh background */
-.mesh-gradient-bg {
-  background-color: #f8faf9;
-  background-image:
-    radial-gradient(at top left, rgba(49, 113, 83, 0.18) 0px, transparent 50%),
-    radial-gradient(at bottom right, rgba(49, 113, 83, 0.22) 0px, transparent 55%),
-    radial-gradient(at top right, rgba(255, 255, 255, 0.6) 0px, transparent 45%),
-    radial-gradient(at bottom left, rgba(16, 185, 129, 0.10) 0px, transparent 50%);
-}
-
-/* Logo text fade */
-.fade-text-enter-active {
-  transition: opacity 150ms ease 100ms, transform 150ms ease 100ms;
-}
-.fade-text-leave-active {
-  transition: opacity 100ms ease, transform 100ms ease;
-}
-
-/* Logo sizes for expanded / collapsed sidebar */
-.logo-full {
-  height: 96px;
-  margin-top: -24px;
-  margin-left: -8px;
-  max-width: none;
-}
-
 /* Sidebar toggle appearance */
 .sidebar-toggle-btn {
   width: 36px;
@@ -336,11 +361,71 @@ const navItems = computed(() => [
   justify-content: center;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--color-nav-text);
   transition: background-color 150ms;
 }
 .sidebar-toggle-btn:hover {
-  background: rgba(255,255,255,0.04);
+  background: var(--color-nav-bg-hover);
+}
+
+/* Header toggle button */
+.nav-toggle-btn {
+  color: var(--color-nav-text);
+  padding: 4px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  transition: color 150ms, background-color 150ms;
+}
+.nav-toggle-btn:hover {
+  color: var(--color-nav-text-hover);
+  background: var(--color-nav-bg-hover);
+}
+
+/* Header title text */
+.header-title-text {
+  color: var(--color-nav-text-hover);
+}
+
+/* Header bottom border (red gradient accent) */
+.header-border::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--color-header-border);
+}
+
+/* Language toggle */
+.border-nav-border {
+  border-color: var(--color-sidebar-border);
+}
+.lang-active {
+  background: var(--color-primary);
+  color: var(--color-content-inverse);
+}
+.lang-inactive {
+  color: var(--color-nav-text);
+}
+.lang-inactive:hover {
+  color: var(--color-nav-text-hover);
+  background: var(--color-nav-bg-hover);
+}
+
+/* User menu button */
+.user-menu-btn {
+  color: var(--color-nav-text-hover);
+}
+.user-menu-btn:hover {
+  background: var(--color-nav-bg-hover);
+}
+.user-menu-name {
+  color: var(--color-nav-text-hover);
+}
+.user-menu-chevron {
+  color: var(--color-nav-text);
 }
 
 /* Header title centered in viewport */
@@ -365,26 +450,6 @@ const navItems = computed(() => [
   margin-left: auto;
   margin-right: auto;
   display: block;
-}
-
-/* Hide native scrollbar when sidebar is collapsed (class w-16 applied on aside) */
-.sidebar-bg.w-16 nav {
-  /* Firefox */
-  scrollbar-width: none;
-  /* IE 10+ */
-  -ms-overflow-style: none;
-}
-.sidebar-bg.w-16 nav::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-/* Sidebar scroll controls placed at bottom when expanded */
-
-.fade-text-enter-from,
-.fade-text-leave-to {
-  opacity: 0;
-  transform: translateX(-6px);
 }
 
 /* Dropdown transition */

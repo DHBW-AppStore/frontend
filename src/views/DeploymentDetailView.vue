@@ -9,45 +9,19 @@ import { useRole } from '@/composables/useRole'
 import { useToastStore } from '@/stores/toast.store'
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { taskApi } from '@/api/task.api'
 import { deploymentApi } from '@/api/deployment.api'
-import type { Task, DeploymentResource } from '@/types'
+import { taskApi } from '@/api/task.api'
+import type { Task } from '@/types'
 import { useDeploymentStream } from '@/composables/useDeploymentStream'
 import InfrastructureVmCard from '@/components/InfrastructureVmCard.vue'
 import InfrastructureVmDrawer from '@/components/InfrastructureVmDrawer.vue'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { formatDateTime } from '@/utils/format'
-import { extractErrorMessage } from '@/utils/http-error'
-
 import { Eye, EyeOff } from 'lucide-vue-next'
-
-// Password visibility state, keyed by account index/key.
-const visiblePasswords = ref<Record<string | number, boolean>>({})
-
-const togglePasswordVisibility = (key: string | number) => {
-    visiblePasswords.value[key] = !visiblePasswords.value[key]
-}
-
-// Build a copy-paste SSH command from an account. Skips ``-p`` for the
-// default port 22 so the line stays short for the common case.
-const sshCommandFor = (data: { username?: string; ip?: string; port?: number }): string => {
-    if (!data.username || !data.ip) return ''
-    const portFlag = data.port && data.port !== 22 ? `-p ${data.port} ` : ''
-    return `ssh ${portFlag}${data.username}@${data.ip}`
-}
-
-// Build a per-user URL from user_accounts (ip + port), preserving any path
-// suffix the team VM url carries (e.g. "/pgadmin4").
-const userUrlFor = (data: { ip?: string; port?: number }, teamVmUrl?: string): string | null => {
-    if (!data.ip || !data.port) return null
-    let path = ''
-    if (teamVmUrl) {
-        try {
-            path = new URL(teamVmUrl).pathname.replace(/\/$/, '')
-        } catch { /* ignore malformed url */ }
-    }
-    return `http://${data.ip}:${data.port}${path}`
-}
+import { useDeploymentLifecycle } from '@/composables/deployment/useDeploymentLifecycle'
+import { useDeploymentCredentials } from '@/composables/deployment/useDeploymentCredentials'
+import { useDeploymentInfrastructure } from '@/composables/deployment/useDeploymentInfrastructure'
+import { useDeploymentTasks } from '@/composables/deployment/useDeploymentTasks'
 
 
 const route = useRoute()
@@ -57,264 +31,10 @@ const authStore = useAuthStore()
 const { isStaff } = useRole()
 const toastStore = useToastStore()
 const { t } = useI18n()
-const tasks = ref<Task[]>([])
-const loadingTasks = ref(false)
-const selectedTask = ref<Task | null>(null)
-const latestTaskOutputs = ref<Task | null>(null)
-// Member self-access: a non-owner (student) can't read the owner-only
-// task outputs, so we fetch just their own credentials from the
-// dedicated ``/my-access`` endpoint into this map. It mirrors the raw
-// ``user_accounts.value`` shape so ``typedUserAccounts`` can fall back
-// to it and the existing account-matching pipeline works unchanged.
-const myAccounts = ref<Record<string, UserAccount> | null>(null)
-const myTeamVms = ref<Record<string, { url?: string; floating_ip?: string; fixed_ip?: string }> | null>(null)
-// Always returns the currently active data task for the UI blocks.
-const activeDataTask = computed(() => selectedTask.value || latestTaskOutputs.value)
-const loadingTaskDetail = ref(false)
 
 const deploymentId = route.params.id as string
 
 const deployment = computed(() => deploymentStore.currentDeployment)
-// Structure of a single account.
-interface UserAccount {
-    username: string
-    team: string
-    ip: string
-    port: number
-    auth: string
-    type?: 'password' | 'ssh_key' | 'oauth' | 'none' | string
-    authtype?: 'ssh' | 'url' | string
-    url?: string
-}
-
-const typedUserAccounts = computed<Record<string, UserAccount> | null>(() => {
-    const currentTarget = selectedTask.value || latestTaskOutputs.value
-    const rawOutputs = currentTarget?.outputs
-    // Member fallback: non-owners have no task outputs (the owner-only
-    // task endpoint 403s / is skipped), so use the per-user credentials
-    // fetched from ``/my-access``. Already in the ``user_accounts.value``
-    // shape, so it feeds the matching pipeline below directly.
-    if (!rawOutputs) return myAccounts.value
-
-    let outputsObj: any = rawOutputs
-
-    // Case 1: outputs arrive as a JSON string from the DB text column.
-    if (typeof rawOutputs === 'string') {
-        try {
-            const trimmed = rawOutputs.trim()
-            if (trimmed.startsWith('{')) {
-                outputsObj = JSON.parse(trimmed)
-            }
-        } catch (e) {
-            console.error('Failed to parse raw outputs data:', e)
-            return myAccounts.value
-        }
-    }
-
-    // Case 2: it is already an object (or was parsed successfully above).
-    if (outputsObj && typeof outputsObj === 'object' && 'user_accounts' in outputsObj) {
-        const userAccountsContainer = outputsObj.user_accounts
-
-        // Reach through to the Terraform ``.value`` object.
-        if (userAccountsContainer && userAccountsContainer.value) {
-            return userAccountsContainer.value as Record<string, UserAccount>
-        }
-    }
-
-    return myAccounts.value
-})
-
-
-
-const enrichedTeams = computed(() => {
-    const currentDeployment = deployment && 'value' in deployment
-        ? deployment.value
-        : deployment;
-
-    if (!currentDeployment?.teams) return [];
-
-    const accounts = typedUserAccounts && 'value' in typedUserAccounts
-        ? typedUserAccounts.value
-        : typedUserAccounts;
-
-    // Team-level VM metadata from terraform's ``team_vms`` output. Apps
-    // that serve a Web-UI publish ``url`` here; SSH-only apps don't.
-    // We surface that as ``team.vm`` so the template can decide between
-    // a URL pill and an SSH-command pill per team.
-    const teamVms = extractTeamVms()
-
-    // Resolve member ↔ account.
-    //
-    // The canonical contract is the ``user_accounts`` MAP KEY, which every app
-    // template constructs the same way:
-    //
-    //     key = "<team>-" + email.split("@")[0].replace(".", "-")
-    //
-    // Since the member's email and team are known here, that key can be
-    // reproduced deterministically. The value's ``username`` field is not a
-    // reliable identifier (some templates write the email local-part, others a
-    // shared team-wide pseudo-email), so we index by key and look up the derived
-    // key per member. Three fallbacks cover templates not matched by the key.
-    const accountByEmail = new Map<string, { key: string; data: UserAccount }>()
-    const accountByUsername = new Map<string, { key: string; data: UserAccount }>()
-    const accountByKey = new Map<string, { key: string; data: UserAccount }>()
-    if (accounts) {
-        for (const [key, acc] of Object.entries(accounts)) {
-            const candidate = acc?.username?.trim().toLowerCase()
-            if (candidate && candidate.includes('@')) {
-                accountByEmail.set(candidate, { key, data: acc })
-            } else if (candidate) {
-                accountByUsername.set(candidate, { key, data: acc })
-            }
-            accountByKey.set(key.trim().toLowerCase(), { key, data: acc })
-        }
-    }
-
-    // Mirror the terraform key sanitisation: lowercase the local-part
-    // and replace dots with dashes. Only dots — terraform's
-    // ``replace(local_part, ".", "-")`` does not touch other characters.
-    const deriveExpectedKey = (teamName: string, email: string | undefined): string | null => {
-        if (!email) return null
-        const localPart = email.split('@')[0]
-        if (!localPart) return null
-        const sanitised = localPart.replace(/\./g, '-').toLowerCase()
-        return `${teamName.trim().toLowerCase()}-${sanitised}`
-    }
-
-    return currentDeployment.teams.map(team => {
-        const vm = teamVms?.[team.name] ?? null
-        const teamNameLower = team.name.trim().toLowerCase()
-        return {
-            ...team,
-            vm,
-            members: team.members.map(member => {
-                const memberEmail = member?.email?.trim().toLowerCase()
-                const memberName = member?.username?.trim().toLowerCase()
-
-                // Strategy 0 (canonical): derive the terraform key from
-                // member.email + team.name and look it up directly.
-                let hit: { key: string; data: UserAccount } | undefined
-                const expectedKey = deriveExpectedKey(team.name, memberEmail)
-                if (expectedKey) hit = accountByKey.get(expectedKey)
-
-                // Strategy 1: email-based (templates that write the
-                // member's full email into ``account.username``).
-                if (!hit && memberEmail) hit = accountByEmail.get(memberEmail)
-
-                // Strategy 2: username substring against account.username
-                if (!hit && memberName) {
-                    for (const [accUser, entry] of accountByUsername) {
-                        if (accUser.includes(memberName) || memberName.includes(accUser)) {
-                            hit = entry
-                            break
-                        }
-                    }
-                }
-
-                // Strategy 3: username substring against the account key
-                // (``Team #1-leon-priemer`` etc.). Last-resort fallback
-                // for templates where ``account.username`` is missing
-                // and the keycloak username happens to match the slug.
-                if (!hit && memberName) {
-                    for (const [accKey, entry] of accountByKey) {
-                        if (accKey.includes(memberName)) {
-                            hit = entry
-                            break
-                        }
-                    }
-                }
-
-                // Team scope guard so an account from team A can't be
-                // attached to a member of team B.
-                const accountTeam = hit?.data.team?.trim().toLowerCase()
-                const keyLower = hit?.key.trim().toLowerCase()
-                const teamMatches = hit && (
-                    accountTeam === teamNameLower ||
-                    (keyLower?.startsWith(`${teamNameLower}-`) ?? false) ||
-                    (keyLower?.includes(teamNameLower) ?? false)
-                )
-                return {
-                    ...member,
-                    account: teamMatches ? hit : null
-                };
-            })
-        };
-    });
-});
-
-/**
- * Pull the ``team_vms`` object out of the active task's outputs. Same
- * unwrap chain as ``typedUserAccounts`` — the outputs may arrive as a
- * raw JSON string from the DB or as an already-parsed object, and the
- * actual map sits under ``.value`` because Terraform stamps the output
- * shape on the wrapper. Returns ``null`` if anything along the way
- * isn't there.
- */
-function extractTeamVms(): Record<string, { url?: string; floating_ip?: string; fixed_ip?: string }> | null {
-    const currentTarget = selectedTask.value || latestTaskOutputs.value
-    const rawOutputs = currentTarget?.outputs
-    // Member fallback: use the team VM block from ``/my-access`` so a
-    // non-owner still gets the Web-URL pill (SSH/PW render even without it).
-    if (!rawOutputs) return myTeamVms.value
-
-    let outputsObj: any = rawOutputs
-    if (typeof rawOutputs === 'string') {
-        try {
-            const trimmed = rawOutputs.trim()
-            if (trimmed.startsWith('{')) outputsObj = JSON.parse(trimmed)
-        } catch {
-            return myTeamVms.value
-        }
-    }
-    const vms = outputsObj?.team_vms?.value
-    return vms && typeof vms === 'object' ? vms : myTeamVms.value
-}
-
-// Counts the resources in the state for the header sub-headline.
-const tfResourcesCount = computed(() => {
-    const state = selectedTask.value?.tf_state
-    if (!state) return 0
-
-    try {
-        const parsed = typeof state === 'string' ? JSON.parse(state) : state
-        return parsed?.resources?.length || 0
-    } catch {
-        return 0
-    }
-})
-
-// Lightweight, safe syntax highlighting for JSON.
-const highlightJson = (jsonString: string): string => {
-    if (!jsonString) return ''
-
-    let safeStr = jsonString
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-
-    return safeStr.replace(
-        /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
-        (match) => {
-            let cls = 'text-amber-400'
-
-            if (/^"/.test(match)) {
-                if (/:$/.test(match)) {
-                    cls = 'text-blue-500 font-medium' // keys
-                } else {
-                    cls = 'text-emerald-500' // string values
-                }
-            } else if (/true|false/.test(match)) {
-                cls = 'text-purple-500 font-bold' // booleans
-            } else if (/null/.test(match)) {
-                cls = 'text-gray-500 italic' // null
-            } else {
-                cls = 'text-cyan-500' // numbers
-            }
-
-            return `<span class="${cls}">${match}</span>`
-        }
-    )
-}
 
 // Owner-view vs member-view — mirrors backend/app/utils/permissions.py
 // ``is_deployment_owner_view``. Drives every gated UI element on
@@ -333,180 +53,78 @@ const isOwnerView = computed(() => {
 })
 
 // ----------------------------------------------------------------
+// TASKS
+// ----------------------------------------------------------------
+const {
+    tasks,
+    loadingTasks,
+    loadTasks,
+    selectedTask,
+    latestTaskOutputs,
+    activeDataTask,
+    loadingTaskDetail,
+    tfResourcesCount,
+    logEntryCount,
+    prettyJson,
+    highlightJson,
+    taskLogsSplit,
+    showTaskLogsTrace,
+    selectTask,
+    deselectTask,
+} = useDeploymentTasks(deploymentId, isOwnerView)
+
+// ----------------------------------------------------------------
 // INFRASTRUCTURE TAB — Stage-1 list + Stage-2 drawer + redeploy
 // ----------------------------------------------------------------
-//
-// State for the resource panel sits on the page (not in a Pinia
-// store) because it's strictly per-deployment and we want it to
-// reset on navigation. The list view polls gently when the latest
-// task is idle and refreshes once when a task transitions to
-// success/failed; the drawer fetches lazy.
-
-const resources = ref<DeploymentResource[]>([])
-const resourcesLoading = ref(false)
-const resourcesError = ref<string | null>(null)
-// Addresses currently waiting on a redeploy task. Used both to
-// disable the button on the card and to know we should refetch the
-// list as soon as the task finishes.
-const redeployInFlight = ref<Set<string>>(new Set())
-// Address of the VM whose detail drawer is currently open. ``null``
-// means the drawer is closed; the drawer component lazy-loads on
-// mount, so toggling this prop is enough.
-const openDrawerAddress = ref<string | null>(null)
-
-const loadResources = async (refresh = true) => {
-    if (!isOwnerView.value) return
-    resourcesLoading.value = true
-    resourcesError.value = null
-    try {
-        const response = await deploymentApi.listResources(deploymentId, { refresh })
-        resources.value = response.data.resources
-    } catch (err: any) {
-        const status = err?.response?.status
-        if (status === 412) {
-            resourcesError.value = t('vm.resourcesErrors.missingCredentials')
-        } else if (status === 502) {
-            resourcesError.value = t('vm.resourcesErrors.unreachable')
-        } else if (status === 404) {
-            // Deployment was soft-deleted upstream (e.g. right after a
-            // successful destroy). The resources are gone; the stream watcher
-            // handles the ``gone`` path, so just clear silently here.
-            resources.value = []
-        } else {
-            resourcesError.value = err?.message || t('vm.resourcesErrors.generic')
-        }
-    } finally {
-        resourcesLoading.value = false
-    }
-}
-
-// Separate compute groups for the three sub-sections.
-const vmResources = computed(() => resources.value.filter(r => r.category === 'instance'))
-const networkResources = computed(() => resources.value.filter(
-    r => r.category === 'network' || r.category === 'subnet' || r.category === 'floating_ip'
-))
-const securityResources = computed(() => resources.value.filter(r => r.category === 'security_group'))
-
-// Click on the card's "Details" button toggles the inline panel:
-// open if a different card is currently shown (or none), close if the
-// same card is already expanded. Matches accordion semantics — only
-// one VM detail is visible at a time.
-const openVmDrawer = (address: string) => {
-    if (openDrawerAddress.value === address) {
-        openDrawerAddress.value = null
-    } else {
-        openDrawerAddress.value = address
-    }
-}
-const closeVmDrawer = () => {
-    openDrawerAddress.value = null
-}
-
-// Redeploy is a two-step UX: the VmCard's "Redeploy" button emits
-// ``@redeploy`` with an address, which opens a confirmation Modal
-// (same pattern as Delete). The actual API call lives in
-// ``executeRedeploy`` so the Modal's confirm button can call it
-// without re-doing the address-extraction.
-const redeployVm = (address: string) => {
-    if (redeployInFlight.value.has(address)) return
-    redeployTargetAddress.value = address
-    showRedeployModal.value = true
-}
-
-const executeRedeploy = async (address: string) => {
-    redeployInFlight.value.add(address)
-    try {
-        await deploymentApi.redeployResource(deploymentId, address)
-        toastStore.success(`Redeploy gestartet für ${address}`)
-        // Refresh the task list right away so the freshly-dispatched
-        // REDEPLOY row shows up as the new ``activeTask``. That in
-        // turn flips ``isStreamRelevant`` to true → the SSE stream
-        // attaches → live progress + logs render under the page's
-        // existing active-task card, identical to deploy/destroy.
-        // Without this poll, the new task only becomes visible on
-        // the next manual page reload.
-        await loadTasks()
-    } catch (err: any) {
-        redeployInFlight.value.delete(address)
-        const detail = err?.response?.data?.detail
-        const reason = detail?.reason
-        if (reason === 'non_redeployable_resource_type') {
-            toastStore.error('Nur Compute-Instanzen können einzeln redeployed werden.')
-        } else if (reason === 'resource_not_in_state') {
-            toastStore.error('Diese Resource ist nicht mehr im aktuellen State.')
-        } else if (err?.response?.status === 409) {
-            toastStore.error('Es läuft bereits eine Lifecycle-Aktion für dieses Deployment.')
-        } else {
-            toastStore.error(err?.message || 'Redeploy fehlgeschlagen.')
-        }
-    }
-}
-
-// Lifecycle action gating — the action bar exposes Delete plus a
-// dynamic Pause/Resume button. The backend picks the right Delete
-// behaviour (terraform destroy + soft-delete vs. straight soft-delete)
-// based on status, so the frontend just surfaces availability.
-// Mirrors backend/app/services/lifecycle.py:
-//   * success                 → Delete (dispatches Destroy), Pause
-//   * paused                  → Delete (dispatches Destroy), Resume
-//   * pause_failed            → Delete, Pause-Retry, Resume
-//   * resume_failed           → Delete, Resume-Retry, Pause
-//   * failed                  → Delete (Destroy or soft-delete)
-//   * cancelled               → Delete (soft-delete)
-//   * pending / running / destroying / pausing / resuming → 409, all disabled
-//
-// Members can never act on lifecycle; the action-bar hides the
-// buttons entirely for them rather than rendering permanently-disabled
-// controls.
-const DELETE_STATUSES = [
-  'success', 'failed', 'cancelled', 'paused', 'pause_failed', 'resume_failed',
-]
-
-const canDelete = computed(() => {
-    if (!isOwnerView.value) return false
-    return DELETE_STATUSES.includes(deployment.value?.status ?? '')
-})
-
-const deleteDisabledReason = computed(() => {
-    if (canDelete.value) return ''
-    return `Delete available when status is ${DELETE_STATUSES.join(', ')}`
-})
-
-// One Pause/Resume button — what it does depends on status. Most
-// common case: ``success`` → Pause; ``paused`` → Resume. Failure
-// states (pause_failed / resume_failed) also expose a retry that
-// matches what just broke. Anything else hides it entirely.
-const canPause = computed(() => {
-    if (!isOwnerView.value) return false
-    const s = deployment.value?.status
-    return s === 'success' || s === 'pause_failed' || s === 'resume_failed'
-})
-const canResume = computed(() => {
-    if (!isOwnerView.value) return false
-    const s = deployment.value?.status
-    return s === 'paused' || s === 'pause_failed' || s === 'resume_failed'
-})
-const canPauseOrResume = computed(() => canPause.value || canResume.value)
-const pauseResumeAction = computed<'pause' | 'resume' | null>(() => {
-    // Prefer the action that matches the steady-state semantic of
-    // the current status: from ``success`` we pause, from ``paused``
-    // we resume. From the failure states we pick the retry that
-    // matches what just broke.
-    const s = deployment.value?.status
-    if (s === 'success' || s === 'pause_failed') return 'pause'
-    if (s === 'paused' || s === 'resume_failed') return 'resume'
-    return null
-})
-
-const showDeleteModal = ref(false)
-// Per-VM redeploy confirmation. Mirrors the Delete-modal pattern, but
-// the action targets a single resource (identified by its TF state
-// address), so we also remember which VM the user clicked while the
-// modal is open.
 const showRedeployModal = ref(false)
 const redeployTargetAddress = ref<string | null>(null)
-const showPauseResumeModal = ref(false)
-const pauseResumeBusy = ref(false)
+
+const {
+    resourcesLoading,
+    resourcesError,
+    loadResources,
+    vmResources,
+    networkResources,
+    securityResources,
+    openVmDrawer,
+    closeVmDrawer,
+    openDrawerAddress,
+    redeployVm,
+    redeployInFlight,
+    confirmRedeploy,
+} = useDeploymentInfrastructure(deploymentId, isOwnerView, showRedeployModal, redeployTargetAddress, loadTasks)
+
+// ----------------------------------------------------------------
+// LIFECYCLE
+// ----------------------------------------------------------------
+const {
+    showDeleteModal,
+    showPauseResumeModal,
+    pauseResumeBusy,
+    canDelete,
+    deleteDisabledReason,
+    canPauseOrResume,
+    pauseResumeAction,
+    confirmDelete,
+    confirmPauseResume,
+} = useDeploymentLifecycle(deploymentId, deployment, isOwnerView, loadTasks)
+
+// ----------------------------------------------------------------
+// CREDENTIALS
+// ----------------------------------------------------------------
+const {
+    myAccounts,
+    myTeamVms,
+    visiblePasswords,
+    togglePasswordVisibility,
+    sshCommandFor,
+    userUrlFor,
+    enrichedTeams,
+    copiedKey,
+    copyToClipboard,
+    resendState,
+    resendAccess,
+} = useDeploymentCredentials(deploymentId, deployment, selectedTask, latestTaskOutputs)
 
 onMounted(async () => {
     await deploymentStore.fetchDeploymentById(deploymentId)
@@ -542,7 +160,7 @@ onMounted(async () => {
             // The API type marks fields optional; the local UserAccount
             // interface is stricter but structurally compatible at the
             // point of use, so cast the map through unknown.
-            myAccounts.value = (data.user_accounts ?? null) as Record<string, UserAccount> | null
+            myAccounts.value = (data.user_accounts ?? null) as Record<string, import('@/composables/deployment/useDeploymentCredentials').UserAccount> | null
             myTeamVms.value = data.team_vms ?? null
         } catch (err) {
             console.error('Error loading own access credentials:', err)
@@ -555,25 +173,6 @@ onMounted(async () => {
     loadResources()
 })
 
-const loadTasks = async () => {
-    // Members can't read tasks (backend returns 403 for the
-    // owner-only endpoint). Skip the call entirely so the network
-    // tab stays clean and the UI doesn't briefly flicker a loader
-    // for data we'll never receive.
-    if (!isOwnerView.value) {
-        tasks.value = []
-        return
-    }
-    loadingTasks.value = true
-    try {
-        const { data } = await taskApi.listByDeployment(deploymentId)
-        tasks.value = data
-    } catch (err) {
-        console.error('Error loading tasks:', err)
-    } finally {
-        loadingTasks.value = false
-    }
-}
 
 // ----------------------------------------------------------------
 // LIVE STREAM (progress bar + log tail)
@@ -961,87 +560,6 @@ onBeforeUnmount(() => {
 // string falls back to an empty label so the template never sees a
 // non-string slip through (e.g. the brief moment an unwrapped ref
 // produced the original ``phase.split is not a function`` crash).
-// Pretty-print arbitrary JSON-ish values for the terraform state /
-// outputs / raw-logs blocks. The backend persists these as TEXT
-// columns, so they arrive as either:
-//
-//  * a JSON string (terraform state pulled from the pg backend, or the
-//    JSON-stringified outputs map),
-//  * a real object/array (when the API layer has already parsed it),
-//  * a plain non-JSON string (a stack trace, a single error line),
-//  * null / undefined when the worker had nothing to record.
-//
-// The helper unifies those into a 2-space-indented JSON dump when the
-// payload parses, and falls back to the raw text otherwise so we never
-// clobber a non-JSON string by trying to parse it.
-const prettyJson = (value: unknown): string => {
-    if (value === null || value === undefined) return ''
-    if (typeof value === 'object') {
-        try {
-            return JSON.stringify(value, null, 2)
-        } catch {
-            return String(value)
-        }
-    }
-    if (typeof value === 'string') {
-        const trimmed = value.trim()
-        // Cheap pre-check: only attempt JSON.parse on strings that look
-        // like JSON. Saves a try/catch round-trip for ordinary log
-        // text and avoids accidentally parsing a bare number or "null"
-        // string into something the consumer didn't expect.
-        if (
-            (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-            (trimmed.startsWith('[') && trimmed.endsWith(']'))
-        ) {
-            try {
-                return JSON.stringify(JSON.parse(trimmed), null, 2)
-            } catch {
-                return value
-            }
-        }
-        return value
-    }
-    return String(value)
-}
-
-// Copy-to-clipboard state. Each "card" (logs/state/outputs) tags its
-// copy button with a unique key; the key of whichever was last
-// successfully copied is stored here for ~1.5s so we can flip its
-// icon to a check as feedback. Multiple cards can share the same state
-// because only one can be the "just copied" target at a time.
-const copiedKey = ref<string | null>(null)
-let copyResetTimer: number | null = null
-
-const copyToClipboard = async (text: string, key: string) => {
-    if (!text) return
-    try {
-        // Modern ``navigator.clipboard`` requires a secure context
-        // (https or localhost). Falls back to the legacy
-        // ``execCommand('copy')`` so the button still works behind
-        // plain http on the dev box.
-        if (navigator.clipboard && window.isSecureContext) {
-            await navigator.clipboard.writeText(text)
-        } else {
-            const ta = document.createElement('textarea')
-            ta.value = text
-            ta.style.position = 'fixed'
-            ta.style.opacity = '0'
-            document.body.appendChild(ta)
-            ta.select()
-            document.execCommand('copy')
-            document.body.removeChild(ta)
-        }
-        copiedKey.value = key
-        if (copyResetTimer !== null) window.clearTimeout(copyResetTimer)
-        copyResetTimer = window.setTimeout(() => {
-            copiedKey.value = null
-            copyResetTimer = null
-        }, 1500)
-    } catch (err) {
-        console.error('Copy failed:', err)
-    }
-}
-
 const phaseLabel = (phase: unknown): string => {
     if (typeof phase !== 'string' || !phase) return ''
     // Worker-emitted multi-image phases carry the template key as a ``:<key>``
@@ -1058,47 +576,6 @@ const phaseLabel = (phase: unknown): string => {
     return subKey ? `${formattedBase} [${subKey}]` : formattedBase
 }
 
-// Count of log entries inside ``selectedTask.logs`` for the badge in
-// the Logs card header. Logs arrive in three flavours:
-//
-//  * an object ``{logs: [...], error?: ...}`` — the Failure payload
-//    serialised by the worker on a failed deploy
-//  * a plain array on the success path (the success result is just
-//    ``logs: list[dict]``)
-//  * a JSON string when the API serialises one of the above as text
-//
-// The computed handles all three so the "N entries" pill stays
-// accurate regardless of the wire shape; returns null when the count
-// can't be determined (e.g. logs is a non-JSON string), in which case
-// the badge is hidden.
-const logEntryCount = computed<number | null>(() => {
-    const raw = selectedTask.value?.logs
-    if (raw == null) return null
-    let value: unknown = raw
-    if (typeof value === 'string') {
-        const trimmed = value.trim()
-        if (
-            (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-            (trimmed.startsWith('[') && trimmed.endsWith(']'))
-        ) {
-            try {
-                value = JSON.parse(trimmed)
-            } catch {
-                return null
-            }
-        } else {
-            return null
-        }
-    }
-    if (Array.isArray(value)) return value.length
-    if (value && typeof value === 'object') {
-        const inner = (value as Record<string, unknown>).logs
-        if (Array.isArray(inner)) return inner.length
-    }
-    return null
-})
-
-
 const deploymentTimestamp = computed(() => {
     return deployment.value?.created_at ? formatDate(deployment.value.created_at) : '-'
 })
@@ -1108,57 +585,57 @@ const getStatusStyles = (status?: string) => {
         case 'success':
             return {
                 label: 'DeploymentsView.deploymentSuccessful',
-                dotClass: 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]',
-                textClass: 'text-gray-900',
-                badgeClass: 'bg-green-100 text-green-800 border-green-300',
+                dotClass: 'bg-status-success shadow-[0_0_10px_rgba(34,197,94,0.4)]',
+                textClass: 'text-content-primary',
+                badgeClass: 'bg-status-successLight text-status-success border-status-success/30',
                 icon: CheckCircle
             }
         case 'running':
             return {
                 label: 'DeploymentsView.deploymentRunning',
-                dotClass: 'bg-blue-500 animate-pulse shadow-[0_0_12px_rgba(59,130,246,0.6)]',
-                textClass: 'text-gray-900',
-                badgeClass: 'bg-blue-100 text-blue-800 border-blue-300',
+                dotClass: 'bg-tag-info animate-pulse shadow-[0_0_12px_rgba(59,130,246,0.6)]',
+                textClass: 'text-content-primary',
+                badgeClass: 'bg-tag-infoLight text-tag-info border-tag-infoBorder',
                 icon: Loader2
             }
         case 'pending':
             return {
                 label: 'DeploymentsView.deploymentPending',
-                dotClass: 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.4)]',
-                textClass: 'text-gray-900',
-                badgeClass: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+                dotClass: 'bg-status-warning shadow-[0_0_10px_rgba(234,179,8,0.4)]',
+                textClass: 'text-content-primary',
+                badgeClass: 'bg-status-warningLight text-status-warning border-status-warning/30',
                 icon: Clock
             }
         case 'failed':
             return {
                 label: 'DeploymentsView.deploymentFailed',
-                dotClass: 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.4)]',
-                textClass: 'text-gray-900',
-                badgeClass: 'bg-red-100 text-red-800 border-red-300',
+                dotClass: 'bg-status-error shadow-[0_0_10px_rgba(239,68,68,0.4)]',
+                textClass: 'text-content-primary',
+                badgeClass: 'bg-status-errorLight text-status-error border-status-error/30',
                 icon: XCircle
             }
         case 'destroying':
             return {
                 label: 'DeploymentsView.deploymentDestroying',
-                dotClass: 'bg-orange-500 animate-pulse shadow-[0_0_12px_rgba(249,115,22,0.6)]',
-                textClass: 'text-gray-900',
-                badgeClass: 'bg-orange-100 text-orange-700 border-orange-300',
+                dotClass: 'bg-tag-destroy animate-pulse shadow-[0_0_12px_rgba(249,115,22,0.6)]',
+                textClass: 'text-content-primary',
+                badgeClass: 'bg-tag-destroyLight text-tag-destroy border-tag-destroyBorder',
                 icon: Loader2
             }
         case 'cancelled':
             return {
                 label: 'DeploymentsView.deploymentCancelled',
-                dotClass: 'bg-gray-400',
-                textClass: 'text-gray-900',
-                badgeClass: 'bg-gray-100 text-gray-700 border-gray-300',
+                dotClass: 'bg-content-disabled',
+                textClass: 'text-content-primary',
+                badgeClass: 'bg-surface-input text-content-secondary border-card-border',
                 icon: StopCircle
             }
         case 'destroyed':
             return {
                 label: 'DeploymentsView.deploymentDestroyed',
-                dotClass: 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]',
-                textClass: 'text-gray-900',
-                badgeClass: 'bg-orange-100 text-orange-800 border-orange-300',
+                dotClass: 'bg-tag-destroy shadow-[0_0_10px_rgba(249,115,22,0.4)]',
+                textClass: 'text-content-primary',
+                badgeClass: 'bg-tag-destroyLight text-tag-destroy border-tag-destroyBorder',
                 icon: Flame
             }
         case 'pausing':
@@ -1168,25 +645,25 @@ const getStatusStyles = (status?: string) => {
                 // active is happening" at a glance, distinct from the
                 // calm green of success.
                 label: 'DeploymentsView.deploymentPausing',
-                dotClass: 'bg-amber-500 animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.6)]',
-                textClass: 'text-gray-900',
-                badgeClass: 'bg-amber-100 text-amber-800 border-amber-300',
+                dotClass: 'bg-status-warning animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.6)]',
+                textClass: 'text-content-primary',
+                badgeClass: 'bg-status-warningLight text-status-warning border-status-warning/30',
                 icon: Loader2
             }
         case 'paused':
             return {
                 label: 'DeploymentsView.deploymentPaused',
-                dotClass: 'bg-slate-400 shadow-[0_0_10px_rgba(148,163,184,0.4)]',
-                textClass: 'text-gray-900',
-                badgeClass: 'bg-slate-100 text-slate-700 border-slate-300',
+                dotClass: 'bg-border-strong shadow-[0_0_10px_rgba(148,163,184,0.4)]',
+                textClass: 'text-content-primary',
+                badgeClass: 'bg-surface-input text-content-secondary border-border',
                 icon: PauseCircle
             }
         case 'resuming':
             return {
                 label: 'DeploymentsView.deploymentResuming',
-                dotClass: 'bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.6)]',
-                textClass: 'text-gray-900',
-                badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                dotClass: 'bg-status-success animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.6)]',
+                textClass: 'text-content-primary',
+                badgeClass: 'bg-status-successLight text-status-success border-status-success/30',
                 icon: Loader2
             }
         case 'pause_failed':
@@ -1196,25 +673,25 @@ const getStatusStyles = (status?: string) => {
             // red of a deploy-failed.
             return {
                 label: 'DeploymentsView.deploymentPauseFailed',
-                dotClass: 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]',
-                textClass: 'text-gray-900',
-                badgeClass: 'bg-amber-100 text-amber-900 border-amber-300',
+                dotClass: 'bg-status-warning shadow-[0_0_10px_rgba(245,158,11,0.4)]',
+                textClass: 'text-content-primary',
+                badgeClass: 'bg-status-warningLight text-status-warning border-status-warning/30',
                 icon: AlertCircle
             }
         case 'resume_failed':
             return {
                 label: 'DeploymentsView.deploymentResumeFailed',
-                dotClass: 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]',
-                textClass: 'text-gray-900',
-                badgeClass: 'bg-amber-100 text-amber-900 border-amber-300',
+                dotClass: 'bg-status-warning shadow-[0_0_10px_rgba(245,158,11,0.4)]',
+                textClass: 'text-content-primary',
+                badgeClass: 'bg-status-warningLight text-status-warning border-status-warning/30',
                 icon: AlertCircle
             }
         default:
             return {
                 label: 'DeploymentsView.noStatus',
-                dotClass: 'bg-gray-300',
-                textClass: 'text-gray-400',
-                badgeClass: 'bg-gray-100 text-gray-800 border-gray-300',
+                dotClass: 'bg-surface-hover',
+                textClass: 'text-content-disabled',
+                badgeClass: 'bg-surface-input text-content-primary border-card-border',
                 icon: AlertCircle
             }
     }
@@ -1277,232 +754,7 @@ const cleanVariableValue = (value?: string) => {
     return cleaned.trim() || '-'
 }
 
-/**
- * Split a task-logs string into a friendly headline + a collapsible
- * technical-details body. The backend's ``celery_event_listener.py``
- * emits Celery-infrastructure failures (``NotRegistered``,
- * ``WorkerLostError``, …) in a stable two-section format separated
- * by ``--- Technische Details ---``; we honour that boundary so the
- * raw stack trace stays available but isn't shoved into the user's
- * face by default.
- *
- * Returns ``{headline, details, isFailure}`` — ``isFailure`` lets
- * the template pick the destructive palette without re-doing the
- * regex on render.
- */
-const FAILURE_DETAIL_DIVIDER = '--- Technische Details ---'
-
-const splitTaskLogs = (raw: string | Record<string, unknown> | null | undefined) => {
-    if (!raw) return { headline: '', details: '', isFailure: false }
-    const text = String(raw)
-    // Backend "infra" failure with the explicit divider — we get a
-    // one-line headline and a raw block underneath.
-    const dividerIdx = text.indexOf(FAILURE_DETAIL_DIVIDER)
-    if (dividerIdx >= 0) {
-        return {
-            headline: text.slice(0, dividerIdx).trim(),
-            details: text.slice(dividerIdx + FAILURE_DETAIL_DIVIDER.length).trim(),
-            isFailure: true,
-        }
-    }
-    // Fallback: the legacy ``Task failed: ...\n<traceback>`` shape.
-    // Take the first line as headline if the body is multi-line.
-    if (text.startsWith('Task failed:')) {
-        const newlineIdx = text.indexOf('\n')
-        if (newlineIdx > 0) {
-            return {
-                headline: text.slice(0, newlineIdx).trim(),
-                details: text.slice(newlineIdx + 1).trim(),
-                isFailure: true,
-            }
-        }
-        return { headline: text.trim(), details: '', isFailure: true }
-    }
-    return { headline: '', details: '', isFailure: false }
-}
-
-// ``logs`` can be either a backend-formatted ``Task failed: ...`` string
-// (the failure shape this splitter cares about) or a structured
-// ``TaskLogsObject`` for normal runs. Only the string form triggers the
-// headline/details split — anything else falls through to the generic
-// pretty-print path below.
-const taskLogsSplit = computed(() => {
-  const raw = selectedTask.value?.logs
-  return splitTaskLogs(typeof raw === 'string' ? raw : null)
-})
-const showTaskLogsTrace = ref(false)
-
-// Unified delete handler. The backend's DELETE endpoint returns 202
-// when it dispatched a destroy task (live progress to follow) or 204
-// when it soft-deleted directly (no resources to clean up). Branch
-// on response.status so the UX matches what's actually happening:
-//   * 202 → stay on the page, refresh tasks so the live stream
-//     attaches to the new DESTROY task; the streamConnectionState
-//     watcher routes back to the list when the task completes.
-//   * 204 → leave immediately with a success toast.
-const confirmDelete = async () => {
-    if (!deploymentId) return
-    try {
-        const response = await deploymentStore.deleteDeployment(deploymentId)
-        if (response?.status === 202) {
-            // Destroy task dispatched. Reload deployment + tasks so
-            // ``activeTask`` flips to the new DESTROY row and the
-            // live-progress card swaps in.
-            toastStore.addToast({
-                type: 'info',
-                message: t('DeploymentDetailView.deleteStartedToast'),
-            })
-            await deploymentStore.fetchDeploymentById(deploymentId)
-            await loadTasks()
-        } else {
-            // 204: nothing to destroy, soft-delete completed
-            // synchronously. Row is gone — back to the list.
-            toastStore.addToast({
-                type: 'success',
-                message: t('DeploymentDetailView.deleteSuccessToast'),
-            })
-            router.push({ name: 'deployments.list' })
-        }
-    } catch (err: any) {
-        toastStore.addToast({
-            type: 'error',
-            message: `${t('DeploymentDetailView.deleteErrorToast')}: ` + extractErrorMessage(err),
-        })
-    } finally {
-        showDeleteModal.value = false
-    }
-}
-
-// Redeploy confirmation handler — close the modal first (so the user
-// gets immediate visual feedback that their click registered) and
-// then dispatch the actual API call. ``executeRedeploy`` owns its
-// own toast handling and adds/removes the in-flight marker.
-const confirmRedeploy = async () => {
-    const address = redeployTargetAddress.value
-    showRedeployModal.value = false
-    if (!address) return
-    try {
-        await executeRedeploy(address)
-    } finally {
-        redeployTargetAddress.value = null
-    }
-}
-
-// Pause / resume handler — same wiring as ``confirmDelete``: the
-// backend returns 202 with a ``task_id`` when it dispatched the
-// worker, so we just reload the deployment + tasks and the existing
-// SSE stream / activeTask plumbing takes over from there. The button
-// itself is hidden while ``pausing``/``resuming`` so the user can't
-// double-click; ``pauseResumeBusy`` debounces the in-flight HTTP call
-// in case the click lands faster than the deployment status refresh.
-const confirmPauseResume = async () => {
-    if (!deploymentId || pauseResumeBusy.value) return
-    const action = pauseResumeAction.value
-    if (!action) return
-    pauseResumeBusy.value = true
-    try {
-        const call = action === 'pause'
-            ? deploymentStore.pauseDeployment(deploymentId)
-            : deploymentStore.resumeDeployment(deploymentId)
-        await call
-        toastStore.addToast({
-            type: 'info',
-            message: action === 'pause'
-                ? t('DeploymentDetailView.pauseStartedToast')
-                : t('DeploymentDetailView.resumeStartedToast'),
-        })
-        await deploymentStore.fetchDeploymentById(deploymentId)
-        await loadTasks()
-    } catch (err: any) {
-        toastStore.addToast({
-            type: 'error',
-            message: (action === 'pause'
-                ? t('DeploymentDetailView.pauseErrorToast')
-                : t('DeploymentDetailView.resumeErrorToast'))
-                + ': '
-                + extractErrorMessage(err),
-        })
-    } finally {
-        pauseResumeBusy.value = false
-        showPauseResumeModal.value = false
-    }
-}
-
-// Per-user resend-access state. Map ``userId → 'sending' | 'sent' | 'error'``
-// so the button can show inline feedback on the row that was clicked
-// without forcing a re-render of the whole list. The 'sent' state
-// auto-clears after 2s so the user can resend again.
-const resendState = ref<Record<string, 'sending' | 'sent' | 'error'>>({})
-
-const resendAccess = async (teamId: string, userId: string) => {
-    resendState.value = { ...resendState.value, [userId]: 'sending' }
-    try {
-        await deploymentApi.resendAccess(deploymentId, teamId, userId)
-        resendState.value = { ...resendState.value, [userId]: 'sent' }
-        toastStore.addToast({
-            type: 'success',
-            message: t('DeploymentDetailView.resendAccessSuccess'),
-        })
-        window.setTimeout(() => {
-            const next = { ...resendState.value }
-            delete next[userId]
-            resendState.value = next
-        }, 2000)
-    } catch (err: any) {
-        resendState.value = { ...resendState.value, [userId]: 'error' }
-        // Backend returns ``{detail: {reason: '...'}}``; surface the
-        // reason verbatim — the UI doesn't need to localise every
-        // possible code, the toast is for the operator.
-        //
-        // Two reasons get a dedicated toast string so the user
-        // understands WHY mail didn't go out:
-        //   * smtp_disabled (503): platform-wide kill-switch; needs
-        //     an admin to flip ``SMTP_ENABLED`` in the backend env.
-        //     A generic "Failed to send" toast would mislead them
-        //     into thinking the SMTP server is down.
-        //   * everything else: stays in the existing failure path
-        //     so SMTP-rejected-the-recipient, transient errors, and
-        //     unknown reasons all get the verbose toast.
-        const reason = err?.response?.data?.detail?.reason || err?.message || 'unknown'
-        const isSmtpDisabled = err?.response?.status === 503 && reason === 'smtp_disabled'
-        const isDeploymentBusyErr = err?.response?.status === 409 && reason === 'deployment_busy'
-        toastStore.addToast({
-            type: (isSmtpDisabled || isDeploymentBusyErr) ? 'warning' : 'error',
-            message: isSmtpDisabled
-                ? t('DeploymentDetailView.resendAccessSmtpDisabled')
-                : isDeploymentBusyErr
-                    ? t('DeploymentDetailView.resendAccessDeploymentBusy')
-                    : `${t('DeploymentDetailView.resendAccessError')}: ${reason}`,
-        })
-        window.setTimeout(() => {
-            const next = { ...resendState.value }
-            delete next[userId]
-            resendState.value = next
-        }, 3000)
-    }
-}
-
 const formatDate = formatDateTime
-
-const selectTask = async (task: Task) => {
-    loadingTaskDetail.value = true
-    try {
-        const { data } = await taskApi.getById(task.taskId)
-        selectedTask.value = data
-    } catch (err) {
-        console.error('Error loading task details:', err)
-        toastStore.addToast({
-            type: 'error',
-            message: 'Failed to load task details'
-        })
-    } finally {
-        loadingTaskDetail.value = false
-    }
-}
-
-const deselectTask = () => {
-    selectedTask.value = null
-}
 </script>
 
 
@@ -1521,22 +773,22 @@ const deselectTask = () => {
             <div class="flex items-center gap-4">
                 <RouterLink :to="{ name: 'deployments.list' }">
                     <button
-                        class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition">
-                        <CircleArrowLeft :size="24" class="text-gray-700" />
+                        class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-input transition">
+                        <CircleArrowLeft :size="24" class="text-content-secondary" />
                     </button>
                 </RouterLink>
 
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">{{ deployment.name }}</h1>
-                    <p class="text-sm text-gray-500 mt-1">Deployment Details</p>
+                    <h1 class="text-3xl font-bold text-content-primary">{{ deployment.name }}</h1>
+                    <p class="text-sm text-content-disabled mt-1">Deployment Details</p>
                 </div>
             </div>
 
             <div class="flex items-center gap-4">
                 <div class="flex items-center gap-3">
-                    <component :is="getStatusStyles(deployment.status).icon" :size="20" :class="deployment.status === 'success' ? 'text-green-600' :
-                        deployment.status === 'failed' ? 'text-red-600' :
-                            deployment.status === 'running' ? 'text-blue-600' : 'text-yellow-600'" />
+                    <component :is="getStatusStyles(deployment.status).icon" :size="20" :class="deployment.status === 'success' ? 'text-status-success' :
+                        deployment.status === 'failed' ? 'text-status-error' :
+                            deployment.status === 'running' ? 'text-tag-info' : 'text-status-warning'" />
                     <span
                         class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold border capitalize"
                         :class="getStatusStyles(deployment.status).badgeClass">
@@ -1579,33 +831,33 @@ const deselectTask = () => {
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Deployment info card -->
-            <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <div class="bg-surface-card rounded-xl border border-card-border p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-content-primary mb-4 flex items-center gap-2">
                     <Package :size="20" class="text-primary" />
                     Deployment Info
                 </h2>
                 <div class="space-y-4">
                     <div>
-                        <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                        <div class="text-xs text-content-disabled uppercase tracking-wide mb-1">
                             {{ $t('DeploymentsView.deploymentName') }}
                         </div>
-                        <div class="text-sm font-medium text-gray-900">{{ deployment.name }}</div>
+                        <div class="text-sm font-medium text-content-primary">{{ deployment.name }}</div>
                     </div>
                     <div>
-                        <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Release Tag</div>
+                        <div class="text-xs text-content-disabled uppercase tracking-wide mb-1">Release Tag</div>
                         <div class="text-sm">
                             <span
-                                class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-100 text-indigo-800 border border-indigo-300">
+                                class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-tag-neutralLight text-tag-neutral border border-tag-neutralBorder">
                                 <GitBranch :size="12" class="mr-1" />
                                 {{ deployment.releaseTag }}
                             </span>
                         </div>
                     </div>
                     <div>
-                        <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                        <div class="text-xs text-content-disabled uppercase tracking-wide mb-1">
                             {{ $t('DeploymentDetailView.deploymentCreated') }}
                         </div>
-                        <div class="text-sm font-medium text-gray-700 flex items-center gap-1">
+                        <div class="text-sm font-medium text-content-secondary flex items-center gap-1">
                             <Calendar :size="14" />
                             {{ deploymentTimestamp }}
                         </div>
@@ -1614,18 +866,18 @@ const deselectTask = () => {
             </div>
 
             <!-- App info card -->
-            <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <Package :size="20" class="text-emerald-600" />
+            <div class="bg-surface-card rounded-xl border border-card-border p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-content-primary mb-4 flex items-center gap-2">
+                    <Package :size="20" class="text-status-success" />
                     {{ $t('DeploymentsView.deploymentApp') }}
                 </h2>
                 <div class="space-y-4" v-if="deployment.app">
                     <div>
-                        <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">App Name</div>
-                        <div class="text-sm font-medium text-gray-900">{{ deployment.app.name }}</div>
+                        <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">App Name</div>
+                        <div class="text-sm font-medium text-content-primary">{{ deployment.app.name }}</div>
                     </div>
                     <div>
-                        <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{
+                        <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">{{
                             $t('DeploymentDetailView.deploymentDescription') }}</div>
                         <MarkdownRenderer
                             v-if="deployment.app.description && deployment.app.description.trim()"
@@ -1635,30 +887,30 @@ const deselectTask = () => {
                             :expandable="true"
                             class="text-sm"
                         />
-                        <div v-else class="text-sm text-gray-500 italic">No description</div>
+                        <div v-else class="text-sm text-content-secondary italic">No description</div>
                     </div>
                     <div>
-                        <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Git Repository</div>
+                        <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">Git Repository</div>
                         <a :href="deployment.app.git_link ?? undefined" target="_blank"
-                            class="text-sm text-blue-600 hover:text-blue-800 underline break-all">
+                            class="text-sm text-tag-info hover:opacity-80 underline break-all">
                             {{ deployment.app.git_link }}
                         </a>
                     </div>
                 </div>
-                <div v-else class="text-sm text-gray-500">No app information available</div>
+                <div v-else class="text-sm text-content-secondary">No app information available</div>
             </div>
 
             <!-- User info card -->
-            <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <User :size="20" class="text-blue-600" />
+            <div class="bg-surface-card rounded-xl border border-card-border p-6 shadow-sm">
+                <h2 class="text-lg font-semibold text-content-primary mb-4 flex items-center gap-2">
+                    <User :size="20" class="text-tag-info" />
                     {{ $t('DeploymentDetailView.deploymentOwner') }}
                 </h2>
                 <div class="space-y-4" v-if="deployment.user">
                     <div>
-                        <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{
+                        <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">{{
                             $t('DeploymentDetailView.deploymentUserName') }}</div>
-                        <div class="text-sm font-medium text-gray-900 flex items-center gap-2">
+                        <div class="text-sm font-medium text-content-primary flex items-center gap-2">
                             <div
                                 class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] text-primary font-bold">
                                 {{ deployment.user.username.substring(0, 2).toUpperCase() }}
@@ -1667,27 +919,27 @@ const deselectTask = () => {
                         </div>
                     </div>
                     <div>
-                        <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Email</div>
-                        <div class="text-sm text-gray-700">{{ deployment.user.email }}</div>
+                        <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">Email</div>
+                        <div class="text-sm text-content-secondary">{{ deployment.user.email }}</div>
                     </div>
                     <div>
-                        <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">{{
+                        <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">{{
                             $t('DeploymentDetailView.deploymentUserRole') }}</div>
                         <div class="text-sm">
                             <span
-                                class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-300 capitalize">
+                                class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-tag-accentLight text-tag-accent border border-tag-accentBorder capitalize">
                                 {{ deployment.user.role }}
                             </span>
                         </div>
                     </div>
                 </div>
-                <div v-else class="text-sm text-gray-500">No user information available</div>
+                <div v-else class="text-sm text-content-secondary">No user information available</div>
             </div>
         </div>
 
         <!-- Groups section -->
-        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm" v-if="groups.length > 0">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <div class="bg-surface-card rounded-xl border border-card-border p-6 shadow-sm" v-if="groups.length > 0">
+            <h2 class="text-lg font-semibold text-content-primary mb-4 flex items-center gap-2">
                 <Users :size="20" class="text-primary" />
                 {{ $t('DeploymentDetailView.deploymentGroups') }}
             </h2>
@@ -1696,7 +948,7 @@ const deselectTask = () => {
                 enter-from-class="opacity-0 translate-x-2" enter-to-class="opacity-100 translate-x-0"
                 leave-active-class="transition-all duration-200 ease-out absolute top-0 left-0 right-0"
                 leave-from-class="opacity-100 translate-x-0" leave-to-class="opacity-0 -translate-x-2">
-                <div v-if="currentGroup" key="detail" class="bg-gray-50 rounded-lg p-4">
+                <div v-if="currentGroup" key="detail" class="bg-surface-input rounded-lg p-4">
 
                     <button @click="deselectGroup"
                         class="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-3 group">
@@ -1704,7 +956,7 @@ const deselectTask = () => {
                         <span class="text-sm font-medium">{{ $t('DeploymentDetailView.deploymentGroupsBack') }}</span>
                     </button>
 
-                    <div class="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
+                    <div class="flex items-center gap-3 mb-4 pb-3 border-b border-card-border">
                         <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                             <span class="text-primary font-bold text-sm">{{ currentGroup.index + 1 }}</span>
                         </div>
@@ -1712,33 +964,33 @@ const deselectTask = () => {
                     </div>
 
                     <div class="space-y-2">
-                        <div class="text-xs text-gray-500 uppercase tracking-wide mb-2">
+                        <div class="text-xs text-content-secondary uppercase tracking-wide mb-2">
                             {{ $t('DeploymentDetailView.deploymentStudentCount', {
                                 n: currentGroup?.students?.length ||
                                     0
                             }, currentGroup?.students?.length || 0) }}
                         </div>
                         <div v-for="(student, idx) in currentGroup.students" :key="student"
-                            class="flex items-center gap-3 bg-white rounded-lg px-3 py-2 border border-gray-200">
+                            class="flex items-center gap-3 bg-surface-card rounded-lg px-3 py-2 border border-card-border">
                             <div
                                 class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs text-primary font-bold">
                                 {{ Number(idx) + 1 }}
                             </div>
-                            <span class="font-mono text-sm text-gray-700">{{ student }}</span>
+                            <span class="font-mono text-sm text-content-secondary">{{ student }}</span>
                         </div>
                     </div>
                 </div>
 
                 <div v-else key="overview" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div v-for="group in groups" :key="group.index" @click="selectGroup(group.index)"
-                        class="bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors border border-gray-200 hover:border-primary/30">
+                        class="bg-surface-input rounded-lg p-4 cursor-pointer hover:bg-surface-input transition-colors border border-card-border hover:border-primary/30">
                         <div class="flex items-center gap-3 mb-2">
                             <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                                 <span class="text-primary font-bold text-sm">{{ group.index + 1 }}</span>
                             </div>
                             <div class="font-semibold">{{ group.name }}</div>
                         </div>
-                        <div class="text-sm text-gray-600 ml-11">
+                        <div class="text-sm text-content-secondary ml-11">
                             {{ $t('DeploymentDetailView.deploymentStudentCount', { n: group.students.length },
                                 group.students.length) }}
                         </div>
@@ -1748,18 +1000,18 @@ const deselectTask = () => {
         </div>
 
         <!-- Deployment Variables -->
-        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm"
+        <div class="bg-surface-card rounded-xl border border-card-border p-6 shadow-sm"
             v-if="Object.keys(deploymentVariables).length > 0">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Settings :size="20" class="text-orange-600" />
+            <h2 class="text-lg font-semibold text-content-primary mb-4 flex items-center gap-2">
+                <Settings :size="20" class="text-tag-destroy" />
                 {{ $t('DeploymentDetailView.deploymentConfig') }}
             </h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div v-for="(value, key) in deploymentVariables" :key="key"
-                    class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <div class="text-xs text-gray-500 uppercase tracking-wide mb-1 font-mono">{{ key }}</div>
-                    <div class="font-medium text-gray-800 break-all text-sm">
+                    class="bg-surface-input rounded-lg p-4 border border-card-border">
+                    <div class="text-xs text-content-secondary uppercase tracking-wide mb-1 font-mono">{{ key }}</div>
+                    <div class="font-medium text-content-primary break-all text-sm">
                         {{ cleanVariableValue(value) }}
                     </div>
                 </div>
@@ -1775,31 +1027,31 @@ const deselectTask = () => {
              running task. Replaces the previous mix of "Latest Task"
              info card + duplicate entry in the Tasks & Logs list. -->
         <div v-if="isStreamRelevant && activeTask"
-            class="bg-white rounded-xl border border-blue-300 shadow-sm overflow-hidden">
+            class="bg-surface-card rounded-xl border border-tag-infoBorder shadow-sm overflow-hidden">
             <!-- Header strip: gradient + live indicator + task type/status -->
-            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-200">
+            <div class="bg-gradient-to-r from-tag-infoLight to-tag-neutralLight px-6 py-4 border-b border-tag-infoBorder">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="relative">
-                            <div class="w-2.5 h-2.5 bg-green-500 rounded-full"></div>
-                            <div class="absolute inset-0 w-2.5 h-2.5 bg-green-500 rounded-full animate-ping"></div>
+                            <div class="w-2.5 h-2.5 bg-status-success rounded-full"></div>
+                            <div class="absolute inset-0 w-2.5 h-2.5 bg-status-success rounded-full animate-ping"></div>
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <span class="text-sm font-semibold text-gray-900 capitalize">{{ activeTask.type
+                                <span class="text-sm font-semibold text-content-primary capitalize">{{ activeTask.type
                                 }}</span>
-                                <span class="text-xs font-medium text-gray-500">·</span>
-                                <span class="text-xs text-gray-600">running since {{ formatDate(activeTask.started_at ||
+                                <span class="text-xs font-medium text-content-secondary">·</span>
+                                <span class="text-xs text-content-secondary">running since {{ formatDate(activeTask.started_at ||
                                     activeTask.created_at) }}</span>
                             </div>
-                            <div class="text-xs text-gray-500 font-mono mt-0.5">{{ activeTask.taskId }}</div>
+                            <div class="text-xs text-content-secondary font-mono mt-0.5">{{ activeTask.taskId }}</div>
                         </div>
                     </div>
                     <span class="text-xs px-2 py-1 rounded-md font-medium" :class="streamConnectionState === 'live'
-                        ? 'bg-green-100 text-green-700 border border-green-200'
+                        ? 'bg-status-successLight text-status-success border border-status-success/30'
                         : streamConnectionState === 'reconnecting'
-                            ? 'bg-yellow-100 text-yellow-700 border border-yellow-200'
-                            : 'bg-gray-100 text-gray-600 border border-gray-200'">
+                            ? 'bg-status-warningLight text-status-warning border border-status-warning/30'
+                            : 'bg-surface-input text-content-secondary border border-card-border'">
                         {{ streamConnectionState === 'live' ? 'Stream live' : streamConnectionState }}
                     </span>
                 </div>
@@ -1816,7 +1068,7 @@ const deselectTask = () => {
                      guess from the DB seed, so checking it alone is
                      enough to decide whether to render the stepper. -->
                 <template v-if="streamCurrentPhaseIndex === null && !streamCurrentPhase">
-                    <div class="flex items-center gap-3 py-6 justify-center text-gray-500">
+                    <div class="flex items-center gap-3 py-6 justify-center text-content-secondary">
                         <Loader2 class="animate-spin" :size="20" />
                         <span class="text-sm">Worker is starting up…</span>
                     </div>
@@ -1825,15 +1077,15 @@ const deselectTask = () => {
                     <!-- Progress headline -->
                     <div>
                         <div class="flex items-baseline justify-between mb-2">
-                            <span class="text-base font-semibold text-gray-900">
+                            <span class="text-base font-semibold text-content-primary">
                                 {{ phaseLabel(streamCurrentPhase) || 'Starting…' }}
                             </span>
-                            <span class="text-2xl font-bold text-gray-900 tabular-nums">
-                                {{ streamProgress ?? 0 }}<span class="text-sm text-gray-500 font-medium">%</span>
+                            <span class="text-2xl font-bold text-content-primary tabular-nums">
+                                {{ streamProgress ?? 0 }}<span class="text-sm text-content-secondary font-medium">%</span>
                             </span>
                         </div>
-                        <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                            <div class="bg-gradient-to-r from-blue-500 to-indigo-500 h-2 rounded-full transition-all duration-500 ease-out"
+                        <div class="w-full bg-surface-input rounded-full h-2 overflow-hidden">
+                            <div class="bg-gradient-to-r from-tag-info to-tag-neutral h-2 rounded-full transition-all duration-500 ease-out"
                                 :style="{ width: (streamProgress ?? 0) + '%' }"></div>
                         </div>
                     </div>
@@ -1848,18 +1100,18 @@ const deselectTask = () => {
                         <template v-for="idx in phaseStepCount" :key="idx - 1">
                             <div class="flex-shrink-0 flex flex-col items-center gap-2 min-w-[60px]">
                                 <div class="w-2.5 h-2.5 rounded-full transition-all" :class="(idx - 1) < currentPhaseIndex
-                                    ? 'bg-blue-500'
+                                    ? 'bg-tag-info'
                                     : (idx - 1) === currentPhaseIndex
-                                        ? 'bg-blue-500 ring-4 ring-blue-200 scale-125'
-                                        : 'bg-gray-200'"></div>
+                                        ? 'bg-tag-info ring-4 ring-tag-infoLight scale-125'
+                                        : 'bg-surface-hover'"></div>
                                 <span
                                     class="text-[10px] uppercase tracking-wide font-medium whitespace-nowrap text-center"
-                                    :class="(idx - 1) <= currentPhaseIndex ? 'text-blue-700' : 'text-gray-400'">
+                                    :class="(idx - 1) <= currentPhaseIndex ? 'text-tag-info' : 'text-content-disabled'">
                                     {{ phaseStepLabel(idx - 1) }}
                                 </span>
                             </div>
                             <div v-if="(idx - 1) < phaseStepCount - 1" class="flex-1 h-px min-w-[8px] mt-[5px]"
-                                :class="(idx - 1) < currentPhaseIndex ? 'bg-blue-300' : 'bg-gray-200'"></div>
+                                :class="(idx - 1) < currentPhaseIndex ? 'bg-tag-info/50' : 'bg-surface-hover'"></div>
                         </template>
                     </div>
                 </template>
@@ -1871,29 +1123,29 @@ const deselectTask = () => {
                      producing output even after the box is full. -->
                 <div v-if="streamLiveLogs.length > 0" class="space-y-2">
                     <div class="flex items-center justify-between">
-                        <span class="text-xs uppercase tracking-wide font-semibold text-gray-600">Live output</span>
-                        <span class="text-xs text-gray-500">
+                        <span class="text-xs uppercase tracking-wide font-semibold text-content-secondary">Live output</span>
+                        <span class="text-xs text-content-secondary">
                             {{ streamTotalLogCount.toLocaleString() }} {{ streamTotalLogCount === 1 ? 'line' : 'lines'
                             }}
-                            <span v-if="streamLiveLogs.length < streamTotalLogCount" class="text-gray-400">
+                            <span v-if="streamLiveLogs.length < streamTotalLogCount" class="text-content-disabled">
                                 · last {{ streamLiveLogs.length }} shown
                             </span>
                         </span>
                     </div>
                     <div class="bg-gray-900 rounded-md p-3 max-h-72 overflow-y-auto font-mono text-xs">
                         <div v-for="(log, idx) in streamLiveLogs" :key="`${log.timestamp}-${idx}`"
-                            class="text-gray-200 whitespace-pre-wrap break-words" :class="{
-                                'text-red-400': log.level === 'ERROR',
-                                'text-yellow-300': log.level === 'WARNING',
-                                'text-green-400': log.level === 'SUCCESS',
-                                'text-gray-400': log.streaming,
+                            class="text-content-inverse whitespace-pre-wrap break-words" :class="{
+                                'text-status-error': log.level === 'ERROR',
+                                'text-status-warning': log.level === 'WARNING',
+                                'text-status-success': log.level === 'SUCCESS',
+                                'text-content-disabled': log.streaming,
                             }">
-                            <span class="text-gray-500 mr-2">{{ log.timestamp.split('T')[1]?.slice(0, 8) || '' }}</span>
-                            <span v-if="log.tool" class="text-blue-400 mr-1">[{{ log.tool }}]</span>{{ log.message }}
+                            <span class="text-content-secondary mr-2">{{ log.timestamp.split('T')[1]?.slice(0, 8) || '' }}</span>
+                            <span v-if="log.tool" class="text-tag-info mr-1">[{{ log.tool }}]</span>{{ log.message }}
                         </div>
                     </div>
                 </div>
-                <div v-else class="bg-gray-50 border border-gray-200 rounded-md p-4 text-center text-xs text-gray-500">
+                <div v-else class="bg-surface-input border border-card-border rounded-md p-4 text-center text-xs text-content-secondary">
                     Waiting for first log line…
                 </div>
             </div>
@@ -1903,40 +1155,40 @@ const deselectTask = () => {
              the human-readable view (who has access to what) precedes
              the technical resource listing. -->
         <div v-if="deployment.teams && deployment.teams.length > 0"
-            class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-8">
+            class="bg-surface-card rounded-xl border border-card-border p-6 shadow-sm mb-8">
             <div class="flex items-center gap-3 mb-5">
-                <div class="p-2 bg-gray-100 rounded-lg">
-                    <Users :size="20" class="text-gray-600" />
+                <div class="p-2 bg-surface-input rounded-lg">
+                    <Users :size="20" class="text-content-secondary" />
                 </div>
-                <span class="text-lg font-semibold text-gray-900">
+                <span class="text-lg font-semibold text-content-primary">
                     {{ $t('DeploymentDetailView.teamsAndMembers') }}
                 </span>
-                <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded">
+                <span class="px-2 py-0.5 bg-surface-input text-content-secondary text-xs font-bold rounded">
                     {{ deployment.teams.length }}
                 </span>
             </div>
 
             <div class="space-y-4">
                 <div v-for="team in enrichedTeams" :key="team.teamId"
-                    class="border border-gray-200 rounded-lg overflow-hidden">
-                    <div class="bg-gray-50 px-4 py-3 flex items-center justify-between border-b border-gray-200">
+                    class="border border-card-border rounded-lg overflow-hidden">
+                    <div class="bg-surface-input px-4 py-3 flex items-center justify-between border-b border-card-border">
                         <div class="flex items-center gap-2">
-                            <span class="font-semibold text-gray-900">{{ team.name }}</span>
-                            <span class="text-xs text-gray-500">·</span>
-                            <span class="text-xs text-gray-600">
+                            <span class="font-semibold text-content-primary">{{ team.name }}</span>
+                            <span class="text-xs text-content-secondary">·</span>
+                            <span class="text-xs text-content-secondary">
                                 {{ team.members.length }}
                                 {{ team.members.length === 1 ? 'member' : 'members' }}
                             </span>
                         </div>
                     </div>
 
-                    <div v-if="team.members.length === 0" class="px-4 py-6 text-center text-sm text-gray-500">
+                    <div v-if="team.members.length === 0" class="px-4 py-6 text-center text-sm text-content-secondary">
                         No members assigned to this team.
                     </div>
 
                     <div v-else>
                         <div v-for="member in team.members" :key="member.userId"
-                            class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-4 py-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50 transition-colors">
+                            class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 px-4 py-4 border-b border-card-border last:border-b-0 hover:bg-surface-input/50 transition-colors">
 
                             <div class="flex items-center gap-3 min-w-0 flex-1">
                                 <div
@@ -1944,49 +1196,49 @@ const deselectTask = () => {
                                     <User :size="16" />
                                 </div>
                                 <div class="min-w-0 pr-2">
-                                    <div class="font-medium text-gray-900 truncate">{{ member.username }}</div>
-                                    <div class="text-xs text-gray-500 truncate">{{ member.email }}</div>
+                                    <div class="font-medium text-content-primary truncate">{{ member.username }}</div>
+                                    <div class="text-xs text-content-secondary truncate">{{ member.email }}</div>
                                 </div>
                             </div>
 
                             <div v-if="member.account"
-                                class="flex flex-wrap items-center gap-4 text-xs font-mono text-gray-600 lg:justify-end">
+                                class="flex flex-wrap items-center gap-4 text-xs font-mono text-content-secondary lg:justify-end">
 
                                 <!-- Web-app URL from ``team_vms.<team>.url``,
                                      shared by every team member. When set, the
                                      SSH pill is dropped and the username shows next to it. -->
                                 <div v-if="team.vm?.url"
-                                    class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded border border-gray-100">
-                                    <span class="text-gray-400 font-sans text-[10px] uppercase tracking-wider flex-shrink-0">User:</span>
+                                    class="flex items-center gap-1.5 bg-surface-input px-2 py-1 rounded border border-card-border">
+                                    <span class="text-content-disabled font-sans text-[10px] uppercase tracking-wider flex-shrink-0">User:</span>
                                     <span>{{ member.account.data.username }}</span>
                                     <button
                                         @click="copyToClipboard(member.account.data.username, 'user-' + member.account.key)"
-                                        class="text-gray-400 hover:text-amber-600 p-0.5 rounded hover:bg-gray-200 transition-colors flex-shrink-0"
+                                        class="text-content-disabled hover:text-status-warning p-0.5 rounded hover:bg-surface-input transition-colors flex-shrink-0"
                                         :title="copiedKey === 'user-' + member.account.key ? 'Kopiert!' : 'Username kopieren'">
                                         <component :is="copiedKey === 'user-' + member.account.key ? Check : Copy" :size="12" />
                                     </button>
                                 </div>
 
                                 <div v-if="member.account.data.ip && member.account.data.port && member.account.data.type !== 'ssh_key' && member.account.data.authtype !== 'ssh' && member.account.data.port !== 22"
-                                    class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded border border-gray-100 max-w-[280px]">
-                                    <span class="text-gray-400 font-sans text-[10px] uppercase tracking-wider flex-shrink-0">URL:</span>
+                                    class="flex items-center gap-1.5 bg-surface-input px-2 py-1 rounded border border-card-border max-w-[280px]">
+                                    <span class="text-content-disabled font-sans text-[10px] uppercase tracking-wider flex-shrink-0">URL:</span>
                                     <a :href="userUrlFor(member.account.data, team.vm?.url) ?? ''" target="_blank" rel="noopener noreferrer"
-                                        class="text-blue-600 hover:underline truncate">{{ userUrlFor(member.account.data, team.vm?.url)?.replace(/^https?:\/\//, '') }}</a>
+                                        class="text-tag-info hover:underline truncate">{{ userUrlFor(member.account.data, team.vm?.url)?.replace(/^https?:\/\//, '') }}</a>
                                     <button
                                         @click="copyToClipboard(userUrlFor(member.account.data, team.vm?.url) ?? '', 'vmurl-' + member.account.key)"
-                                        class="text-gray-400 hover:text-amber-600 p-0.5 rounded hover:bg-gray-200 transition-colors flex-shrink-0"
+                                        class="text-content-disabled hover:text-status-warning p-0.5 rounded hover:bg-surface-input transition-colors flex-shrink-0"
                                         :title="copiedKey === 'vmurl-' + member.account.key ? 'Kopiert!' : 'URL kopieren'">
                                         <component :is="copiedKey === 'vmurl-' + member.account.key ? Check : Copy" :size="12" />
                                     </button>
                                 </div>
                                 <div v-else-if="team.vm?.url"
-                                    class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded border border-gray-100 max-w-[280px]">
-                                    <span class="text-gray-400 font-sans text-[10px] uppercase tracking-wider flex-shrink-0">URL:</span>
+                                    class="flex items-center gap-1.5 bg-surface-input px-2 py-1 rounded border border-card-border max-w-[280px]">
+                                    <span class="text-content-disabled font-sans text-[10px] uppercase tracking-wider flex-shrink-0">URL:</span>
                                     <a :href="team.vm.url" target="_blank" rel="noopener noreferrer"
-                                        class="text-blue-600 hover:underline truncate">{{ team.vm.url.replace(/^https?:\/\//, '') }}</a>
+                                        class="text-tag-info hover:underline truncate">{{ team.vm.url.replace(/^https?:\/\//, '') }}</a>
                                     <button
                                         @click="copyToClipboard(team.vm.url, 'vmurl-' + member.account.key)"
-                                        class="text-gray-400 hover:text-amber-600 p-0.5 rounded hover:bg-gray-200 transition-colors flex-shrink-0"
+                                        class="text-content-disabled hover:text-status-warning p-0.5 rounded hover:bg-surface-input transition-colors flex-shrink-0"
                                         :title="copiedKey === 'vmurl-' + member.account.key ? 'Kopiert!' : 'URL kopieren'">
                                         <component :is="copiedKey === 'vmurl-' + member.account.key ? Check : Copy" :size="12" />
                                     </button>
@@ -1995,36 +1247,36 @@ const deselectTask = () => {
                                 <!-- Ready-to-use SSH command line — already
                                      includes username, IP and (for non-22) the port. -->
                                 <div v-if="!team.vm?.url && member.account.data.ip && member.account.data.username && (!member.account.data.authtype || member.account.data.authtype === 'ssh')"
-                                    class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded border border-gray-100 max-w-full">
-                                    <span class="text-gray-400 font-sans text-[10px] uppercase tracking-wider flex-shrink-0">SSH:</span>
+                                    class="flex items-center gap-1.5 bg-surface-input px-2 py-1 rounded border border-card-border max-w-full">
+                                    <span class="text-content-disabled font-sans text-[10px] uppercase tracking-wider flex-shrink-0">SSH:</span>
                                     <span class="truncate">{{ sshCommandFor(member.account.data) }}</span>
                                     <button
                                         @click="copyToClipboard(sshCommandFor(member.account.data), 'ssh-' + member.account.key)"
-                                        class="text-gray-400 hover:text-amber-600 p-0.5 rounded hover:bg-gray-200 transition-colors flex-shrink-0"
+                                        class="text-content-disabled hover:text-status-warning p-0.5 rounded hover:bg-surface-input transition-colors flex-shrink-0"
                                         :title="copiedKey === 'ssh-' + member.account.key ? 'Kopiert!' : 'SSH-Befehl kopieren'">
                                         <component :is="copiedKey === 'ssh-' + member.account.key ? Check : Copy" :size="12" />
                                     </button>
                                 </div>
 
                                 <div v-if="member.account.data.auth"
-                                    class="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded border border-gray-100 min-w-[150px] justify-between">
+                                    class="flex items-center gap-1.5 bg-surface-input px-2 py-1 rounded border border-card-border min-w-[150px] justify-between">
                                     <div class="truncate mr-1">
                                         <span
-                                            class="text-gray-400 font-sans text-[10px] uppercase tracking-wider mr-1">PW:</span>
+                                            class="text-content-disabled font-sans text-[10px] uppercase tracking-wider mr-1">PW:</span>
                                         <template v-if="visiblePasswords[member.account.key]">{{
                                             member.account.data.auth }}</template>
-                                        <span v-else class="tracking-widest text-gray-400 select-none">••••••••</span>
+                                        <span v-else class="tracking-widest text-content-disabled select-none">••••••••</span>
                                     </div>
 
                                     <div class="flex items-center gap-0.5 flex-shrink-0">
                                         <button @click="togglePasswordVisibility(member.account.key)"
-                                            class="text-gray-400 hover:text-gray-600 p-0.5 rounded hover:bg-gray-200 transition-colors">
+                                            class="text-content-disabled hover:text-content-secondary p-0.5 rounded hover:bg-surface-input transition-colors">
                                             <component :is="visiblePasswords[member.account.key] ? EyeOff : Eye"
                                                 :size="12" />
                                         </button>
                                         <button
                                             @click="copyToClipboard(member.account.data.auth, 'auth-' + member.account.key)"
-                                            class="text-gray-400 hover:text-amber-600 p-0.5 rounded hover:bg-gray-200 transition-colors"
+                                            class="text-content-disabled hover:text-status-warning p-0.5 rounded hover:bg-surface-input transition-colors"
                                             :title="copiedKey === 'auth-' + member.account.key ? 'Kopiert!' : 'Passwort kopieren'">
                                             <component :is="copiedKey === 'auth-' + member.account.key ? Check : Copy"
                                                 :size="12" />
@@ -2043,10 +1295,10 @@ const deselectTask = () => {
                                         : $t('DeploymentDetailView.resendAccessTooltip')"
                                     class="w-full lg:w-auto flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border transition-colors"
                                     :class="resendState[member.userId] === 'sent'
-                                        ? 'bg-green-600 text-white border-green-600'
+                                        ? 'bg-status-success text-white border-status-success'
                                         : resendState[member.userId] === 'error'
-                                            ? 'bg-red-50 text-red-700 border-red-300'
-                                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 disabled:opacity-50'">
+                                            ? 'bg-status-errorLight text-status-error border-status-error/30'
+                                            : 'bg-surface-card text-content-secondary border-border hover:bg-surface-input disabled:opacity-50'">
                                     <Loader2 v-if="resendState[member.userId] === 'sending'" :size="14"
                                         class="animate-spin" />
                                     <Check v-else-if="resendState[member.userId] === 'sent'" :size="14" />
@@ -2078,18 +1330,18 @@ const deselectTask = () => {
              ``bg-white rounded-xl border ... p-6 shadow-sm`` shell,
              same icon-tile header, same sub-section spacing. -->
         <div v-if="isOwnerView"
-             class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm mb-8">
+             class="bg-surface-card rounded-xl border border-card-border p-6 shadow-sm mb-8">
             <div class="flex items-center justify-between mb-5 gap-3 flex-wrap">
                 <div class="flex items-center gap-3">
-                    <div class="p-2 bg-gray-100 rounded-lg">
-                        <Server :size="20" class="text-gray-600" />
+                    <div class="p-2 bg-surface-input rounded-lg">
+                        <Server :size="20" class="text-content-secondary" />
                     </div>
-                    <span class="text-lg font-semibold text-gray-900">Infrastruktur</span>
+                    <span class="text-lg font-semibold text-content-primary">Infrastruktur</span>
                 </div>
                 <button
                     @click="loadResources()"
                     :disabled="resourcesLoading"
-                    class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-1.5 transition-colors"
+                    class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-border hover:bg-surface-input disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center gap-1.5 transition-colors"
                     title="Live-Status neu abfragen"
                 >
                     <RefreshCw :size="13" :class="resourcesLoading ? 'animate-spin' : ''" />
@@ -2099,7 +1351,7 @@ const deselectTask = () => {
 
             <div
                 v-if="resourcesError"
-                class="text-sm p-3 rounded-lg border bg-red-50 text-red-800 border-red-200 mb-4 flex items-start gap-2"
+                class="text-sm p-3 rounded-lg border bg-status-errorLight text-status-error border-status-error/30 mb-4 flex items-start gap-2"
             >
                 <AlertCircle :size="16" class="mt-0.5 shrink-0" />
                 <p>{{ resourcesError }}</p>
@@ -2109,26 +1361,26 @@ const deselectTask = () => {
                  styling from ``InfrastructureVmCard``. -->
             <section class="mb-6">
                 <div class="flex items-center gap-2 mb-3">
-                    <Server :size="14" class="text-gray-400" />
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray-600">
+                    <Server :size="14" class="text-content-disabled" />
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-content-secondary">
                         Virtuelle Maschinen
                     </h3>
                     <span
                         v-if="vmResources.length > 0"
-                        class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded"
+                        class="px-2 py-0.5 bg-surface-input text-content-secondary text-xs font-bold rounded"
                     >
                         {{ vmResources.length }}
                     </span>
                 </div>
                 <div
                     v-if="resourcesLoading && vmResources.length === 0"
-                    class="text-sm text-gray-500 italic px-4 py-6 bg-gray-50 rounded-lg border border-gray-100 text-center"
+                    class="text-sm text-content-secondary italic px-4 py-6 bg-surface-input rounded-lg border border-card-border text-center"
                 >
                     Lade VMs…
                 </div>
                 <div
                     v-else-if="vmResources.length === 0"
-                    class="text-sm text-gray-500 italic px-4 py-6 bg-gray-50 rounded-lg border border-gray-100 text-center"
+                    class="text-sm text-content-secondary italic px-4 py-6 bg-surface-input rounded-lg border border-card-border text-center"
                 >
                     Keine VMs im aktuellen Terraform-State.
                 </div>
@@ -2148,11 +1400,11 @@ const deselectTask = () => {
             <!-- Networks / Subnets / Floating IPs (read-only) -->
             <section v-if="networkResources.length > 0" class="mb-6">
                 <div class="flex items-center gap-2 mb-3">
-                    <Network :size="14" class="text-gray-400" />
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray-600">
+                    <Network :size="14" class="text-content-disabled" />
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-content-secondary">
                         Netzwerk
                     </h3>
-                    <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded">
+                    <span class="px-2 py-0.5 bg-surface-input text-content-secondary text-xs font-bold rounded">
                         {{ networkResources.length }}
                     </span>
                 </div>
@@ -2160,17 +1412,17 @@ const deselectTask = () => {
                     <li
                         v-for="res in networkResources"
                         :key="res.address"
-                        class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-between"
+                        class="px-3 py-2 bg-surface-input rounded-lg border border-card-border flex items-center justify-between"
                     >
                         <div class="min-w-0">
-                            <p class="font-semibold text-gray-900 truncate">
+                            <p class="font-semibold text-content-primary truncate">
                                 {{ res.display_name }}
                             </p>
-                            <p class="text-gray-500 font-mono truncate" :title="res.address">
+                            <p class="text-content-secondary font-mono truncate" :title="res.address">
                                 {{ res.address }}
                             </p>
                         </div>
-                        <span class="text-[10px] uppercase tracking-wider bg-white px-2 py-0.5 rounded border border-gray-300 text-gray-600 ml-2 shrink-0">
+                        <span class="text-[10px] uppercase tracking-wider bg-surface-card px-2 py-0.5 rounded border border-border text-content-secondary ml-2 shrink-0">
                             {{ res.category }}
                         </span>
                     </li>
@@ -2180,11 +1432,11 @@ const deselectTask = () => {
             <!-- Security Groups (read-only) -->
             <section v-if="securityResources.length > 0">
                 <div class="flex items-center gap-2 mb-3">
-                    <Shield :size="14" class="text-gray-400" />
-                    <h3 class="text-sm font-bold uppercase tracking-wider text-gray-600">
+                    <Shield :size="14" class="text-content-disabled" />
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-content-secondary">
                         Sicherheit
                     </h3>
-                    <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded">
+                    <span class="px-2 py-0.5 bg-surface-input text-content-secondary text-xs font-bold rounded">
                         {{ securityResources.length }}
                     </span>
                 </div>
@@ -2192,10 +1444,10 @@ const deselectTask = () => {
                     <li
                         v-for="res in securityResources"
                         :key="res.address"
-                        class="px-3 py-2 bg-gray-50 rounded-lg border border-gray-100"
+                        class="px-3 py-2 bg-surface-input rounded-lg border border-card-border"
                     >
-                        <p class="font-semibold text-gray-900">{{ res.display_name }}</p>
-                        <p class="text-gray-500 font-mono">{{ res.address }}</p>
+                        <p class="font-semibold text-content-primary">{{ res.display_name }}</p>
+                        <p class="text-content-secondary font-mono">{{ res.address }}</p>
                     </li>
                 </ul>
             </section>
@@ -2207,29 +1459,29 @@ const deselectTask = () => {
              Only the deployment owner / staff sees the actual task
              contents — members get a placeholder card instead so the
              page layout stays consistent across roles. -->
-        <div v-if="!isOwnerView" class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <div v-if="!isOwnerView" class="bg-surface-card rounded-xl border border-card-border p-6 shadow-sm">
             <div class="flex items-center gap-3 mb-3">
-                <div class="p-2 bg-gray-100 rounded-lg">
-                    <Terminal :size="20" class="text-gray-400" />
+                <div class="p-2 bg-surface-input rounded-lg">
+                    <Terminal :size="20" class="text-content-disabled" />
                 </div>
-                <span class="text-lg font-semibold text-gray-700">{{ $t('DeploymentDetailView.tasksAndLogs') }}</span>
+                <span class="text-lg font-semibold text-content-secondary">{{ $t('DeploymentDetailView.tasksAndLogs') }}</span>
             </div>
-            <div class="text-sm text-gray-500 flex items-start gap-2 px-2">
-                <AlertCircle :size="16" class="text-gray-400 mt-0.5 flex-shrink-0" />
+            <div class="text-sm text-content-secondary flex items-start gap-2 px-2">
+                <AlertCircle :size="16" class="text-content-disabled mt-0.5 flex-shrink-0" />
                 <span>{{ $t('DeploymentDetailView.tasksOwnerOnly') }}</span>
             </div>
         </div>
-        <div v-else class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <div v-else class="bg-surface-card rounded-xl border border-card-border p-6 shadow-sm">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-3">
-                    <div class="p-2 bg-gray-100 rounded-lg">
-                        <Terminal :size="20" class="text-gray-600" />
+                    <div class="p-2 bg-surface-input rounded-lg">
+                        <Terminal :size="20" class="text-content-secondary" />
                     </div>
-                    <span class="text-lg font-semibold text-gray-900">
+                    <span class="text-lg font-semibold text-content-primary">
                         {{ isStreamRelevant ? 'Task History' : 'Tasks & Logs' }}
                     </span>
                     <span v-if="historyTasks.length > 0"
-                        class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold rounded">
+                        class="px-2 py-0.5 bg-surface-input text-content-secondary text-xs font-bold rounded">
                         {{ historyTasks.length }}
                     </span>
                 </div>
@@ -2246,32 +1498,32 @@ const deselectTask = () => {
                     <Loader2 class="animate-spin text-primary" :size="32" />
                 </div>
 
-                <div v-else-if="historyTasks.length === 0" class="text-center py-10 text-gray-500">
+                <div v-else-if="historyTasks.length === 0" class="text-center py-10 text-content-secondary">
                     {{ isStreamRelevant ? 'No previous tasks for this deployment.' : 'No tasks found' }}
                 </div>
 
                 <div v-else class="space-y-2">
                     <div v-for="task in historyTasks" :key="task.taskId" @click="selectTask(task)"
-                        class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200 hover:border-primary/30">
+                        class="flex items-center justify-between p-4 bg-surface-input rounded-lg hover:bg-surface-input transition-colors cursor-pointer border border-card-border hover:border-primary/30">
                         <div class="flex items-center gap-4 flex-1">
-                            <component :is="getStatusStyles(task.status).icon" :size="18" :class="task.status === 'success' ? 'text-green-600' :
-                                task.status === 'failed' ? 'text-red-600' :
-                                    task.status === 'running' ? 'text-blue-600' : 'text-yellow-600'" />
+                            <component :is="getStatusStyles(task.status).icon" :size="18" :class="task.status === 'success' ? 'text-status-success' :
+                                task.status === 'failed' ? 'text-status-error' :
+                                    task.status === 'running' ? 'text-tag-info' : 'text-status-warning'" />
                             <div class="flex-1">
                                 <div class="flex items-center gap-3 mb-1">
-                                    <span class="font-medium text-gray-900 capitalize">{{ task.type }}</span>
+                                    <span class="font-medium text-content-primary capitalize">{{ task.type }}</span>
                                     <span
                                         class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border capitalize"
                                         :class="getStatusStyles(task.status).badgeClass">
                                         {{ task.status }}
                                     </span>
                                 </div>
-                                <div class="text-xs text-gray-500">
+                                <div class="text-xs text-content-secondary">
                                     Created: {{ formatDate(task.created_at) }}
                                 </div>
                             </div>
                         </div>
-                        <ChevronDown :size="20" class="text-gray-400 transform -rotate-90" />
+                        <ChevronDown :size="20" class="text-content-disabled transform -rotate-90" />
                     </div>
                 </div>
             </div>
@@ -2283,14 +1535,14 @@ const deselectTask = () => {
                 </div>
 
                 <div v-else>
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-4">
+                    <div class="bg-surface-input rounded-lg p-4 border border-card-border mb-4">
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                             <div>
-                                <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Type</div>
-                                <div class="text-sm font-medium text-gray-900 capitalize">{{ selectedTask.type }}</div>
+                                <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">Type</div>
+                                <div class="text-sm font-medium text-content-primary capitalize">{{ selectedTask.type }}</div>
                             </div>
                             <div>
-                                <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Status</div>
+                                <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">Status</div>
                                 <span
                                     class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold border capitalize"
                                     :class="getStatusStyles(selectedTask.status).badgeClass">
@@ -2298,30 +1550,30 @@ const deselectTask = () => {
                                 </span>
                             </div>
                             <div>
-                                <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Started</div>
-                                <div class="text-sm text-gray-700">{{ formatDate(selectedTask.started_at) }}</div>
+                                <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">Started</div>
+                                <div class="text-sm text-content-secondary">{{ formatDate(selectedTask.started_at) }}</div>
                             </div>
                             <div>
-                                <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Finished</div>
-                                <div class="text-sm text-gray-700">{{ formatDate(selectedTask.finished_at) }}</div>
+                                <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">Finished</div>
+                                <div class="text-sm text-content-secondary">{{ formatDate(selectedTask.finished_at) }}</div>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-1 gap-3">
                             <div>
-                                <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Task ID</div>
-                                <div class="text-xs font-mono text-gray-700 bg-white px-2 py-1 rounded">{{
+                                <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">Task ID</div>
+                                <div class="text-xs font-mono text-content-secondary bg-surface-card px-2 py-1 rounded">{{
                                     selectedTask.taskId
                                 }}</div>
                             </div>
                             <div>
-                                <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Celery Task ID</div>
-                                <div class="text-xs font-mono text-gray-700 bg-white px-2 py-1 rounded">{{
+                                <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">Celery Task ID</div>
+                                <div class="text-xs font-mono text-content-secondary bg-surface-card px-2 py-1 rounded">{{
                                     selectedTask.celeryTaskId }}</div>
                             </div>
                             <div>
-                                <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Created At</div>
-                                <div class="text-sm text-gray-700">{{ formatDate(selectedTask.created_at) }}</div>
+                                <div class="text-xs text-content-secondary uppercase tracking-wide mb-1">Created At</div>
+                                <div class="text-sm text-content-secondary">{{ formatDate(selectedTask.created_at) }}</div>
                             </div>
                         </div>
                     </div>
@@ -2334,16 +1586,16 @@ const deselectTask = () => {
                          is uniform and lets the browser handle search
                          (Cmd+F) consistently across all three blocks. -->
                     <div v-if="selectedTask.logs" class="mb-4">
-                        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                        <div class="bg-surface-card rounded-lg border border-card-border overflow-hidden">
                             <div
-                                class="bg-gradient-to-r from-emerald-50 to-green-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                                class="bg-gradient-to-r from-status-successLight to-status-successLight px-4 py-3 border-b border-card-border flex items-center justify-between">
                                 <div class="flex items-center gap-2">
-                                    <div class="p-1.5 bg-white rounded-md border border-emerald-200">
-                                        <Terminal :size="16" class="text-emerald-600" />
+                                    <div class="p-1.5 bg-surface-card rounded-md border border-status-success/30">
+                                        <Terminal :size="16" class="text-status-success" />
                                     </div>
-                                    <span class="font-semibold text-gray-900">Logs</span>
+                                    <span class="font-semibold text-content-primary">Logs</span>
                                     <span v-if="logEntryCount !== null"
-                                        class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded border border-emerald-200">
+                                        class="px-2 py-0.5 bg-status-successLight text-status-success text-xs font-bold rounded border border-status-success/30">
                                         {{ logEntryCount }} entries
                                     </span>
                                 </div>
@@ -2351,70 +1603,70 @@ const deselectTask = () => {
                                     :title="copiedKey === 'logs' ? 'Copied!' : 'Copy to clipboard'"
                                     class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors"
                                     :class="copiedKey === 'logs'
-                                        ? 'bg-emerald-600 text-white border-emerald-600'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'">
+                                        ? 'bg-status-success text-white border-status-success'
+                                        : 'bg-surface-card text-content-secondary border-border hover:bg-surface-input'">
                                     <component :is="copiedKey === 'logs' ? Check : Copy" :size="13" />
                                     {{ copiedKey === 'logs' ? 'Copied' : 'Copy' }}
                                 </button>
                             </div>
-                            <div class="bg-gray-50 p-4 overflow-y-auto max-h-[500px]">
-                                <div class="bg-white rounded-lg border border-gray-200 p-4">
+                            <div class="bg-surface-input p-4 overflow-y-auto max-h-[500px]">
+                                <div class="bg-surface-card rounded-lg border border-card-border p-4">
                                     <!-- Failure case: for a backend-formatted
                                          ``Task failed: ...`` string, split the
                                          friendly headline (shown in red) from the
                                          technical trace, which hides behind a toggle. -->
                                     <template v-if="taskLogsSplit.isFailure">
-                                        <div class="flex items-start gap-2 text-sm text-red-700 mb-3">
+                                        <div class="flex items-start gap-2 text-sm text-status-error mb-3">
                                             <AlertCircle :size="18" class="mt-0.5 flex-shrink-0" />
                                             <div class="font-medium leading-relaxed whitespace-pre-wrap">{{ taskLogsSplit.headline }}</div>
                                         </div>
                                         <button
                                             v-if="taskLogsSplit.details"
                                             type="button"
-                                            class="text-xs text-gray-600 hover:text-gray-900 underline mb-2"
+                                            class="text-xs text-content-secondary hover:text-content-primary underline mb-2"
                                             @click="showTaskLogsTrace = !showTaskLogsTrace"
                                         >
                                             {{ showTaskLogsTrace ? 'Technische Details ausblenden' : 'Technische Details anzeigen' }}
                                         </button>
                                         <pre
                                             v-if="showTaskLogsTrace && taskLogsSplit.details"
-                                            class="text-gray-700 font-mono text-xs leading-relaxed whitespace-pre-wrap"
+                                            class="text-content-secondary font-mono text-xs leading-relaxed whitespace-pre-wrap"
                                         >{{ taskLogsSplit.details }}</pre>
                                     </template>
-                                    <pre v-else class="text-gray-700 font-mono text-xs leading-relaxed whitespace-pre-wrap" v-html="highlightJson(prettyJson(selectedTask.logs))"></pre>
+                                    <pre v-else class="text-content-secondary font-mono text-xs leading-relaxed whitespace-pre-wrap" v-html="highlightJson(prettyJson(selectedTask.logs))"></pre>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div v-else class="mb-4">
-                        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+                        <div class="bg-surface-card rounded-lg border border-card-border overflow-hidden">
+                            <div class="bg-surface-input px-4 py-3 border-b border-card-border">
                                 <div class="flex items-center gap-2">
-                                    <Terminal :size="16" class="text-gray-400" />
-                                    <span class="font-semibold text-gray-700">Logs</span>
+                                    <Terminal :size="16" class="text-content-disabled" />
+                                    <span class="font-semibold text-content-secondary">Logs</span>
                                 </div>
                             </div>
-                            <div class="text-center py-8 text-gray-500">
-                                <Terminal :size="32" class="mx-auto mb-2 text-gray-300" />
+                            <div class="text-center py-8 text-content-secondary">
+                                <Terminal :size="32" class="mx-auto mb-2 text-content-disabled" />
                                 <p class="text-sm">No logs available for this task</p>
                             </div>
                         </div>
                     </div>
 
                     <div v-if="activeDataTask?.tf_state" class="mb-4">
-                        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                        <div class="bg-surface-card rounded-lg border border-card-border overflow-hidden shadow-sm">
 
                             <div
-                                class="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between select-none">
+                                class="bg-gradient-to-r from-tag-infoLight to-tag-neutralLight px-4 py-3 border-b border-card-border flex items-center justify-between select-none">
                                 <div class="flex items-center gap-2">
-                                    <div class="p-1.5 bg-white rounded-md border border-blue-200">
-                                        <Settings :size="16" class="text-blue-600" />
+                                    <div class="p-1.5 bg-surface-card rounded-md border border-tag-infoBorder">
+                                        <Settings :size="16" class="text-tag-info" />
                                     </div>
                                     <div class="flex flex-col text-left">
-                                        <span class="font-semibold text-gray-900">{{
+                                        <span class="font-semibold text-content-primary">{{
                                             $t('DeploymentDetailView.terraformState')
                                             }}</span>
-                                        <span class="text-xs text-gray-500">
+                                        <span class="text-xs text-content-secondary">
                                             {{ tfResourcesCount > 0 ? `${tfResourcesCount} verwaltete Ressourcen` :
                                                 'Erweiterte Details' }}
                                         </span>
@@ -2425,14 +1677,14 @@ const deselectTask = () => {
                                     :title="copiedKey === 'tf_state' ? 'Kopiert!' : 'In die Zwischenablage kopieren'"
                                     class="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors flex-shrink-0"
                                     :class="copiedKey === 'tf_state'
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'">
+                                        ? 'bg-tag-info text-white border-tag-info'
+                                        : 'bg-surface-card text-content-secondary border-border hover:bg-surface-input'">
                                     <component :is="copiedKey === 'tf_state' ? Check : Copy" :size="13" />
                                     {{ copiedKey === 'tf_state' ? 'Copied' : 'Copy' }}
                                 </button>
                             </div>
 
-                            <div class="bg-white p-4 overflow-y-auto max-h-[500px]">
+                            <div class="bg-surface-card p-4 overflow-y-auto max-h-[500px]">
                                 <div
                                     class="font-mono text-xs leading-relaxed text-left whitespace-pre-wrap select-text">
                                     <pre v-html="highlightJson(prettyJson(activeDataTask.tf_state))"></pre>
@@ -2472,7 +1724,7 @@ const deselectTask = () => {
                 {{ $t('DeploymentDetailView.confirmDeleteTitle') }}
             </template>
             <template #body>
-                <p class="text-gray-700" v-html="$t('DeploymentDetailView.confirmDeleteMessage', { name: deployment.name })"></p>
+                <p class="text-content-secondary" v-html="$t('DeploymentDetailView.confirmDeleteMessage', { name: deployment.name })"></p>
             </template>
             <template #footer>
                 <div class="flex justify-end gap-3">
@@ -2498,11 +1750,11 @@ const deselectTask = () => {
             </template>
             <template #body>
                 <div class="space-y-3">
-                    <p class="text-gray-700">
+                    <p class="text-content-secondary">
                         Diese VM wird zerstört und identisch neu erstellt.
                         Andere VMs in diesem Deployment bleiben unangetastet.
                     </p>
-                    <p v-if="redeployTargetAddress" class="text-xs font-mono text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 break-all">
+                    <p v-if="redeployTargetAddress" class="text-xs font-mono text-content-secondary bg-surface-input border border-card-border rounded-lg px-3 py-2 break-all">
                         {{ redeployTargetAddress }}
                     </p>
                 </div>
@@ -2530,7 +1782,7 @@ const deselectTask = () => {
                     : $t('DeploymentDetailView.confirmResumeTitle') }}
             </template>
             <template #body>
-                <p class="text-gray-700" v-html="pauseResumeAction === 'pause'
+                <p class="text-content-secondary" v-html="pauseResumeAction === 'pause'
                     ? $t('DeploymentDetailView.confirmPauseMessage', { name: deployment.name })
                     : $t('DeploymentDetailView.confirmResumeMessage', { name: deployment.name })"></p>
             </template>
