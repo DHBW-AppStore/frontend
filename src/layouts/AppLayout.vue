@@ -22,6 +22,7 @@ import { useRoute } from 'vue-router'
 import { useColorScheme } from '@/composables/useColorScheme'
 
 import logo from '@/assets/ScholarStackLogo.png'
+import logoDark from '@/assets/ScholarStackLogo-Hell.png'
 import logoMark from '@/assets/ScholarStackLogo(S).png'
 
 const { locale, t } = useI18n()
@@ -56,20 +57,20 @@ const meshStyle = computed(() => {
     return {
       backgroundColor: 'var(--color-surface-page)',
       backgroundImage: [
-        'radial-gradient(at top left, rgba(232, 25, 44, 0.35) 0px, transparent 50%)',
-        'radial-gradient(at top center, rgba(200, 16, 32, 0.20) 0px, transparent 45%)',
-        'radial-gradient(at bottom right, rgba(30, 18, 20, 0) 0px, transparent 50%)',
-        'radial-gradient(at center, rgba(232, 25, 44, 0.08) 0px, transparent 65%)',
+        'radial-gradient(at top left, var(--color-mesh-spot-1) 0px, transparent 50%)',
+        'radial-gradient(at top center, var(--color-mesh-spot-2) 0px, transparent 45%)',
+        'radial-gradient(at bottom right, var(--color-mesh-spot-3) 0px, transparent 50%)',
+        'radial-gradient(at center, var(--color-mesh-spot-4) 0px, transparent 65%)',
       ].join(', '),
     }
   }
   return {
     backgroundColor: 'var(--color-surface-page)',
     backgroundImage: [
-      'radial-gradient(at top left, rgba(217, 43, 58, 0.10) 0px, transparent 50%)',
-      'radial-gradient(at bottom right, rgba(217, 43, 58, 0.12) 0px, transparent 55%)',
-      'radial-gradient(at top right, rgba(255, 240, 240, 0.8) 0px, transparent 45%)',
-      'radial-gradient(at bottom left, rgba(255, 77, 94, 0.06) 0px, transparent 50%)',
+      'radial-gradient(at top left, var(--color-mesh-spot-1) 0px, transparent 50%)',
+      'radial-gradient(at bottom right, var(--color-mesh-spot-2) 0px, transparent 55%)',
+      'radial-gradient(at top right, var(--color-mesh-spot-3) 0px, transparent 45%)',
+      'radial-gradient(at bottom left, var(--color-mesh-spot-4) 0px, transparent 50%)',
     ].join(', '),
   }
 })
@@ -132,7 +133,7 @@ const navItems = computed(() => [
           :style="{ height: sidebarCollapsed ? '40px' : '84px', width: '100%', overflow: 'visible' }"
         >
           <img
-            :src="sidebarCollapsed ? logoMark : logo"
+            :src="sidebarCollapsed ? logoMark : (isDark ? logoDark : logo)"
             alt="ScholarStack Click'n Deploy"
             :style="{
               position: 'relative',
@@ -224,7 +225,7 @@ const navItems = computed(() => [
               @click="userMenuOpen = !userMenuOpen"
               class="user-menu-btn flex items-center gap-2 rounded-lg px-2.5 py-1.5 transition-colors"
             >
-              <div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-xs font-semibold text-white">
+              <div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-xs font-semibold text-content-inverse">
                 {{ userInitial }}
               </div>
               <span class="text-sm max-w-24 truncate user-menu-name">{{ userName }}</span>
@@ -350,22 +351,6 @@ const navItems = computed(() => [
   opacity: 1;
 }
 
-/* Logo text fade */
-.fade-text-enter-active {
-  transition: opacity 150ms ease 100ms, transform 150ms ease 100ms;
-}
-.fade-text-leave-active {
-  transition: opacity 100ms ease, transform 100ms ease;
-}
-
-/* Logo sizes for expanded / collapsed sidebar */
-.logo-full {
-  height: 96px;
-  margin-top: -24px;
-  margin-left: -8px;
-  max-width: none;
-}
-
 /* Sidebar toggle appearance */
 .sidebar-toggle-btn {
   width: 36px;
@@ -419,7 +404,7 @@ const navItems = computed(() => [
 }
 .lang-active {
   background: var(--color-primary);
-  color: #ffffff;
+  color: var(--color-content-inverse);
 }
 .lang-inactive {
   color: var(--color-nav-text);
@@ -465,26 +450,6 @@ const navItems = computed(() => [
   margin-left: auto;
   margin-right: auto;
   display: block;
-}
-
-/* Hide native scrollbar when sidebar is collapsed (class w-16 applied on aside) */
-.sidebar-bg.w-16 nav {
-  /* Firefox */
-  scrollbar-width: none;
-  /* IE 10+ */
-  -ms-overflow-style: none;
-}
-.sidebar-bg.w-16 nav::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-/* Sidebar scroll controls placed at bottom when expanded */
-
-.fade-text-enter-from,
-.fade-text-leave-to {
-  opacity: 0;
-  transform: translateX(-6px);
 }
 
 /* Dropdown transition */

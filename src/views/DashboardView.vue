@@ -7,7 +7,8 @@ import {
 } from 'lucide-vue-next'
 // Rein dekoratives Markenzeichen im Hero — die freigestellte Variante ohne
 // Schriftzug, damit die Grafik in jeder Größe lesbar bleibt.
-import logoMark from '@/assets/ScholarStackLogo(S).png'
+import logoMark from '@/assets/ScholarStackLogo.png'
+import logoMarkDark from '@/assets/ScholarStackLogo-Hell.png'
 import { useDashboard } from '@/composables/useDashboard'
 import { useQuotas } from '@/composables/useQuotas'
 import { useOpenStackCredentialsStore } from '@/stores/openstack-credentials.store'
@@ -15,6 +16,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useDeploymentStore } from '@/stores/deployment.store'
 import { useRole } from '@/composables/useRole'
 import { formatDateTime } from '@/utils/format'
+import { useColorScheme } from '@/composables/useColorScheme'
 import CredentialMissingBanner from '@/components/CredentialMissingBanner.vue'
 
 const { stats, fetchStats } = useDashboard()
@@ -24,6 +26,14 @@ const authStore = useAuthStore()
 const deploymentStore = useDeploymentStore()
 const { t } = useI18n()
 const { isStaff } = useRole()
+const { scheme } = useColorScheme()
+
+const isDark = computed(() => {
+  void scheme.value
+  return document.documentElement.classList.contains('dark')
+})
+
+const activeLogo = computed(() => isDark.value ? logoMarkDark : logoMark)
 
 /** Die fünf jüngsten Deployments, absteigend nach Anlagedatum. */
 const recentDeployments = computed(() =>
@@ -133,7 +143,7 @@ onMounted(() => {
         <span class="mark-orbit" />
         <span class="mark-plate mark-plate--top" />
         <span class="mark-plate mark-plate--bottom" />
-        <img :src="logoMark" alt="" />
+        <img :src="activeLogo" alt="" />
       </div>
     </div>
 
@@ -182,8 +192,8 @@ onMounted(() => {
     <!-- Available resources — two-column quotas list -->
     <div class="panel xl:col-span-2">
       <div class="panel-head flex items-center justify-between px-6 py-4">
-        <h2 class="text-sm font-semibold text-gray-900">{{ $t('DashboardView.availableResources') }}</h2>
-        <span v-if="quotasLoading && hasCachedQuotas" class="flex items-center gap-1.5 text-xs text-gray-400">
+        <h2 class="text-sm font-semibold panel-head-title">{{ $t('DashboardView.availableResources') }}</h2>
+        <span v-if="quotasLoading && hasCachedQuotas" class="flex items-center gap-1.5 text-xs text-content-disabled">
           <Loader2 :size="12" class="animate-spin" />
         </span>
       </div>
@@ -192,10 +202,10 @@ onMounted(() => {
       <div v-if="quotasLoading && !hasCachedQuotas" class="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
         <div v-for="i in 6" :key="i" class="animate-pulse space-y-2">
           <div class="flex justify-between">
-            <div class="h-3 bg-gray-100 rounded w-20" />
-            <div class="h-3 bg-gray-100 rounded w-10" />
+            <div class="h-3 bg-surface-hover rounded w-20" />
+            <div class="h-3 bg-surface-hover rounded w-10" />
           </div>
-          <div class="h-1.5 bg-gray-100 rounded-full" />
+          <div class="h-1.5 bg-surface-hover rounded-full" />
         </div>
       </div>
 
@@ -218,7 +228,7 @@ onMounted(() => {
 
           <span
             class="quota-pct"
-            :class="quota.percentage >= 80 ? 'text-red-600' : quota.percentage >= 60 ? 'text-amber-600' : 'text-stone-500'"
+            :class="quota.percentage >= 80 ? 'text-status-error' : quota.percentage >= 60 ? 'text-status-warning' : 'text-content-secondary'"
           >
             {{ quota.percentage }}%
             <!-- Der volle Satz bleibt für Screenreader erhalten; sichtbar
@@ -228,17 +238,17 @@ onMounted(() => {
 
           <span class="quota-val">
             {{ quota.used }}/{{ quota.limit }}{{ quota.unit }}
-            <AlertCircle v-if="quota.percentage >= 80" :size="12" class="text-red-500 shrink-0" />
+            <AlertCircle v-if="quota.percentage >= 80" :size="12" class="text-status-error shrink-0" />
           </span>
         </div>
       </div>
       <!-- No credentials -->
       <div v-else-if="needsCredentials" class="px-6 py-12 text-center">
-        <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3">
-          <XCircle :size="22" class="text-gray-400" />
+        <div class="w-12 h-12 rounded-full bg-surface-hover flex items-center justify-center mx-auto mb-3">
+          <XCircle :size="22" class="text-content-disabled" />
         </div>
-        <p class="text-sm font-medium text-gray-700">{{ t('DashboardView.noCredentialsTitle') }}</p>
-        <p class="text-xs text-gray-400 mt-1 mb-4">{{ t('DashboardView.noCredentialsHint') }}</p>
+        <p class="text-sm font-medium text-content-primary">{{ t('DashboardView.noCredentialsTitle') }}</p>
+        <p class="text-xs text-content-secondary mt-1 mb-4">{{ t('DashboardView.noCredentialsHint') }}</p>
         <RouterLink
           to="/user/openstack"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-content-inverse text-xs font-semibold rounded-lg hover:bg-primary-dark transition-colors"
@@ -249,7 +259,7 @@ onMounted(() => {
 
       <!-- Error / no data -->
       <div v-else class="px-6 py-12 text-center">
-        <p class="text-sm text-gray-400">{{ t('DashboardView.quotaLoadError') }}</p>
+        <p class="text-sm text-content-secondary">{{ t('DashboardView.quotaLoadError') }}</p>
       </div>
     </div>
 
@@ -259,26 +269,26 @@ onMounted(() => {
          Liste halten kann. -->
     <div class="panel flex flex-col">
       <div class="panel-head flex items-center justify-between px-6 py-4">
-        <h2 class="text-sm font-semibold text-gray-900">{{ $t('DashboardView.recentDeployments') }}</h2>
+        <h2 class="text-sm font-semibold panel-head-title">{{ $t('DashboardView.recentDeployments') }}</h2>
         <Loader2
           v-if="deploymentStore.isLoading && recentDeployments.length > 0"
           :size="12"
-          class="animate-spin text-gray-400"
+          class="animate-spin text-content-disabled"
         />
       </div>
 
       <!-- Skeleton (Erstladung) -->
       <div v-if="deploymentStore.isLoading && recentDeployments.length === 0" class="px-6 py-5 space-y-4">
         <div v-for="i in 4" :key="i" class="animate-pulse flex items-center gap-3">
-          <div class="h-2 w-2 rounded-full bg-gray-100 shrink-0" />
-          <div class="h-3 bg-gray-100 rounded flex-1" />
-          <div class="h-3 bg-gray-100 rounded w-14 shrink-0" />
+          <div class="h-2 w-2 rounded-full bg-surface-hover shrink-0" />
+          <div class="h-3 bg-surface-hover rounded flex-1" />
+          <div class="h-3 bg-surface-hover rounded w-14 shrink-0" />
         </div>
       </div>
 
       <!-- Fehler -->
       <div v-else-if="deploymentStore.error" class="px-6 py-12 text-center">
-        <p class="text-sm text-gray-400">{{ deploymentStore.error }}</p>
+        <p class="text-sm text-content-secondary">{{ deploymentStore.error }}</p>
       </div>
 
       <!-- Leer -->
@@ -286,11 +296,11 @@ onMounted(() => {
         <div class="activity-empty-icon">
           <Rocket :size="20" />
         </div>
-        <p class="text-sm font-medium text-gray-700">{{ $t('DashboardView.noDeploymentsTitle') }}</p>
+        <p class="text-sm font-medium text-content-primary">{{ $t('DashboardView.noDeploymentsTitle') }}</p>
         <!-- Bewusst ohne eigenen Button: "Neues Deployment" steht bereits als
              Primäraktion im Hero. Zwei gleiche Aufrufe auf einer Seite
              schwächen beide. -->
-        <p class="text-xs text-gray-400 mt-1">{{ $t('DashboardView.noDeploymentsHint') }}</p>
+        <p class="text-xs text-content-secondary mt-1">{{ $t('DashboardView.noDeploymentsHint') }}</p>
       </div>
 
       <!-- Liste -->
@@ -329,10 +339,10 @@ onMounted(() => {
    lässt das Markenzeichen rechts überhaupt erst wirken. */
 .hero-banner {
   background:
-    radial-gradient(at 88% 28%, rgba(225, 2, 16, 0.12) 0px, transparent 55%),
-    linear-gradient(120deg, #fff7f7 0%, #fdedee 55%, #fbe1e3 100%);
-  border: 1px solid #f7dcde;
-  box-shadow: 0 12px 34px -20px rgba(107, 1, 6, 0.30);
+    radial-gradient(at 88% 28%, var(--color-dash-hero-overlay) 0px, transparent 55%),
+    var(--color-dash-hero-bg);
+  border: 1px solid var(--color-dash-hero-border);
+  box-shadow: 0 12px 34px -20px var(--color-dash-hero-shadow);
   border-radius: 20px;
   padding: 36px 40px;
   display: flex;
@@ -352,7 +362,7 @@ onMounted(() => {
   right: 4%;
   width: 290px;
   height: 290px;
-  background: rgba(225, 2, 16, 0.05);
+  background: var(--color-dash-hero-shape);
   border-radius: 52px;
   transform: rotate(18deg);
 }
@@ -364,7 +374,7 @@ onMounted(() => {
   right: 20%;
   width: 230px;
   height: 230px;
-  background: rgba(225, 2, 16, 0.04);
+  background: var(--color-dash-hero-shape);
   border-radius: 44px;
   transform: rotate(-12deg);
 }
@@ -375,7 +385,7 @@ onMounted(() => {
 }
 
 .hero-greeting {
-  color: #C10612;
+  color: var(--color-dash-hero-greeting);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -384,7 +394,7 @@ onMounted(() => {
 }
 
 .hero-name {
-  color: #241a1a;
+  color: var(--color-dash-hero-name);
   font-size: 2.25rem;
   font-weight: 700;
   line-height: 1.1;
@@ -392,7 +402,7 @@ onMounted(() => {
 }
 
 .hero-sub {
-  color: #6b5b5b;
+  color: var(--color-dash-hero-sub);
   font-size: 0.9375rem;
   max-width: 32rem;
 }
@@ -410,21 +420,21 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 11px 22px;
-  background: linear-gradient(135deg, #E10210 0%, #B00410 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
   border: 1px solid transparent;
-  color: #ffffff;
+  color: var(--color-content-inverse);
   font-size: 0.875rem;
   font-weight: 600;
   border-radius: 12px;
   text-decoration: none;
-  box-shadow: 0 12px 24px -14px rgba(225, 2, 16, 0.85);
+  box-shadow: 0 12px 24px -14px var(--color-dash-hero-cta-shadow);
   transition: transform 150ms ease, box-shadow 150ms ease;
   white-space: nowrap;
 }
 
 .hero-cta:hover {
   transform: translateY(-1px);
-  box-shadow: 0 16px 30px -14px rgba(225, 2, 16, 0.9);
+  box-shadow: 0 16px 30px -14px var(--color-dash-hero-cta-shadow-hover);
 }
 
 /* Sekundäraktion: klar untergeordnet, aber nicht zaghaft. */
@@ -433,9 +443,9 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   padding: 11px 22px;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid #f0c9cc;
-  color: #B00410;
+  background: var(--color-dash-cta-ghost-bg);
+  border: 1px solid var(--color-dash-cta-ghost-border);
+  color: var(--color-dash-cta-ghost-text);
   font-size: 0.875rem;
   font-weight: 600;
   border-radius: 12px;
@@ -445,8 +455,8 @@ onMounted(() => {
 }
 
 .hero-cta-ghost:hover {
-  background: #ffffff;
-  border-color: #E10210;
+  background: var(--color-surface-card);
+  border-color: var(--color-dash-cta-ghost-border-hover);
 }
 
 /* Bühne für das Markenzeichen. Die Ebenen greifen das Stapel-Motiv des Logos
@@ -469,7 +479,7 @@ onMounted(() => {
   display: block;
   width: 72%;
   height: auto;
-  filter: drop-shadow(0 18px 30px rgba(225, 2, 16, 0.38));
+  filter: drop-shadow(0 18px 30px var(--color-dash-mark-drop-shadow));
   animation: mark-float 7s ease-in-out infinite;
 }
 
@@ -480,8 +490,8 @@ onMounted(() => {
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(225, 2, 16, 0.20) 0%,
-    rgba(225, 2, 16, 0.07) 42%,
+    var(--color-dash-mark-halo-inner) 0%,
+    var(--color-dash-mark-halo-outer) 42%,
     transparent 68%
   );
 }
@@ -490,7 +500,7 @@ onMounted(() => {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 1px solid rgba(225, 2, 16, 0.16);
+  border: 1px solid var(--color-dash-mark-ring);
 }
 
 /* Gestrichelter Ring, der sehr langsam kreist — Leben ohne Unruhe. */
@@ -498,7 +508,7 @@ onMounted(() => {
   position: absolute;
   inset: 11%;
   border-radius: 50%;
-  border: 1px dashed rgba(225, 2, 16, 0.22);
+  border: 1px dashed var(--color-dash-mark-orbit);
   animation: mark-spin 48s linear infinite;
 }
 
@@ -510,7 +520,7 @@ onMounted(() => {
   width: 54%;
   height: 30%;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(225, 2, 16, 0.16) 0%, rgba(225, 2, 16, 0.03) 100%);
+  background: linear-gradient(135deg, var(--color-dash-mark-plate) 0%, var(--color-dash-mark-plate-outer) 100%);
   transform: rotate(-22deg) skewX(-14deg);
 }
 
@@ -575,17 +585,17 @@ onMounted(() => {
   padding: 20px 22px;
   border-radius: 16px;
   text-decoration: none;
-  background: linear-gradient(180deg, #ffffff 0%, #fffbfb 100%);
-  border: 1px solid #f7e6e7;
-  box-shadow: 0 3px 14px -8px rgba(107, 1, 6, 0.16);
+  background: var(--color-dash-kpi-bg);
+  border: 1px solid var(--color-dash-kpi-border);
+  box-shadow: 0 3px 14px -8px var(--color-dash-kpi-shadow);
   overflow: hidden;
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
 }
 
 .kpi-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 14px 28px -16px rgba(107, 1, 6, 0.34);
-  border-color: #f0c9cc;
+  box-shadow: 0 14px 28px -16px var(--color-dash-kpi-shadow);
+  border-color: var(--color-dash-kpi-border-hover);
 }
 
 /* Akzentkante oben — der einzige Ort, an dem die Kacheln sich farblich
@@ -620,18 +630,18 @@ onMounted(() => {
 }
 
 .kpi-item--red {
-  --kpi-accent: linear-gradient(90deg, #E10210 0%, #B00410 100%);
-  --kpi-glow: radial-gradient(circle, rgba(225, 2, 16, 0.14) 0%, transparent 70%);
+  --kpi-accent: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  --kpi-glow: radial-gradient(circle, var(--color-dash-kpi-red-glow) 0%, transparent 70%);
 }
 
 .kpi-item--stone {
-  --kpi-accent: linear-gradient(90deg, #6b5b5b 0%, #332828 100%);
-  --kpi-glow: radial-gradient(circle, rgba(60, 48, 48, 0.12) 0%, transparent 70%);
+  --kpi-accent: linear-gradient(90deg, var(--color-dash-kpi-stone-from) 0%, var(--color-dash-kpi-stone-to) 100%);
+  --kpi-glow: radial-gradient(circle, var(--color-dash-kpi-stone-glow) 0%, transparent 70%);
 }
 
 .kpi-item--amber {
-  --kpi-accent: linear-gradient(90deg, #E48C2A 0%, #c2711a 100%);
-  --kpi-glow: radial-gradient(circle, rgba(228, 140, 42, 0.16) 0%, transparent 70%);
+  --kpi-accent: linear-gradient(90deg, var(--color-dash-kpi-amber-from) 0%, var(--color-dash-kpi-amber-to) 100%);
+  --kpi-glow: radial-gradient(circle, var(--color-dash-kpi-amber-glow) 0%, transparent 70%);
 }
 
 .kpi-body {
@@ -645,28 +655,32 @@ onMounted(() => {
   z-index: 1;
   margin-left: auto;
   flex-shrink: 0;
-  color: #d8c4c5;
+  color: var(--color-dash-kpi-arrow);
   transition: color 160ms ease, transform 160ms ease;
 }
 
 .kpi-item:hover .kpi-arrow {
-  color: #B00410;
+  color: var(--color-dash-kpi-arrow-hover);
   transform: translateX(3px);
 }
 
 /* Gemeinsame Flächenkarte: warmer Verlauf statt reinem Weiß, damit die
    Panels nicht auf dem hellen Hintergrund verschwinden. */
 .panel {
-  background: linear-gradient(180deg, #ffffff 0%, #fffcfc 100%);
-  border: 1px solid #f7e6e7;
+  background: var(--color-dash-panel-bg);
+  border: 1px solid var(--color-dash-panel-border);
   border-radius: 16px;
-  box-shadow: 0 3px 14px -8px rgba(107, 1, 6, 0.16);
+  box-shadow: 0 3px 14px -8px var(--color-dash-panel-shadow);
   overflow: hidden;
 }
 
 .panel-head {
-  background: linear-gradient(90deg, rgba(225, 2, 16, 0.05) 0%, rgba(225, 2, 16, 0) 60%);
-  border-bottom: 1px solid #f7e6e7;
+  background: var(--color-dash-panel-head-bg);
+  border-bottom: 1px solid var(--color-dash-panel-border);
+}
+
+.panel-head h2 {
+  color: var(--color-dash-panel-head-title);
 }
 
 /* Quota-Zeilen
@@ -680,7 +694,7 @@ onMounted(() => {
   align-items: center;
   gap: 10px;
   padding: 11px 0;
-  border-bottom: 1px solid #f7eeee;
+  border-bottom: 1px solid var(--color-dash-quota-border);
 }
 
 .quota-row:last-child,
@@ -696,14 +710,14 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: linear-gradient(135deg, rgba(225, 2, 16, 0.10) 0%, rgba(225, 2, 16, 0.03) 100%);
-  color: #B00410;
+  background: var(--color-dash-quota-icon-bg);
+  color: var(--color-dash-quota-icon-text);
 }
 
 .quota-label {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #3f3434;
+  color: var(--color-dash-quota-label);
   white-space: nowrap;
 }
 
@@ -715,8 +729,8 @@ onMounted(() => {
   height: 8px;
   border-radius: 999px;
   overflow: hidden;
-  background: linear-gradient(90deg, #f6ecec 0%, #f1e2e3 100%);
-  box-shadow: inset 0 1px 2px rgba(107, 1, 6, 0.07);
+  background: var(--color-dash-quota-track-bg);
+  box-shadow: inset 0 1px 2px var(--color-dash-quota-track-shadow);
 }
 
 .quota-fill {
@@ -740,7 +754,7 @@ onMounted(() => {
   font-size: 0.75rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  color: #6b5b5b;
+  color: var(--color-dash-quota-val);
   white-space: nowrap;
 }
 
@@ -754,23 +768,23 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.4) 100%);
-  border: 1px solid #f3e0e1;
-  color: #B00410;
+  background: var(--color-dash-kpi-icon-wrap-bg);
+  border: 1px solid var(--color-dash-kpi-icon-border);
+  color: var(--color-dash-kpi-icon-red);
 }
 
 .kpi-item--stone .kpi-icon-wrap {
-  color: #3a2f2f;
+  color: var(--color-dash-kpi-icon-stone);
 }
 
 .kpi-item--amber .kpi-icon-wrap {
-  color: #c2711a;
+  color: var(--color-dash-kpi-icon-amber);
 }
 
 .kpi-num {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #241a1a;
+  color: var(--color-dash-kpi-num);
   line-height: 1;
 }
 
@@ -787,7 +801,7 @@ onMounted(() => {
 }
 
 .activity-row:hover {
-  background: linear-gradient(90deg, rgba(225, 2, 16, 0.06) 0%, rgba(225, 2, 16, 0.01) 100%);
+  background: var(--color-dash-activity-row-hover);
 }
 
 /* Der Punkt trägt den Status. Ein Ring in derselben Farbe gibt ihm Gewicht,
@@ -803,7 +817,7 @@ onMounted(() => {
 .activity-name {
   font-size: 0.8125rem;
   font-weight: 500;
-  color: #3f3434;
+  color: var(--color-dash-activity-name);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -812,7 +826,7 @@ onMounted(() => {
 .activity-time {
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
-  color: #9a8888;
+  color: var(--color-dash-activity-time);
   white-space: nowrap;
 }
 
@@ -822,7 +836,7 @@ onMounted(() => {
 }
 
 .activity-row:hover .activity-arrow {
-  color: #B00410;
+  color: var(--color-dash-activity-arrow-hover);
   transform: translateX(2px);
 }
 
@@ -833,16 +847,16 @@ onMounted(() => {
   gap: 6px;
   margin-top: auto;
   padding: 13px;
-  border-top: 1px solid #f7eeee;
+  border-top: 1px solid var(--color-dash-activity-all-border);
   font-size: 0.75rem;
   font-weight: 600;
-  color: #B00410;
+  color: var(--color-dash-activity-all-text);
   text-decoration: none;
   transition: background 150ms ease;
 }
 
 .activity-all:hover {
-  background: rgba(225, 2, 16, 0.04);
+  background: var(--color-dash-activity-all-hover);
 }
 
 .activity-empty-icon {
@@ -853,8 +867,8 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   margin: 0 auto 12px;
-  background: linear-gradient(135deg, rgba(225, 2, 16, 0.12) 0%, rgba(225, 2, 16, 0.03) 100%);
-  color: #B00410;
+  background: var(--color-dash-empty-icon-bg);
+  color: var(--color-dash-empty-icon-text);
 }
 
 /* Label steht jetzt ÜBER der Zahl: beim Überfliegen liest man zuerst, worum
@@ -864,7 +878,7 @@ onMounted(() => {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #9a8888;
+  color: var(--color-dash-kpi-lbl);
   margin-bottom: 6px;
 }
 </style>

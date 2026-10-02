@@ -34,6 +34,86 @@
     --color-hero-bg:          linear-gradient(135deg, #c0392b 0%, #96000a 60%, #6b0007 100%);
     --color-hero-bg-light:    linear-gradient(135deg, #fff0f0 0%, #fde0e0 40%, #f5c6c6 100%);
 
+    /* ── Mesh background (dashboard page bg) ───────────────────────── */
+    --color-mesh-spot-1:      rgba(225, 2, 16, 0.06);
+    --color-mesh-spot-2:      rgba(225, 2, 16, 0.08);
+    --color-mesh-spot-3:      rgba(255, 245, 245, 0.80);
+    --color-mesh-spot-4:      rgba(225, 2, 16, 0.04);
+
+    /* ── Dashboard — Hero ──────────────────────────────────────────── */
+    --color-dash-hero-bg:         linear-gradient(120deg, #fff7f7 0%, #fdedee 55%, #fbe1e3 100%);
+    --color-dash-hero-border:     #f7dcde;
+    --color-dash-hero-shadow:     rgba(107, 1, 6, 0.30);
+    --color-dash-hero-shape:      rgba(225, 2, 16, 0.05);
+    --color-dash-hero-greeting:   #C10612;
+    --color-dash-hero-name:       #241a1a;
+    --color-dash-hero-sub:        #6b5b5b;
+    --color-dash-cta-ghost-bg:    rgba(255, 255, 255, 0.78);
+    --color-dash-cta-ghost-border: #f0c9cc;
+    --color-dash-cta-ghost-text:  #B00410;
+    --color-dash-cta-ghost-border-hover: #E10210;
+
+    /* ── Dashboard — KPI cards ─────────────────────────────────────── */
+    --color-dash-kpi-bg:          linear-gradient(180deg, #ffffff 0%, #fffbfb 100%);
+    --color-dash-kpi-border:      #f7e6e7;
+    --color-dash-kpi-shadow:      rgba(107, 1, 6, 0.16);
+    --color-dash-kpi-border-hover: #f0c9cc;
+    --color-dash-kpi-num:         #241a1a;
+    --color-dash-kpi-lbl:         #9a8888;
+    --color-dash-kpi-arrow:       #d8c4c5;
+    --color-dash-kpi-arrow-hover: #B00410;
+    --color-dash-kpi-icon-border: #f3e0e1;
+    --color-dash-kpi-icon-red:    #B00410;
+    --color-dash-kpi-icon-stone:  #3a2f2f;
+    --color-dash-kpi-icon-amber:  #c2711a;
+
+    /* ── Dashboard — Panels / Quota rows ───────────────────────────── */
+    --color-dash-panel-bg:        linear-gradient(180deg, #ffffff 0%, #fffcfc 100%);
+    --color-dash-panel-border:    #f7e6e7;
+    --color-dash-panel-shadow:    rgba(107, 1, 6, 0.16);
+    --color-dash-panel-head-bg:   linear-gradient(90deg, rgba(225, 2, 16, 0.05) 0%, rgba(225, 2, 16, 0) 60%);
+    --color-dash-panel-head-title: #1a1010;
+    --color-dash-quota-border:    #f7eeee;
+    --color-dash-quota-icon-bg:   linear-gradient(135deg, rgba(225, 2, 16, 0.10) 0%, rgba(225, 2, 16, 0.03) 100%);
+    --color-dash-quota-icon-text: #B00410;
+    --color-dash-quota-label:     #3f3434;
+    --color-dash-quota-track-bg:  linear-gradient(90deg, #f6ecec 0%, #f1e2e3 100%);
+    --color-dash-quota-val:       #6b5b5b;
+
+    /* ── Dashboard — Activity / Deployments list ───────────────────── */
+    --color-dash-activity-row-hover: linear-gradient(90deg, rgba(225, 2, 16, 0.06) 0%, rgba(225, 2, 16, 0.01) 100%);
+    --color-dash-activity-name:   #3f3434;
+    --color-dash-activity-time:   #9a8888;
+    --color-dash-activity-arrow-hover: #B00410;
+    --color-dash-activity-all-border: #f7eeee;
+    --color-dash-activity-all-text: #B00410;
+    --color-dash-activity-all-hover: rgba(225, 2, 16, 0.04);
+    --color-dash-empty-icon-bg:   linear-gradient(135deg, rgba(225, 2, 16, 0.12) 0%, rgba(225, 2, 16, 0.03) 100%);
+    --color-dash-empty-icon-text: #B00410;
+    --color-dash-kpi-icon-wrap-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.4) 100%);
+
+    /* ── Dashboard — Hero mark decoration ──────────────────────────── */
+    --color-dash-hero-overlay:    rgba(225, 2, 16, 0.12);
+    --color-dash-hero-cta-shadow: rgba(225, 2, 16, 0.85);
+    --color-dash-hero-cta-shadow-hover: rgba(225, 2, 16, 0.9);
+    --color-dash-mark-drop-shadow: rgba(225, 2, 16, 0.38);
+    --color-dash-mark-halo-inner: rgba(225, 2, 16, 0.20);
+    --color-dash-mark-halo-outer: rgba(225, 2, 16, 0.07);
+    --color-dash-mark-ring:       rgba(225, 2, 16, 0.16);
+    --color-dash-mark-orbit:      rgba(225, 2, 16, 0.22);
+    --color-dash-mark-plate:      rgba(225, 2, 16, 0.16);
+    --color-dash-mark-plate-outer: rgba(225, 2, 16, 0.03);
+
+    /* ── Dashboard — KPI accent colors ─────────────────────────────── */
+    --color-dash-kpi-stone-from:  #6b5b5b;
+    --color-dash-kpi-stone-to:    #332828;
+    --color-dash-kpi-stone-glow:  rgba(60, 48, 48, 0.12);
+    --color-dash-kpi-amber-from:  #E48C2A;
+    --color-dash-kpi-amber-to:    #c2711a;
+    --color-dash-kpi-amber-glow:  rgba(228, 140, 42, 0.16);
+    --color-dash-kpi-red-glow:    rgba(225, 2, 16, 0.14);
+    --color-dash-quota-track-shadow: rgba(107, 1, 6, 0.07);
+
     /* ── Text ──────────────────────────────────────────────────── */
     --color-content-primary:   #1A1014;  /* Deep warm anthracite */
     --color-content-secondary: #6B5C5E;  /* Warm muted — not cold grey */
@@ -139,6 +219,86 @@
     --color-header-border:    linear-gradient(90deg, #E10210 0%, rgba(225, 2, 16, 0.35) 38%, rgba(225, 2, 16, 0) 78%);
     --color-hero-bg:          linear-gradient(135deg, #c0392b 0%, #96000a 60%, #6b0007 100%);
     --color-hero-bg-light:    linear-gradient(135deg, #3a0008 0%, #2a0005 100%);
+
+    /* ── Mesh background (dashboard page bg) ───────────────────────── */
+    --color-mesh-spot-1:      rgba(225, 2, 16, 0.25);
+    --color-mesh-spot-2:      rgba(200, 0, 20, 0.15);
+    --color-mesh-spot-3:      rgba(30, 18, 20, 0);
+    --color-mesh-spot-4:      rgba(225, 2, 16, 0.06);
+
+    /* ── Dashboard — Hero ──────────────────────────────────────────── */
+    --color-dash-hero-bg:         linear-gradient(120deg, #0d1520 0%, #111820 55%, #141520 100%);
+    --color-dash-hero-border:     #1e2d40;
+    --color-dash-hero-shadow:     rgba(0, 0, 0, 0.50);
+    --color-dash-hero-shape:      rgba(225, 2, 16, 0.07);
+    --color-dash-hero-greeting:   #FF4455;
+    --color-dash-hero-name:       #F8F0F0;
+    --color-dash-hero-sub:        #C8A0A0;
+    --color-dash-cta-ghost-bg:    rgba(255, 255, 255, 0.07);
+    --color-dash-cta-ghost-border: #2a3d54;
+    --color-dash-cta-ghost-text:  #FF9AA0;
+    --color-dash-cta-ghost-border-hover: #E10210;
+
+    /* ── Dashboard — KPI cards ─────────────────────────────────────── */
+    --color-dash-kpi-bg:          linear-gradient(180deg, #0f161f 0%, #0d1420 100%);
+    --color-dash-kpi-border:      #1e2d40;
+    --color-dash-kpi-shadow:      rgba(0, 0, 0, 0.40);
+    --color-dash-kpi-border-hover: #2a3d54;
+    --color-dash-kpi-num:         #F8F0F0;
+    --color-dash-kpi-lbl:         #7A6070;
+    --color-dash-kpi-arrow:       #3a4d60;
+    --color-dash-kpi-arrow-hover: #FF4455;
+    --color-dash-kpi-icon-border: #1e2d40;
+    --color-dash-kpi-icon-red:    #FF4455;
+    --color-dash-kpi-icon-stone:  #C8A0A0;
+    --color-dash-kpi-icon-amber:  #FBBF24;
+
+    /* ── Dashboard — Panels / Quota rows ───────────────────────────── */
+    --color-dash-panel-bg:        linear-gradient(180deg, #0f161f 0%, #0d1420 100%);
+    --color-dash-panel-border:    #1e2d40;
+    --color-dash-panel-shadow:    rgba(0, 0, 0, 0.40);
+    --color-dash-panel-head-bg:   linear-gradient(90deg, rgba(225, 2, 16, 0.10) 0%, rgba(225, 2, 16, 0) 60%);
+    --color-dash-panel-head-title: #F8F0F0;
+    --color-dash-quota-border:    #1e2d40;
+    --color-dash-quota-icon-bg:   linear-gradient(135deg, rgba(225, 2, 16, 0.18) 0%, rgba(225, 2, 16, 0.06) 100%);
+    --color-dash-quota-icon-text: #FF4455;
+    --color-dash-quota-label:     #C8A0A0;
+    --color-dash-quota-track-bg:  linear-gradient(90deg, #1a2535 0%, #162030 100%);
+    --color-dash-quota-val:       #7A6070;
+
+    /* ── Dashboard — Activity / Deployments list ───────────────────── */
+    --color-dash-activity-row-hover: linear-gradient(90deg, rgba(225, 2, 16, 0.10) 0%, rgba(225, 2, 16, 0.02) 100%);
+    --color-dash-activity-name:   #C8A0A0;
+    --color-dash-activity-time:   #5a4858;
+    --color-dash-activity-arrow-hover: #FF4455;
+    --color-dash-activity-all-border: #1e2d40;
+    --color-dash-activity-all-text: #FF4455;
+    --color-dash-activity-all-hover: rgba(225, 2, 16, 0.08);
+    --color-dash-empty-icon-bg:   linear-gradient(135deg, rgba(225, 2, 16, 0.20) 0%, rgba(225, 2, 16, 0.06) 100%);
+    --color-dash-empty-icon-text: #FF4455;
+    --color-dash-kpi-icon-wrap-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+
+    /* ── Dashboard — Hero mark decoration ──────────────────────────── */
+    --color-dash-hero-overlay:    rgba(225, 2, 16, 0.18);
+    --color-dash-hero-cta-shadow: rgba(225, 2, 16, 0.70);
+    --color-dash-hero-cta-shadow-hover: rgba(225, 2, 16, 0.80);
+    --color-dash-mark-drop-shadow: rgba(225, 2, 16, 0.50);
+    --color-dash-mark-halo-inner: rgba(225, 2, 16, 0.30);
+    --color-dash-mark-halo-outer: rgba(225, 2, 16, 0.10);
+    --color-dash-mark-ring:       rgba(225, 2, 16, 0.22);
+    --color-dash-mark-orbit:      rgba(225, 2, 16, 0.28);
+    --color-dash-mark-plate:      rgba(225, 2, 16, 0.22);
+    --color-dash-mark-plate-outer: rgba(225, 2, 16, 0.06);
+
+    /* ── Dashboard — KPI accent colors ─────────────────────────────── */
+    --color-dash-kpi-stone-from:  #8a7070;
+    --color-dash-kpi-stone-to:    #5a4848;
+    --color-dash-kpi-stone-glow:  rgba(100, 80, 80, 0.18);
+    --color-dash-kpi-amber-from:  #F09D3A;
+    --color-dash-kpi-amber-to:    #d4832a;
+    --color-dash-kpi-amber-glow:  rgba(240, 157, 58, 0.20);
+    --color-dash-kpi-red-glow:    rgba(225, 2, 16, 0.22);
+    --color-dash-quota-track-shadow: rgba(0, 0, 0, 0.20);
 
     /* ── Navigation ────────────────────────────────────────────── */
     --color-nav-text:         rgba(255, 255, 255, 0.82);
