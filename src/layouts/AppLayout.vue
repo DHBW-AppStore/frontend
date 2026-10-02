@@ -41,15 +41,14 @@ const isDark = computed(() => {
   return document.documentElement.classList.contains('dark')
 })
 
-const sidebarStyle = computed(() => isDark.value
-  ? { background: 'linear-gradient(180deg, #0D1520 0%, #0A1018 60%, #080E16 100%)' }
-  : { background: 'linear-gradient(180deg, var(--color-primary) 0%, var(--color-secondary-dark) 100%)' }
-)
+const sidebarStyle = computed(() => ({
+  background: 'var(--color-surface-sidebar-grad)',
+  borderRight: '1px solid var(--color-sidebar-border)',
+}))
 
-const headerStyle = computed(() => isDark.value
-  ? { background: 'linear-gradient(90deg, #0D1520 0%, #0A1018 60%, #080E16 100%)' }
-  : { background: 'var(--color-primary)' }
-)
+const headerStyle = computed(() => ({
+  background: 'var(--color-surface-header)',
+}))
 
 const meshStyle = computed(() => {
   if (!isMeshBgActive.value) return {}
@@ -146,7 +145,7 @@ const navItems = computed(() => [
       </div>
 
       <!-- Sidebar toggle inside navigation zone (shown only when collapsed) -->
-      <div v-if="sidebarCollapsed" class="px-2 py-2 border-b border-white/5">
+      <div v-if="sidebarCollapsed" class="px-2 py-2 border-b" style="border-color: var(--color-sidebar-border)">
         <button
           @click="sidebarCollapsed = false"
           class="sidebar-toggle-btn"
@@ -183,14 +182,14 @@ const navItems = computed(() => [
     <div class="flex-1 flex flex-col h-full min-w-0">
 
       <!-- Header -->
-      <header class="h-16 flex items-center justify-between px-6 flex-shrink-0 border-b border-white/10 relative" :style="headerStyle">
+      <header class="h-16 flex items-center justify-between px-6 flex-shrink-0 relative header-border" :style="headerStyle">
 
         <!-- Left: toggle (title centered separately) -->
         <div class="flex items-center gap-3">
           <button
             v-if="!sidebarCollapsed"
             @click="sidebarCollapsed = true"
-            class="text-white/60 hover:text-white transition-colors p-1 rounded-md hover:bg-white/10"
+            class="nav-toggle-btn"
             aria-label="Close sidebar"
           >
             <PanelLeftClose :size="20" />
@@ -199,23 +198,23 @@ const navItems = computed(() => [
 
         <!-- Centered title (always horizontally centered in viewport) -->
         <div class="header-title">
-          <span class="text-white/90 text-sm font-medium tracking-wide">{{ pageTitle }}</span>
+          <span class="header-title-text text-sm font-semibold tracking-wide">{{ pageTitle }}</span>
         </div>
 
         <!-- Right controls -->
         <div class="flex items-center gap-2">
 
           <!-- Language toggle -->
-          <div class="flex rounded-md overflow-hidden border border-white/20 text-xs">
+          <div class="flex rounded-md overflow-hidden border border-nav-border text-xs">
             <button
               @click="changeLocale('de')"
-              :class="locale === 'de' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80'"
+              :class="locale === 'de' ? 'lang-active' : 'lang-inactive'"
               class="px-2.5 py-1 transition-colors"
             >DE</button>
             <button
               @click="changeLocale('en')"
-              :class="locale === 'en' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80'"
-              class="px-2.5 py-1 transition-colors border-l border-white/20"
+              :class="locale === 'en' ? 'lang-active' : 'lang-inactive'"
+              class="px-2.5 py-1 transition-colors border-l border-nav-border"
             >EN</button>
           </div>
 
@@ -223,15 +222,15 @@ const navItems = computed(() => [
           <div class="relative user-menu-root">
             <button
               @click="userMenuOpen = !userMenuOpen"
-              class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 hover:bg-white/10 transition-colors text-white"
+              class="user-menu-btn flex items-center gap-2 rounded-lg px-2.5 py-1.5 transition-colors"
             >
-              <div class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs font-semibold">
+              <div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-xs font-semibold text-white">
                 {{ userInitial }}
               </div>
-              <span class="text-sm text-white/90 max-w-24 truncate">{{ userName }}</span>
+              <span class="text-sm max-w-24 truncate user-menu-name">{{ userName }}</span>
               <ChevronDown
                 :size="14"
-                class="text-white/50 transition-transform duration-150"
+                class="user-menu-chevron transition-transform duration-150"
                 :class="userMenuOpen ? 'rotate-180' : ''"
               />
             </button>
@@ -289,19 +288,20 @@ const navItems = computed(() => [
   border-radius: 10px;
   font-size: 1rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--color-nav-text);
   transition: background-color 150ms, color 150ms;
   text-decoration: none;
 }
 
 .nav-link:hover {
-  background-color: rgba(255, 255, 255, 0.10);
-  color: rgba(255, 255, 255, 1);
+  background-color: var(--color-nav-bg-hover);
+  color: var(--color-nav-text-hover);
 }
 
 .nav-link-active {
-  background-color: rgba(232, 25, 44, 0.25);
-  color: #FFFFFF;
+  background-color: var(--color-nav-bg-active);
+  color: var(--color-nav-text-active);
+  font-weight: 600;
 }
 
 /* Collapsed: center icons */
@@ -318,7 +318,7 @@ const navItems = computed(() => [
   transform: translateY(-50%) scaleY(0);
   width: 3px;
   height: 60%;
-  background: var(--color-highlight);
+  background: var(--color-nav-indicator);
   border-radius: 0 2px 2px 0;
   transition: transform 150ms ease;
 }
@@ -376,11 +376,71 @@ const navItems = computed(() => [
   justify-content: center;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--color-nav-text);
   transition: background-color 150ms;
 }
 .sidebar-toggle-btn:hover {
-  background: rgba(255,255,255,0.04);
+  background: var(--color-nav-bg-hover);
+}
+
+/* Header toggle button */
+.nav-toggle-btn {
+  color: var(--color-nav-text);
+  padding: 4px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  transition: color 150ms, background-color 150ms;
+}
+.nav-toggle-btn:hover {
+  color: var(--color-nav-text-hover);
+  background: var(--color-nav-bg-hover);
+}
+
+/* Header title text */
+.header-title-text {
+  color: var(--color-nav-text-hover);
+}
+
+/* Header bottom border (red gradient accent) */
+.header-border::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--color-header-border);
+}
+
+/* Language toggle */
+.border-nav-border {
+  border-color: var(--color-sidebar-border);
+}
+.lang-active {
+  background: var(--color-primary);
+  color: #ffffff;
+}
+.lang-inactive {
+  color: var(--color-nav-text);
+}
+.lang-inactive:hover {
+  color: var(--color-nav-text-hover);
+  background: var(--color-nav-bg-hover);
+}
+
+/* User menu button */
+.user-menu-btn {
+  color: var(--color-nav-text-hover);
+}
+.user-menu-btn:hover {
+  background: var(--color-nav-bg-hover);
+}
+.user-menu-name {
+  color: var(--color-nav-text-hover);
+}
+.user-menu-chevron {
+  color: var(--color-nav-text);
 }
 
 /* Header title centered in viewport */
