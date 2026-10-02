@@ -21,7 +21,8 @@ import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useColorScheme } from '@/composables/useColorScheme'
 
-import logo from '@/assets/Six7-white-withoutBackground.png'
+import logo from '@/assets/ScholarStackLogo.png'
+import logoMark from '@/assets/ScholarStackLogo(S).png'
 
 const { locale, t } = useI18n()
 const authStore = useAuthStore()
@@ -123,10 +124,24 @@ const navItems = computed(() => [
       :style="sidebarStyle"
     >
 
-      <!-- Logo area -->
-      <div class="h-16 flex items-center border-b border-white/10 px-3" style="overflow: visible;">
-        <RouterLink to="/" class="block" style="height: 48px; width: 100%; overflow: visible;">
-          <img :src="logo" alt="SIX7 Click'n Deploy" style="position: relative; z-index: 30; height: 96px; margin-top: -24px; margin-left: -8px; max-width: none;" />
+      <!-- Logo area. Eingeklappt (64 px) passt der Schriftzug nicht — deshalb
+           wird auf die freigestellte "S"-Variante umgeschaltet. -->
+      <div class="flex items-center px-3" :class="sidebarCollapsed ? 'h-16' : 'h-24'" style="overflow: visible;">
+        <RouterLink
+          to="/"
+          class="flex items-center justify-center"
+          :style="{ height: sidebarCollapsed ? '40px' : '84px', width: '100%', overflow: 'visible' }"
+        >
+          <img
+            :src="sidebarCollapsed ? logoMark : logo"
+            alt="ScholarStack Click'n Deploy"
+            :style="{
+              position: 'relative',
+              zIndex: 30,
+              height: sidebarCollapsed ? '40px' : '84px',
+              maxWidth: 'none',
+            }"
+          />
         </RouterLink>
       </div>
 
