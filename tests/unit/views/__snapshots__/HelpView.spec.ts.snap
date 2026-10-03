@@ -73,10 +73,10 @@ exports[`HelpView (de) > matches snapshot 1`] = `
       </div>
       <p class="text-gray-600 leading-7 mb-4">Direkter Zugriff auf die relevanten GitHub-Repositories.</p>
       <ul class="list-disc list-inside space-y-2 text-gray-600">
-        <li><a href="https://github.com/six7-click-n-deploy/frontend" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: Frontend-Repository</a></li>
-        <li><a href="https://github.com/six7-click-n-deploy/backend" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: Backend-Repository</a></li>
-        <li><a href="https://github.com/six7-click-n-deploy/deployment" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: Deployment-Repository</a></li>
-        <li><a href="https://github.com/six7-click-n-deploy/worker" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: Worker-Repository</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/frontend" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: Frontend-Repository</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/backend" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: Backend-Repository</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/deployment" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: Deployment-Repository</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/worker" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: Worker-Repository</a></li>
       </ul>
     </article>
     <article class="rounded-3xl border border-slate-200 bg-slate-50 p-6">
@@ -91,9 +91,9 @@ exports[`HelpView (de) > matches snapshot 1`] = `
       </div>
       <p class="text-gray-600 leading-7 mb-4">Direkter Zugriff auf die relevanten Projekt-Dokumentationen.</p>
       <ul class="list-disc list-inside space-y-3 text-gray-600">
-        <li><a href="https://github.com/six7-click-n-deploy/deployment/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Dokumentation bzgl. Installations und Administration</a></li>
-        <li><a href="https://github.com/six7-click-n-deploy/.github/blob/main/docs/technologiestack.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Dokumentation bzgl. Technologiestack und Architektur</a></li>
-        <li><a href="https://github.com/six7-click-n-deploy/template-app/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Dokumentation für App Entwickler: Entwicklung eines neuen App Templates</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/deployment/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Dokumentation bzgl. Installations und Administration</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/.github/blob/main/docs/technologiestack.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Dokumentation bzgl. Technologiestack und Architektur</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/template-app/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Dokumentation für App Entwickler: Entwicklung eines neuen App Templates</a></li>
       </ul>
     </article>
   </div>
@@ -173,10 +173,10 @@ exports[`HelpView (en) > matches snapshot 1`] = `
       </div>
       <p class="text-gray-600 leading-7 mb-4">Quick access to the relevant GitHub repositories.</p>
       <ul class="list-disc list-inside space-y-2 text-gray-600">
-        <li><a href="https://github.com/six7-click-n-deploy/frontend" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: frontend repository</a></li>
-        <li><a href="https://github.com/six7-click-n-deploy/backend" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: backend repository</a></li>
-        <li><a href="https://github.com/six7-click-n-deploy/deployment" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: deployment repository</a></li>
-        <li><a href="https://github.com/six7-click-n-deploy/worker" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: worker repository</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/frontend" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: frontend repository</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/backend" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: backend repository</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/deployment" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: deployment repository</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/worker" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">GitHub: worker repository</a></li>
       </ul>
     </article>
     <article class="rounded-3xl border border-slate-200 bg-slate-50 p-6">
@@ -191,9 +191,9 @@ exports[`HelpView (en) > matches snapshot 1`] = `
       </div>
       <p class="text-gray-600 leading-7 mb-4">Direct access to the relevant project documentation.</p>
       <ul class="list-disc list-inside space-y-3 text-gray-600">
-        <li><a href="https://github.com/six7-click-n-deploy/deployment/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Documentation regarding Installation and Administration</a></li>
-        <li><a href="https://github.com/six7-click-n-deploy/.github/blob/main/docs/technologiestack.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Documentation regarding Technology Stack and Architecture</a></li>
-        <li><a href="https://github.com/six7-click-n-deploy/template-app/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Documentation for App Developers: Creating a new App Template</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/deployment/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Documentation regarding Installation and Administration</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/.github/blob/main/docs/technologiestack.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Documentation regarding Technology Stack and Architecture</a></li>
+        <li><a href="https://github.com/DHBW-AppStore/template-app/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">Documentation for App Developers: Creating a new App Template</a></li>
       </ul>
     </article>
   </div>

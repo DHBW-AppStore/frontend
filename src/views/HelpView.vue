@@ -76,22 +76,22 @@ import { HelpCircle, Layers, BookOpen, FileText } from 'lucide-vue-next'
         </p>
         <ul class="list-disc list-inside space-y-2 text-gray-600">
           <li>
-            <a href="https://github.com/six7-click-n-deploy/frontend" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
+            <a href="https://github.com/DHBW-AppStore/frontend" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
               {{ $t('HelpView.resources.frontendRepo') }}
             </a>
           </li>
           <li>
-            <a href="https://github.com/six7-click-n-deploy/backend" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
+            <a href="https://github.com/DHBW-AppStore/backend" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
               {{ $t('HelpView.resources.backendRepo') }}
             </a>
           </li>
           <li>
-            <a href="https://github.com/six7-click-n-deploy/deployment" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
+            <a href="https://github.com/DHBW-AppStore/deployment" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
               {{ $t('HelpView.resources.deploymentRepo') }}
             </a>
           </li>
           <li>
-            <a href="https://github.com/six7-click-n-deploy/worker" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
+            <a href="https://github.com/DHBW-AppStore/worker" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
               {{ $t('HelpView.resources.workerRepo') }}
             </a>
           </li>
@@ -108,17 +108,17 @@ import { HelpCircle, Layers, BookOpen, FileText } from 'lucide-vue-next'
         </p>
         <ul class="list-disc list-inside space-y-3 text-gray-600">
           <li>
-            <a href="https://github.com/six7-click-n-deploy/deployment/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
+            <a href="https://github.com/DHBW-AppStore/deployment/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
               {{ $t('HelpView.docs.linkAdmin') }}
             </a>
           </li>
           <li>
-            <a href="https://github.com/six7-click-n-deploy/.github/blob/main/docs/technologiestack.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
+            <a href="https://github.com/DHBW-AppStore/.github/blob/main/docs/technologiestack.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
               {{ $t('HelpView.docs.linkTech') }}
             </a>
           </li>
           <li>
-            <a href="https://github.com/six7-click-n-deploy/template-app/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
+            <a href="https://github.com/DHBW-AppStore/template-app/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">
               {{ $t('HelpView.docs.linkAppDev') }}
             </a>
           </li>
